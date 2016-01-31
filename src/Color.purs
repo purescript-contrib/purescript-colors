@@ -12,6 +12,9 @@ module Color
   , toHSLA
   , toRGBA
   , cssStringHSLA
+  , complementary
+  , lighten
+  , darken
   ) where
 
 import Prelude

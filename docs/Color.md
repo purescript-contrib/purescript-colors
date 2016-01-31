@@ -97,4 +97,32 @@ Convert a `Color` to its red, green, blue and alpha values.
 cssStringHSLA :: Color -> String
 ```
 
+#### `complementary`
+
+``` purescript
+complementary :: Color -> Color
+```
+
+Get the complementary color (hue rotated by 180°).
+
+#### `lighten`
+
+``` purescript
+lighten :: Number -> Color -> Color
+```
+
+Lighten a color by adding a certain amount (number between -1.0 and 1.0)
+to the lightness channel. If the number is negative, the color is
+darkened.
+
+#### `darken`
+
+``` purescript
+darken :: Number -> Color -> Color
+```
+
+Darken a color by subtracting a certain amount (number between -1.0 and
+1.0) from the lightness channel. If the number is negative, the color is
+lightened.
+
 
