@@ -10,6 +10,7 @@
     "purescript-orders": "^0.1.1"
   },
   "devDependencies": {
-    "purescript-test-unit": "^4.1.0"
+    "purescript-test-unit": "^4.1.0",
+    "purescript-flarecheck": "^0.2.1"
   }
 }
