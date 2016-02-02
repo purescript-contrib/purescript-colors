@@ -3034,21 +3034,21 @@ var PS = { };
               };
           };
       })();
-      Test_FlareCheck.flareCheck(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveString))("cssStringHSLA")(function (v) {
+      Test_FlareCheck.flareCheck(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveString))("cssStringHSLA :: Color -> String")(function (v) {
           return Color.cssStringHSLA(v);
       })();
-      Test_FlareCheck.flareCheck(Test_FlareCheck.interactiveFunction(flammableNumber1)(interactiveTColor))("greyscale")(function (v) {
+      Test_FlareCheck.flareCheck(Test_FlareCheck.interactiveFunction(flammableNumber1)(interactiveTColor))("greyscale :: Number -> Color")(function (v) {
           return Color.grayscale(v);
       })();
-      Test_FlareCheck.flareCheck(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveTColor))("complementary")(function (v) {
+      Test_FlareCheck.flareCheck(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveTColor))("complementary :: Color -> Color")(function (v) {
           return Color.complementary(v);
       })();
-      Test_FlareCheck.flareCheck(Test_FlareCheck.interactiveFunction(flammableNumber1)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveTColor)))("lighten")(function (v) {
+      Test_FlareCheck.flareCheck(Test_FlareCheck.interactiveFunction(flammableNumber1)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveTColor)))("lighten :: Number -> Color -> Color")(function (v) {
           return function (v1) {
               return Color.lighten(v)(v1);
           };
       })();
-      Test_FlareCheck.flareCheck(Test_FlareCheck.interactiveFunction(flammableNumber1)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveTColor)))("darken")(function (v) {
+      Test_FlareCheck.flareCheck(Test_FlareCheck.interactiveFunction(flammableNumber1)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveTColor)))("darken :: Number -> Color -> Color")(function (v) {
           return function (v1) {
               return Color.darken(v)(v1);
           };

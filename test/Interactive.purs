@@ -45,11 +45,11 @@ main = do
   flareCheck "hsla" (id :: TColor -> _)
   flareCheck "rgba :: Int -> Int -> Int -> Number -> Color" $
     (\(Int255 r) (Int255 g) (Int255 b) (Number1 a) -> TColor (rgba r g b a))
-  flareCheck "cssStringHSLA" (\(TColor c) -> cssStringHSLA c)
-  flareCheck "greyscale" (\(Number1 s) -> TColor (grayscale s))
-  flareCheck "complementary" (\(TColor c) -> TColor (complementary c))
-  flareCheck "lighten" (\(Number1 a) (TColor c) -> TColor (lighten a c))
-  flareCheck "darken" (\(Number1 a) (TColor c) -> TColor (darken a c))
+  flareCheck "cssStringHSLA :: Color -> String" (\(TColor c) -> cssStringHSLA c)
+  flareCheck "greyscale :: Number -> Color" (\(Number1 s) -> TColor (grayscale s))
+  flareCheck "complementary :: Color -> Color" (\(TColor c) -> TColor (complementary c))
+  flareCheck "lighten :: Number -> Color -> Color" (\(Number1 a) (TColor c) -> TColor (lighten a c))
+  flareCheck "darken :: Number -> Color -> Color" (\(Number1 a) (TColor c) -> TColor (darken a c))
 
   flareCheck' "tests-md" "red" (TColor red)
   flareCheck' "tests-md" "pink" (TColor pink)
