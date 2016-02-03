@@ -826,6 +826,12 @@ var PS = { };
       };
       return HSLA;
   })();
+  var saturate = function (f) {
+      return function (v) {
+          var s$prime = Data_Ord.clamp(Prelude.ordNumber)(0.0)(1.0)(v.value1 + f);
+          return new HSLA(v.value0, s$prime, v.value2, v.value3);
+      };
+  };
   var rgba = function (red) {
       return function (green) {
           return function (blue) {
@@ -849,7 +855,7 @@ var PS = { };
                       if (Prelude.otherwise) {
                           return chroma$prime / (1.0 - $$Math.abs(2.0 * lightness - 1.0));
                       };
-                      throw new Error("Failed pattern match at Color line 54, column 1 - line 55, column 1: " + [  ]);
+                      throw new Error("Failed pattern match at Color line 56, column 1 - line 57, column 1: " + [  ]);
                   })();
                   var b = Data_Int.toNumber(blue) / 255.0;
                   var hue$prime = function (v) {
@@ -865,7 +871,7 @@ var PS = { };
                       if (Prelude.otherwise) {
                           return (r - g) / chroma$prime + 4.0;
                       };
-                      throw new Error("Failed pattern match at Color line 54, column 1 - line 55, column 1: " + [ v.constructor.name ]);
+                      throw new Error("Failed pattern match at Color line 56, column 1 - line 57, column 1: " + [ v.constructor.name ]);
                   };
                   var hue = 60.0 * hue$prime(chroma);
                   return new HSLA(hue, saturation, lightness, alpha);
@@ -897,6 +903,9 @@ var PS = { };
   var grayscale = function (l) {
       return hsl(0.0)(0.0)(l);
   }; 
+  var desaturate = function (f) {
+      return saturate(-f);
+  };
   var darken = function (f) {
       return lighten(-f);
   };
@@ -905,19 +914,21 @@ var PS = { };
       var lightness = Prelude.show(Prelude.showInt)(Data_Int.round(v.value2 * 100.0)) + "%";
       var hue = Prelude.show(Prelude.showInt)(Data_Int.round(v.value0));
       var alpha = Prelude.show(Prelude.showNumber)(v.value3);
-      var $42 = v.value3 === 1.0;
-      if ($42) {
+      var $49 = v.value3 === 1.0;
+      if ($49) {
           return "hsl(" + (hue + (", " + (saturation + (", " + (lightness + ")")))));
       };
-      if (!$42) {
+      if (!$49) {
           return "hsla(" + (hue + (", " + (saturation + (", " + (lightness + (", " + (alpha + ")")))))));
       };
-      throw new Error("Failed pattern match at Color line 135, column 1 - line 136, column 1: " + [ $42.constructor.name ]);
+      throw new Error("Failed pattern match at Color line 137, column 1 - line 138, column 1: " + [ $49.constructor.name ]);
   };
   var complementary = function (v) {
       var h$prime = $$Math["%"](v.value0 + 180.0)(360.0);
       return new HSLA(h$prime, v.value1, v.value2, v.value3);
   };
+  exports["desaturate"] = desaturate;
+  exports["saturate"] = saturate;
   exports["darken"] = darken;
   exports["lighten"] = lighten;
   exports["complementary"] = complementary;
@@ -7500,8 +7511,8 @@ var PS = { };
               return Text_Smolder_HTML.pre(Text_Smolder_Markup.text(repr));
           });
       };
-      return Prelude["<$>"](Flare.functorUI)(function ($26) {
-          return Test_FlareCheck.SetHTML.create(pretty($26));
+      return Prelude["<$>"](Flare.functorUI)(function ($34) {
+          return Test_FlareCheck.SetHTML.create(pretty($34));
       })(ui);
   });
   var flammableTColor = new Test_FlareCheck.Flammable(Prelude["<$>"](Flare.functorUI)(TColor)(Flare.fieldset("Color")(Prelude["<*>"](Flare.applyUI)(Prelude["<*>"](Flare.applyUI)(Prelude["<*>"](Flare.applyUI)(Prelude["<$>"](Flare.functorUI)(Color.hsla)(Flare.numberSlider("Hue")(0.0)(360.0)(1.0)(0.0)))(Flare.numberSlider("Saturation")(0.0)(1.0)(1.0e-2)(0.8)))(Flare.numberSlider("Lightness")(0.0)(1.0)(1.0e-2)(0.4)))(Flare.numberSlider("Alpha")(0.0)(1.0)(1.0e-2)(1.0)))));
@@ -7539,6 +7550,16 @@ var PS = { };
           doc(Test_FlareCheck.interactiveFunction(flammableNumber1)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveTColor)))("darken")(function (v) {
               return function (v1) {
                   return Color.darken(v)(v1);
+              };
+          })();
+          doc(Test_FlareCheck.interactiveFunction(flammableNumber1)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveTColor)))("saturate")(function (v) {
+              return function (v1) {
+                  return Color.saturate(v)(v1);
+              };
+          })();
+          doc(Test_FlareCheck.interactiveFunction(flammableNumber1)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveTColor)))("desaturate")(function (v) {
+              return function (v1) {
+                  return Color.desaturate(v)(v1);
               };
           })();
           var docmd = function (dictInteractive) {
