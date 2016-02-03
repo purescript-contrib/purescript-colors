@@ -131,7 +131,7 @@ toRGBA (HSLA h s l a) = { r, g, b, a }
          | 4.0 <= h' && h' < 5.0 = { r: x  , g: 0.0, b: chr }
          | otherwise             = { r: chr, g: 0.0, b: x   }
 
--- The CSS representation of the color in the form `hsl(..)` or `hsla(...)`.
+-- | The CSS representation of the color in the form `hsl(..)` or `hsla(...)`.
 cssStringHSLA :: Color -> String
 cssStringHSLA (HSLA h s l a) =
   if a == 1.0

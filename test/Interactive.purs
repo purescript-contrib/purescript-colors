@@ -1,13 +1,14 @@
 module Test.Interactive where
 
 import Prelude
-import Test.FlareCheck
 
 import Text.Smolder.Markup as H
 import Text.Smolder.Markup ((!), text)
 import Text.Smolder.HTML as H
 import Text.Smolder.HTML.Attributes as HA
 import Text.Smolder.Renderer.String as H
+
+import Test.FlareDoc
 
 import Color
 import Color.Scheme.MaterialDesign
@@ -42,31 +43,38 @@ instance flammableInt255 :: Flammable Int255 where
   spark = Int255 <$> intSlider "Int" 0 255 100
 
 main = do
-  flareCheck "hsla" (id :: TColor -> _)
-  flareCheck "rgba :: Int -> Int -> Int -> Number -> Color" $
-    (\(Int255 r) (Int255 g) (Int255 b) (Number1 a) -> TColor (rgba r g b a))
-  flareCheck "cssStringHSLA :: Color -> String" (\(TColor c) -> cssStringHSLA c)
-  flareCheck "greyscale :: Number -> Color" (\(Number1 s) -> TColor (grayscale s))
-  flareCheck "complementary :: Color -> Color" (\(TColor c) -> TColor (complementary c))
-  flareCheck "lighten :: Number -> Color -> Color" (\(Number1 a) (TColor c) -> TColor (lighten a c))
-  flareCheck "darken :: Number -> Color -> Color" (\(Number1 a) (TColor c) -> TColor (darken a c))
+  withPackage "purescript-colors.json" $ \dict -> do
+    let doc :: forall t. Interactive t => String -> t -> _
+        doc = flareDoc' "doc-color" dict "Color"
 
-  flareCheck' "tests-md" "red" (TColor red)
-  flareCheck' "tests-md" "pink" (TColor pink)
-  flareCheck' "tests-md" "purple" (TColor purple)
-  flareCheck' "tests-md" "deepPurple" (TColor deepPurple)
-  flareCheck' "tests-md" "indigo" (TColor indigo)
-  flareCheck' "tests-md" "blue" (TColor blue)
-  flareCheck' "tests-md" "lightBlue" (TColor lightBlue)
-  flareCheck' "tests-md" "cyan" (TColor cyan)
-  flareCheck' "tests-md" "teal" (TColor teal)
-  flareCheck' "tests-md" "green" (TColor green)
-  flareCheck' "tests-md" "lightGreen" (TColor lightGreen)
-  flareCheck' "tests-md" "lime" (TColor lime)
-  flareCheck' "tests-md" "yellow" (TColor yellow)
-  flareCheck' "tests-md" "amber" (TColor amber)
-  flareCheck' "tests-md" "orange" (TColor orange)
-  flareCheck' "tests-md" "deepOrange" (TColor deepOrange)
-  flareCheck' "tests-md" "brown" (TColor brown)
-  flareCheck' "tests-md" "grey" (TColor grey)
-  flareCheck' "tests-md" "blueGrey" (TColor blueGrey)
+    doc "hsla" (id :: TColor -> _)
+    doc "rgba" $
+      (\(Int255 r) (Int255 g) (Int255 b) (Number1 a) -> TColor (rgba r g b a))
+    doc "cssStringHSLA" (\(TColor c) -> cssStringHSLA c)
+    doc "grayscale" (\(Number1 s) -> TColor (grayscale s))
+    doc "complementary" (\(TColor c) -> TColor (complementary c))
+    doc "lighten" (\(Number1 a) (TColor c) -> TColor (lighten a c))
+    doc "darken" (\(Number1 a) (TColor c) -> TColor (darken a c))
+
+    let docmd :: forall t. Interactive t => String -> t -> _
+        docmd = flareDoc' "doc-scheme-md" dict "Color.Scheme.MaterialDesign"
+
+    docmd "red" (TColor red)
+    docmd "pink" (TColor pink)
+    docmd "purple" (TColor purple)
+    docmd "deepPurple" (TColor deepPurple)
+    docmd "indigo" (TColor indigo)
+    docmd "blue" (TColor blue)
+    docmd "lightBlue" (TColor lightBlue)
+    docmd "cyan" (TColor cyan)
+    docmd "teal" (TColor teal)
+    docmd "green" (TColor green)
+    docmd "lightGreen" (TColor lightGreen)
+    docmd "lime" (TColor lime)
+    docmd "yellow" (TColor yellow)
+    docmd "amber" (TColor amber)
+    docmd "orange" (TColor orange)
+    docmd "deepOrange" (TColor deepOrange)
+    docmd "brown" (TColor brown)
+    docmd "grey" (TColor grey)
+    docmd "blueGrey" (TColor blueGrey)
