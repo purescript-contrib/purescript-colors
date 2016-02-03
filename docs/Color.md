@@ -97,6 +97,8 @@ Convert a `Color` to its red, green, blue and alpha values.
 cssStringHSLA :: Color -> String
 ```
 
+The CSS representation of the color in the form `hsl(..)` or `hsla(...)`.
+
 #### `complementary`
 
 ``` purescript
@@ -124,5 +126,25 @@ darken :: Number -> Color -> Color
 Darken a color by subtracting a certain amount (number between -1.0 and
 1.0) from the lightness channel. If the number is negative, the color is
 lightened.
+
+#### `saturate`
+
+``` purescript
+saturate :: Number -> Color -> Color
+```
+
+Increase the saturation of a color by adding a certain amount (number
+between -1.0 and 1.0) to the saturation channel. If the number is
+negative, the color is desaturated.
+
+#### `desaturate`
+
+``` purescript
+desaturate :: Number -> Color -> Color
+```
+
+Decrease the saturation of a color by subtracting a certain amount (number
+between -1.0 and 1.0) from the saturation channel. If the number is
+negative, the color is saturated.
 
 

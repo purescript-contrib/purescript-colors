@@ -53,8 +53,10 @@ main = do
     doc "cssStringHSLA" (\(TColor c) -> cssStringHSLA c)
     doc "grayscale" (\(Number1 s) -> TColor (grayscale s))
     doc "complementary" (\(TColor c) -> TColor (complementary c))
-    doc "lighten" (\(Number1 a) (TColor c) -> TColor (lighten a c))
-    doc "darken" (\(Number1 a) (TColor c) -> TColor (darken a c))
+    doc "lighten"    (\(Number1 a) (TColor c) -> TColor (lighten a c))
+    doc "darken"     (\(Number1 a) (TColor c) -> TColor (darken a c))
+    doc "saturate"   (\(Number1 a) (TColor c) -> TColor (saturate a c))
+    doc "desaturate" (\(Number1 a) (TColor c) -> TColor (desaturate a c))
 
     let docmd :: forall t. Interactive t => String -> t -> _
         docmd = flareDoc' "doc-scheme-md" dict "Color.Scheme.MaterialDesign"

@@ -15,6 +15,8 @@ module Color
   , complementary
   , lighten
   , darken
+  , saturate
+  , desaturate
   ) where
 
 import Prelude
@@ -161,3 +163,16 @@ lighten f (HSLA h s l a) = HSLA h s l' a
 -- | lightened.
 darken :: Number -> Color -> Color
 darken f = lighten (- f)
+
+-- | Increase the saturation of a color by adding a certain amount (number
+-- | between -1.0 and 1.0) to the saturation channel. If the number is
+-- | negative, the color is desaturated.
+saturate :: Number -> Color -> Color
+saturate f (HSLA h s l a) = HSLA h s' l a
+  where s' = clamp 0.0 1.0 (s + f)
+
+-- | Decrease the saturation of a color by subtracting a certain amount (number
+-- | between -1.0 and 1.0) from the saturation channel. If the number is
+-- | negative, the color is saturated.
+desaturate :: Number -> Color -> Color
+desaturate f = saturate (- f)
