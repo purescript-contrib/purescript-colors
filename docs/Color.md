@@ -105,7 +105,17 @@ Convert a `Color` to its hue, saturation, lightness and alpha values.
 toRGBA :: Color -> { r :: Int, g :: Int, b :: Int, a :: Number }
 ```
 
-Convert a `Color` to its red, green, blue and alpha values.
+Convert a `Color` to its red, green, blue and alpha values. The RGB values
+are integers in the range from 0 to 255.
+
+#### `toRGBA'`
+
+``` purescript
+toRGBA' :: Color -> { r :: Number, g :: Number, b :: Number, a :: Number }
+```
+
+Convert a `Color` to its red, green, blue and alpha values. All values
+are numbers in the range from 0.0 to 1.0.
 
 #### `cssStringHSLA`
 
