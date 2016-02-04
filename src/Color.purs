@@ -103,11 +103,15 @@ rgba' r g b a = rgba (round $ r * 255.0)
 rgb' :: Number -> Number -> Number -> Color
 rgb' r g b = rgba' r g b 1.0
 
--- | Create a `Color` from hue, saturation, lightness and alpha values.
+-- | Create a `Color` from hue, saturation, lightness and alpha values. The
+-- | hue is given in degrees, as a `Number` between 0.0 and 360.0. Saturation,
+-- | lightness and alpha are numbers between 0.0 and 1.0.
 hsla :: Number -> Number -> Number -> Number -> Color
 hsla = HSLA
 
--- | Create a `Color` from hue, saturation and lightness values.
+-- | Create a `Color` from hue, saturation and lightness values. The hue is
+-- | given in degrees, as a `Number` between 0.0 and 360.0. Both saturation and
+-- | lightness are numbers between 0.0 and 1.0.
 hsl :: Number -> Number -> Number -> Color
 hsl h s l = HSLA h s l 1.0
 

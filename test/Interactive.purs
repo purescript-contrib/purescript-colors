@@ -14,6 +14,7 @@ import Test.FlareDoc
 
 import Color
 import Color.Blending
+import Color.Gradient
 import Color.Scheme.MaterialDesign as MD
 import Color.Scheme.X11
 
@@ -33,9 +34,9 @@ colorBox c = H.div ! HA.style css $ H.code (H.text repr)
   where
     repr = cssStringHSLA c
     css = "background-color: " <> repr <> ";" <>
-          "width: 200px; height: 50px; display: inline-block;" <>
-          "margin-right: 10px; border: 1px solid black; padding: 3px;" <>
-          "color: " <> cssStringHSLA textColor
+          "width: 30%; height: 50px; display: inline-block;" <>
+          "margin-top: 10px; margin-right: 10px; border: 1px solid black;" <>
+          "padding: 5px; color: " <> cssStringHSLA textColor
     textColor = if isLight c then black else white
 
 instance interactiveTColor :: Interactive TColor where
@@ -59,13 +60,16 @@ instance flammableTBlendMode :: Flammable TBlendMode where
       toString Average = "Average"
 
 newtype Number1 = Number1 Number
-newtype Int255 = Int255 Int
-
 instance flammableNumber1 :: Flammable Number1 where
   spark = Number1 <$> numberSlider "Number" 0.0 1.0 0.01 0.3
 
+newtype Int255 = Int255 Int
 instance flammableInt255 :: Flammable Int255 where
   spark = Int255 <$> intSlider "Int" 0 255 100
+
+newtype SmallInt = SmallInt Int
+instance flammableSmallInt :: Flammable SmallInt where
+  spark = SmallInt <$> intRange "Int" 0 1000 18
 
 main = do
   withPackage "purescript-colors.json" $ \dict -> do
@@ -91,6 +95,14 @@ main = do
         docblend = flareDoc' "doc-blending" dict "Color.Blending"
 
     docblend "blend" (\(TBlendMode m) (TColor b) (TColor f) -> ColorList [b, f, blend m b f])
+
+    let docmd :: forall t. Interactive t => String -> t -> _
+        docmd = flareDoc' "doc-scheme-md" dict "Color.Scheme.MaterialDesign"
+
+    let docgrad :: forall t. Interactive t => String -> t -> _
+        docgrad = flareDoc' "doc-gradient" dict "Color.Gradient"
+
+    docgrad "hslGradient" (\(SmallInt n) (TColor f) (TColor t) -> ColorList (hslGradient n f t))
 
     let docmd :: forall t. Interactive t => String -> t -> _
         docmd = flareDoc' "doc-scheme-md" dict "Color.Scheme.MaterialDesign"

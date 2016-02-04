@@ -11,7 +11,8 @@
   ],
   "dependencies": {
     "purescript-integers": "^0.2.1",
-    "purescript-orders": "^0.1.1"
+    "purescript-orders": "^0.1.1",
+    "purescript-arrays": "^0.4.4"
   },
   "devDependencies": {
     "purescript-test-unit": "^4.1.0",
