@@ -19,6 +19,18 @@ var PS = { };
     };
   };
 
+  //- Bind -----------------------------------------------------------------------
+
+  exports.arrayBind = function (arr) {
+    return function (f) {
+      var result = [];
+      for (var i = 0, l = arr.length; i < l; i++) {
+        Array.prototype.push.apply(result, f(arr[i]));
+      }
+      return result;
+    };
+  };
+
   //- Monoid ---------------------------------------------------------------------
 
   exports.concatString = function (s1) {
@@ -378,6 +390,22 @@ var PS = { };
           };
       };
   };
+  var monadArray = new Monad(function () {
+      return applicativeArray;
+  }, function () {
+      return bindArray;
+  });
+  var bindArray = new Bind(function () {
+      return applyArray;
+  }, $foreign.arrayBind);
+  var applyArray = new Apply(function () {
+      return functorArray;
+  }, ap(monadArray));
+  var applicativeArray = new Applicative(function () {
+      return applyArray;
+  }, function (x) {
+      return [ x ];
+  });
   exports["LT"] = LT;
   exports["GT"] = GT;
   exports["EQ"] = EQ;
@@ -430,6 +458,10 @@ var PS = { };
   exports["categoryFn"] = categoryFn;
   exports["functorFn"] = functorFn;
   exports["functorArray"] = functorArray;
+  exports["applyArray"] = applyArray;
+  exports["applicativeArray"] = applicativeArray;
+  exports["bindArray"] = bindArray;
+  exports["monadArray"] = monadArray;
   exports["semigroupString"] = semigroupString;
   exports["semigroupArray"] = semigroupArray;
   exports["eqInt"] = eqInt;
@@ -826,6 +858,63 @@ var PS = { };
       };
       return HSLA;
   })();
+  var toRGBA$prime = function (v) {
+      var h$prime = v.value0 / 60.0;
+      var chr = (1.0 - $$Math.abs(2.0 * v.value2 - 1.0)) * v.value1;
+      var m = v.value2 - chr / 2.0;
+      var x = chr * (1.0 - $$Math.abs($$Math["%"](h$prime)(2.0) - 1.0));
+      var rgb$prime1 = (function () {
+          if (h$prime < 1.0) {
+              return {
+                  r: chr, 
+                  g: x, 
+                  b: 0.0
+              };
+          };
+          if (1.0 <= h$prime && h$prime < 2.0) {
+              return {
+                  r: x, 
+                  g: chr, 
+                  b: 0.0
+              };
+          };
+          if (2.0 <= h$prime && h$prime < 3.0) {
+              return {
+                  r: 0.0, 
+                  g: chr, 
+                  b: x
+              };
+          };
+          if (3.0 <= h$prime && h$prime < 4.0) {
+              return {
+                  r: 0.0, 
+                  g: x, 
+                  b: chr
+              };
+          };
+          if (4.0 <= h$prime && h$prime < 5.0) {
+              return {
+                  r: x, 
+                  g: 0.0, 
+                  b: chr
+              };
+          };
+          if (Prelude.otherwise) {
+              return {
+                  r: chr, 
+                  g: 0.0, 
+                  b: x
+              };
+          };
+          throw new Error("Failed pattern match at Color line 140, column 1 - line 141, column 1: " + [  ]);
+      })();
+      return {
+          r: rgb$prime1.r + m, 
+          g: rgb$prime1.g + m, 
+          b: rgb$prime1.b + m, 
+          a: v.value3
+      };
+  }; 
   var saturate = function (f) {
       return function (v) {
           var s$prime = Data_Ord.clamp(Prelude.ordNumber)(0.0)(1.0)(v.value1 + f);
@@ -855,7 +944,7 @@ var PS = { };
                       if (Prelude.otherwise) {
                           return chroma$prime / (1.0 - $$Math.abs(2.0 * lightness - 1.0));
                       };
-                      throw new Error("Failed pattern match at Color line 58, column 1 - line 59, column 1: " + [  ]);
+                      throw new Error("Failed pattern match at Color line 59, column 1 - line 60, column 1: " + [  ]);
                   })();
                   var b = Data_Int.toNumber(blue) / 255.0;
                   var hue$prime = function (v) {
@@ -871,10 +960,19 @@ var PS = { };
                       if (Prelude.otherwise) {
                           return (r - g) / chroma$prime + 4.0;
                       };
-                      throw new Error("Failed pattern match at Color line 58, column 1 - line 59, column 1: " + [ v.constructor.name ]);
+                      throw new Error("Failed pattern match at Color line 59, column 1 - line 60, column 1: " + [ v.constructor.name ]);
                   };
                   var hue = 60.0 * hue$prime(chroma);
                   return new HSLA(hue, saturation, lightness, alpha);
+              };
+          };
+      };
+  };
+  var rgba$prime = function (r) {
+      return function (g) {
+          return function (b) {
+              return function (a) {
+                  return rgba(Data_Int.round(r * 255.0))(Data_Int.round(g * 255.0))(Data_Int.round(b * 255.0))(a);
               };
           };
       };
@@ -915,14 +1013,14 @@ var PS = { };
       var lightness = Prelude.show(Prelude.showInt)(Data_Int.round(v.value2 * 100.0)) + "%";
       var hue = Prelude.show(Prelude.showInt)(Data_Int.round(v.value0));
       var alpha = Prelude.show(Prelude.showNumber)(v.value3);
-      var $49 = v.value3 === 1.0;
-      if ($49) {
+      var $55 = v.value3 === 1.0;
+      if ($55) {
           return "hsl(" + (hue + (", " + (saturation + (", " + (lightness + ")")))));
       };
-      if (!$49) {
+      if (!$55) {
           return "hsla(" + (hue + (", " + (saturation + (", " + (lightness + (", " + (alpha + ")")))))));
       };
-      throw new Error("Failed pattern match at Color line 147, column 1 - line 148, column 1: " + [ $49.constructor.name ]);
+      throw new Error("Failed pattern match at Color line 155, column 1 - line 156, column 1: " + [ $55.constructor.name ]);
   };
   var complementary = function (v) {
       var h$prime = $$Math["%"](v.value0 + 180.0)(360.0);
@@ -935,15 +1033,94 @@ var PS = { };
   exports["lighten"] = lighten;
   exports["complementary"] = complementary;
   exports["cssStringHSLA"] = cssStringHSLA;
+  exports["toRGBA'"] = toRGBA$prime;
   exports["grayscale"] = grayscale;
   exports["white"] = white;
   exports["black"] = black;
   exports["hsl"] = hsl;
   exports["hsla"] = hsla;
+  exports["rgba'"] = rgba$prime;
   exports["rgb"] = rgb;
   exports["rgba"] = rgba;;
  
 })(PS["Color"] = PS["Color"] || {});
+(function(exports) {
+  // Generated by psc version 0.8.0.0
+  "use strict";
+  var Prelude = PS["Prelude"];
+  var Color = PS["Color"];     
+  var Multiply = (function () {
+      function Multiply() {
+
+      };
+      Multiply.value = new Multiply();
+      return Multiply;
+  })();
+  var Screen = (function () {
+      function Screen() {
+
+      };
+      Screen.value = new Screen();
+      return Screen;
+  })();
+  var Overlay = (function () {
+      function Overlay() {
+
+      };
+      Overlay.value = new Overlay();
+      return Overlay;
+  })();
+  var Average = (function () {
+      function Average() {
+
+      };
+      Average.value = new Average();
+      return Average;
+  })();
+  var blendChannel = function (v) {
+      return function (b) {
+          return function (f) {
+              if (v instanceof Multiply) {
+                  return b * f;
+              };
+              if (v instanceof Screen) {
+                  return 1.0 - (1.0 - b) * (1.0 - f);
+              };
+              if (v instanceof Overlay) {
+                  if (b < 0.5) {
+                      return 2.0 * b * f;
+                  };
+                  if (Prelude.otherwise) {
+                      return 1.0 - 2.0 * (1.0 - b) * (1.0 - f);
+                  };
+              };
+              if (v instanceof Average) {
+                  return (b + f) / 2.0;
+              };
+              throw new Error("Failed pattern match at Color.Blending line 13, column 1 - line 14, column 1: " + [ v.constructor.name, b.constructor.name, f.constructor.name ]);
+          };
+      };
+  };
+  var blend = function (mode) {
+      return function (c1) {
+          return function (c2) {
+              var v2 = Color["toRGBA'"](c2);
+              var v1 = Color["toRGBA'"](c1);
+              var r = blendChannel(mode)(v1.r)(v2.r);
+              var g = blendChannel(mode)(v1.g)(v2.g);
+              var b = blendChannel(mode)(v1.b)(v2.b);
+              var a = (v1.a + v2.a) / 2.0;
+              return Color["rgba'"](r)(g)(b)(a);
+          };
+      };
+  };
+  exports["Multiply"] = Multiply;
+  exports["Screen"] = Screen;
+  exports["Overlay"] = Overlay;
+  exports["Average"] = Average;
+  exports["blend"] = blend;;
+ 
+})(PS["Color.Blending"] = PS["Color.Blending"] || {});
 (function(exports) {
   // Generated by psc version 0.8.0.0
   "use strict";
@@ -4261,6 +4438,34 @@ var PS = { };
     };
   };
 
+  exports.cSelect = function(xs) {
+    return function(toString) {
+      return createComponent("select",
+        function(initial) {
+          var select = document.createElement("select");
+
+          var x, op;
+          for (var i = 0; i < xs.length + 1; i++) {
+            x = (i === 0) ? initial : xs[i - 1];
+            op = document.createElement("option");
+            op.appendChild(document.createTextNode(toString(x)));
+            select.appendChild(op);
+          }
+
+          return select;
+        },
+        "change",
+        function(t, initial) {
+          var ix = t.selectedIndex;
+          if (ix === 0) {
+            return initial;
+          }
+          return xs[ix - 1];
+        }
+      );
+    };
+  };
+
   exports.toFieldset = function(label) {
     return function(elements) {
       var fieldset = document.createElement("fieldset");
@@ -4493,6 +4698,15 @@ var PS = { };
               };
           };
       };
+  };                               
+  var select = function (label) {
+      return function ($$default) {
+          return function (xs) {
+              return function (toString) {
+                  return createUI($foreign.cSelect(xs)(toString))(label)($$default);
+              };
+          };
+      };
   };
   var applyFlare = new Prelude.Apply(function () {
       return functorFlare;
@@ -4520,6 +4734,7 @@ var PS = { };
   });
   exports["setupFlare"] = setupFlare;
   exports["fieldset"] = fieldset;
+  exports["select"] = select;
   exports["intSlider"] = intSlider;
   exports["numberSlider"] = numberSlider;
   exports["functorFlare"] = functorFlare;
@@ -7704,7 +7919,6 @@ var PS = { };
               return function (moduleName) {
                   return function (functionName) {
                       return function (x) {
-                          var title = moduleName + ("." + functionName);
                           var docString = Prelude.bind(Data_Maybe.bindMaybe)(Data_StrMap.lookup(moduleName)(docMap))(function (v) {
                               return Prelude.bind(Data_Maybe.bindMaybe)(Data_StrMap.lookup(functionName)(v))(function (v1) {
                                   return Prelude.bind(Data_Maybe.bindMaybe)(v1)(function (v2) {
@@ -7713,7 +7927,7 @@ var PS = { };
                                   });
                               });
                           });
-                          return Test_FlareCheck["flareDoc'"](dictInteractive)(parentId)(title)(docString)(x);
+                          return Test_FlareCheck["flareDoc'"](dictInteractive)(parentId)(functionName)(docString)(x);
                       };
                   };
               };
@@ -7784,12 +7998,14 @@ var PS = { };
   // Generated by psc version 0.8.0.0
   "use strict";
   var Prelude = PS["Prelude"];
+  var Data_Foldable = PS["Data.Foldable"];
   var Text_Smolder_Markup = PS["Text.Smolder.Markup"];
   var Text_Smolder_HTML = PS["Text.Smolder.HTML"];
   var Text_Smolder_HTML_Attributes = PS["Text.Smolder.HTML.Attributes"];
   var Text_Smolder_Renderer_String = PS["Text.Smolder.Renderer.String"];
   var Test_FlareDoc = PS["Test.FlareDoc"];
   var Color = PS["Color"];
+  var Color_Blending = PS["Color.Blending"];
   var Color_Scheme_MaterialDesign = PS["Color.Scheme.MaterialDesign"];
   var Color_Scheme_X11 = PS["Color.Scheme.X11"];
   var Test_FlareCheck = PS["Test.FlareCheck"];
@@ -7798,25 +8014,67 @@ var PS = { };
   var TColor = function (x) {
       return x;
   };
+  var TBlendMode = function (x) {
+      return x;
+  };
   var Number1 = function (x) {
       return x;
   };
   var Int255 = function (x) {
       return x;
   };
+  var ColorList = (function () {
+      function ColorList(value0) {
+          this.value0 = value0;
+      };
+      ColorList.create = function (value0) {
+          return new ColorList(value0);
+      };
+      return ColorList;
+  })();
   var interactiveTColor = new Test_FlareCheck.Interactive(function (ui) {
       var pretty = function (v) {
           var repr = Color.cssStringHSLA(v);
-          var css = "background-color: " + (repr + (";" + "width: 100%; height: 30px"));
+          var css = "background-color: " + (repr + (";" + "width: 200px; height: 50px; border: 1px solid black"));
           return Prelude.bind(Text_Smolder_Markup.bindMarkupM)(Text_Smolder_Markup["!"](Text_Smolder_Markup.attributableMarkupMF)(Text_Smolder_HTML.div)(Text_Smolder_HTML_Attributes.style(css))(Text_Smolder_Markup.text("")))(function () {
               return Text_Smolder_HTML.pre(Text_Smolder_Markup.text(repr));
           });
       };
-      return Prelude["<$>"](Flare.functorUI)(function ($35) {
-          return Test_FlareCheck.SetHTML.create(pretty($35));
+      return Prelude["<$>"](Flare.functorUI)(function ($49) {
+          return Test_FlareCheck.SetHTML.create(pretty($49));
       })(ui);
   });
-  var flammableTColor = new Test_FlareCheck.Flammable(Prelude["<$>"](Flare.functorUI)(TColor)(Flare.fieldset("Color")(Prelude["<*>"](Flare.applyUI)(Prelude["<*>"](Flare.applyUI)(Prelude["<*>"](Flare.applyUI)(Prelude["<$>"](Flare.functorUI)(Color.hsla)(Flare.numberSlider("Hue")(0.0)(360.0)(1.0)(0.0)))(Flare.numberSlider("Saturation")(0.0)(1.0)(1.0e-2)(0.8)))(Flare.numberSlider("Lightness")(0.0)(1.0)(1.0e-2)(0.4)))(Flare.numberSlider("Alpha")(0.0)(1.0)(1.0e-2)(1.0)))));
+  var interactiveColorList = new Test_FlareCheck.Interactive(function (ui) {
+      var pretty = function (v) {
+          return Data_Foldable.fold(Data_Foldable.foldableArray)(Text_Smolder_Markup.monoidMarkup)(Prelude.bind(Prelude.bindArray)(v.value0)(function (v1) {
+              var repr = Color.cssStringHSLA(v1);
+              var css = "background-color: " + (repr + (";" + ("width: 200px; height: 50px; display: inline-block;" + "margin-right: 10px; border: 1px solid black")));
+              return Prelude["return"](Prelude.applicativeArray)(Text_Smolder_Markup["!"](Text_Smolder_Markup.attributableMarkupMF)(Text_Smolder_HTML.div)(Text_Smolder_HTML_Attributes.style(css))(Text_Smolder_Markup.text("")));
+          }));
+      };
+      return Prelude["<$>"](Flare.functorUI)(function ($50) {
+          return Test_FlareCheck.SetHTML.create(pretty($50));
+      })(ui);
+  });
+  var flammableTColor = new Test_FlareCheck.Flammable(Prelude["<$>"](Flare.functorUI)(TColor)(Flare.fieldset("Color")(Prelude["<*>"](Flare.applyUI)(Prelude["<*>"](Flare.applyUI)(Prelude["<*>"](Flare.applyUI)(Prelude["<$>"](Flare.functorUI)(Color.hsla)(Flare.numberSlider("Hue")(0.0)(360.0)(1.0)(231.0)))(Flare.numberSlider("Saturation")(0.0)(1.0)(1.0e-2)(0.48)))(Flare.numberSlider("Lightness")(0.0)(1.0)(1.0e-2)(0.48)))(Flare.numberSlider("Alpha")(0.0)(1.0)(1.0e-2)(1.0)))));
+  var flammableTBlendMode = new Test_FlareCheck.Flammable((function () {
+      var toString = function (v) {
+          if (v instanceof Color_Blending.Multiply) {
+              return "Multiply";
+          };
+          if (v instanceof Color_Blending.Screen) {
+              return "Screen";
+          };
+          if (v instanceof Color_Blending.Overlay) {
+              return "Overlay";
+          };
+          if (v instanceof Color_Blending.Average) {
+              return "Average";
+          };
+          throw new Error("Failed pattern match at Test.Interactive line 58, column 7 - line 59, column 7: " + [ v.constructor.name ]);
+      };
+      return Prelude["<$>"](Flare.functorUI)(TBlendMode)(Flare.select("BlendMode")(Color_Blending.Multiply.value)([ Color_Blending.Screen.value, Color_Blending.Overlay.value, Color_Blending.Average.value ])(toString));
+  })());
   var flammableNumber1 = new Test_FlareCheck.Flammable(Prelude["<$>"](Flare.functorUI)(Number1)(Flare.numberSlider("Number")(0.0)(1.0)(1.0e-2)(0.3)));
   var flammableInt255 = new Test_FlareCheck.Flammable(Prelude["<$>"](Flare.functorUI)(Int255)(Flare.intSlider("Int")(0)(255)(100)));
   var main = Test_FlareDoc.withPackage("purescript-colors.json")(function (dict) {
@@ -7842,27 +8100,37 @@ var PS = { };
           doc(Test_FlareCheck.interactiveFunction(flammableNumber1)(interactiveTColor))("grayscale")(function (v) {
               return Color.grayscale(v);
           })();
-          doc(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveTColor))("complementary")(function (v) {
-              return Color.complementary(v);
+          doc(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList))("complementary")(function (v) {
+              return new ColorList([ v, Color.complementary(v) ]);
           })();
-          doc(Test_FlareCheck.interactiveFunction(flammableNumber1)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveTColor)))("lighten")(function (v) {
+          doc(Test_FlareCheck.interactiveFunction(flammableNumber1)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList)))("lighten")(function (v) {
               return function (v1) {
-                  return Color.lighten(v)(v1);
+                  return new ColorList([ v1, Color.lighten(v)(v1) ]);
               };
           })();
-          doc(Test_FlareCheck.interactiveFunction(flammableNumber1)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveTColor)))("darken")(function (v) {
+          doc(Test_FlareCheck.interactiveFunction(flammableNumber1)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList)))("darken")(function (v) {
               return function (v1) {
-                  return Color.darken(v)(v1);
+                  return new ColorList([ v1, Color.darken(v)(v1) ]);
               };
           })();
-          doc(Test_FlareCheck.interactiveFunction(flammableNumber1)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveTColor)))("saturate")(function (v) {
+          doc(Test_FlareCheck.interactiveFunction(flammableNumber1)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList)))("saturate")(function (v) {
               return function (v1) {
-                  return Color.saturate(v)(v1);
+                  return new ColorList([ v1, Color.saturate(v)(v1) ]);
               };
           })();
-          doc(Test_FlareCheck.interactiveFunction(flammableNumber1)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveTColor)))("desaturate")(function (v) {
+          doc(Test_FlareCheck.interactiveFunction(flammableNumber1)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList)))("desaturate")(function (v) {
               return function (v1) {
-                  return Color.desaturate(v)(v1);
+                  return new ColorList([ v1, Color.desaturate(v)(v1) ]);
+              };
+          })();
+          var docblend = function (dictInteractive) {
+              return Test_FlareDoc["flareDoc'"](dictInteractive)("doc-blending")(dict)("Color.Blending");
+          };
+          docblend(Test_FlareCheck.interactiveFunction(flammableTBlendMode)(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList))))("blend")(function (v) {
+              return function (v1) {
+                  return function (v2) {
+                      return new ColorList([ v1, v2, Color_Blending.blend(v)(v1)(v2) ]);
+                  };
               };
           })();
           var docmd = function (dictInteractive) {
@@ -8039,10 +8307,14 @@ var PS = { };
   });
   exports["Int255"] = Int255;
   exports["Number1"] = Number1;
+  exports["TBlendMode"] = TBlendMode;
+  exports["ColorList"] = ColorList;
   exports["TColor"] = TColor;
   exports["main"] = main;
   exports["flammableTColor"] = flammableTColor;
   exports["interactiveTColor"] = interactiveTColor;
+  exports["interactiveColorList"] = interactiveColorList;
+  exports["flammableTBlendMode"] = flammableTBlendMode;
   exports["flammableNumber1"] = flammableNumber1;
   exports["flammableInt255"] = flammableInt255;;
  
