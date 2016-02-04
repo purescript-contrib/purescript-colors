@@ -15,6 +15,6 @@
   },
   "devDependencies": {
     "purescript-test-unit": "^4.1.0",
-    "purescript-flaredoc": "^0.1.0"
+    "purescript-flaredoc": "^0.1.1"
   }
 }

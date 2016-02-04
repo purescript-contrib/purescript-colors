@@ -2,6 +2,8 @@ module Test.Interactive where
 
 import Prelude
 
+import Data.Foldable (fold)
+
 import Text.Smolder.Markup as H
 import Text.Smolder.Markup ((!), text)
 import Text.Smolder.HTML as H
@@ -11,6 +13,7 @@ import Text.Smolder.Renderer.String as H
 import Test.FlareDoc
 
 import Color
+import Color.Blending
 import Color.Scheme.MaterialDesign as MD
 import Color.Scheme.X11
 
@@ -18,9 +21,9 @@ newtype TColor = TColor Color
 
 instance flammableTColor :: Flammable TColor where
   spark = TColor <$> fieldset "Color"
-                     (hsla <$> numberSlider "Hue" 0.0 360.0 1.0 0.0
-                      <*> numberSlider "Saturation" 0.0 1.0 0.01 0.8
-                      <*> numberSlider "Lightness" 0.0 1.0 0.01 0.4
+                     (hsla <$> numberSlider "Hue" 0.0 360.0 1.0 231.0
+                      <*> numberSlider "Saturation" 0.0 1.0 0.01 0.48
+                      <*> numberSlider "Lightness" 0.0 1.0 0.01 0.48
                       <*> numberSlider "Alpha" 0.0 1.0 0.01 1.0)
 
 instance interactiveTColor :: Interactive TColor where
@@ -31,8 +34,31 @@ instance interactiveTColor :: Interactive TColor where
         H.pre $ text $ repr
 
         where css = "background-color: " <> repr <> ";" <>
-                    "width: 100%; height: 30px"
+                    "width: 200px; height: 50px; border: 1px solid black"
               repr = cssStringHSLA c
+
+data ColorList = ColorList (Array Color)
+
+instance interactiveColorList :: Interactive ColorList where
+  interactive ui = (SetHTML <<< pretty) <$> ui
+    where
+      pretty (ColorList cs) = fold do
+        c <- cs
+        let repr = cssStringHSLA c
+            css = "background-color: " <> repr <> ";" <>
+                  "width: 200px; height: 50px; display: inline-block;" <>
+                  "margin-right: 10px; border: 1px solid black"
+        return $ H.div ! HA.style css $ H.text ""
+
+newtype TBlendMode = TBlendMode BlendMode
+
+instance flammableTBlendMode :: Flammable TBlendMode where
+  spark = TBlendMode <$> select "BlendMode" Multiply [Screen, Overlay, Average] toString
+    where
+      toString Multiply = "Multiply"
+      toString Screen = "Screen"
+      toString Overlay = "Overlay"
+      toString Average = "Average"
 
 newtype Number1 = Number1 Number
 newtype Int255 = Int255 Int
@@ -55,11 +81,16 @@ main = do
     doc "black" (TColor black)
     doc "white" (TColor white)
     doc "grayscale" (\(Number1 s) -> TColor (grayscale s))
-    doc "complementary" (\(TColor c) -> TColor (complementary c))
-    doc "lighten"    (\(Number1 a) (TColor c) -> TColor (lighten a c))
-    doc "darken"     (\(Number1 a) (TColor c) -> TColor (darken a c))
-    doc "saturate"   (\(Number1 a) (TColor c) -> TColor (saturate a c))
-    doc "desaturate" (\(Number1 a) (TColor c) -> TColor (desaturate a c))
+    doc "complementary" (\(TColor c) -> ColorList [c, complementary c])
+    doc "lighten"    (\(Number1 a) (TColor c) -> ColorList [c, lighten a c])
+    doc "darken"     (\(Number1 a) (TColor c) -> ColorList [c, darken a c])
+    doc "saturate"   (\(Number1 a) (TColor c) -> ColorList [c, saturate a c])
+    doc "desaturate" (\(Number1 a) (TColor c) -> ColorList [c, desaturate a c])
+
+    let docblend :: forall t. Interactive t => String -> t -> _
+        docblend = flareDoc' "doc-blending" dict "Color.Blending"
+
+    docblend "blend" (\(TBlendMode m) (TColor b) (TColor f) -> ColorList [b, f, blend m b f])
 
     let docmd :: forall t. Interactive t => String -> t -> _
         docmd = flareDoc' "doc-scheme-md" dict "Color.Scheme.MaterialDesign"
