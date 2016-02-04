@@ -10,6 +10,7 @@ import Test.Unit (test, runTest)
 import Test.Unit.Assert (assert, assertFalse, equal)
 
 import Color
+import Color.Blending
 
 main = runTest do
   test "Eq instance" do
@@ -57,3 +58,11 @@ main = runTest do
   test "cssStringHSLA" do
     equal "hsla(120, 33%, 55%, 0.3)" (cssStringHSLA (hsla 120.1 0.33 0.55 0.3))
     equal "hsl(120, 33%, 55%)" (cssStringHSLA (hsla 120.1 0.332 0.549 1.0))
+
+  test "blend" do
+    let b = rgb 255 102 0
+        f = rgb 51 51 51
+    equal (blend Multiply b f) (rgb 51 20 0)
+    equal (blend Screen b f) (rgb 255 133 51)
+    equal (blend Overlay b f) (rgb 255 41 0)
+    equal (blend Average b f) (rgb 153 77 26)
