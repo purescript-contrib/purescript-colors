@@ -20,6 +20,8 @@ module Color
   , darken
   , saturate
   , desaturate
+  , brightness
+  , isLight
   ) where
 
 import Prelude
@@ -105,7 +107,7 @@ rgb' r g b = rgba' r g b 1.0
 hsla :: Number -> Number -> Number -> Number -> Color
 hsla = HSLA
 
--- | Create a `Color` from hue, saturation, lightness and alpha values.
+-- | Create a `Color` from hue, saturation and lightness values.
 hsl :: Number -> Number -> Number -> Color
 hsl h s l = HSLA h s l 1.0
 
@@ -194,3 +196,13 @@ saturate f (HSLA h s l a) = HSLA h s' l a
 -- | negative, the color is saturated.
 desaturate :: Number -> Color -> Color
 desaturate f = saturate (- f)
+
+-- | The percieved brightness of the color (A number between 0.0 and 1.0).
+-- | See: https://www.w3.org/TR/AERT#color-contrast
+brightness :: Color -> Number
+brightness col = (299.0 * rgb.r + 587.0 * rgb.g + 114.0 * rgb.b) / 1000.0
+  where rgb = toRGBA' col
+
+-- | Determine whether a color is perceived as a light color.
+isLight :: Color -> Boolean
+isLight c = brightness c > 0.5

@@ -2,7 +2,7 @@ module Test.Interactive where
 
 import Prelude
 
-import Data.Foldable (fold)
+import Data.Foldable (foldMap)
 
 import Text.Smolder.Markup as H
 import Text.Smolder.Markup ((!), text)
@@ -19,36 +19,34 @@ import Color.Scheme.X11
 
 newtype TColor = TColor Color
 
+runTColor :: TColor -> Color
+runTColor (TColor c) = c
+
 instance flammableTColor :: Flammable TColor where
   spark = TColor <$> fieldset "Color"
-                     (hsla <$> numberSlider "Hue" 0.0 360.0 1.0 231.0
-                      <*> numberSlider "Saturation" 0.0 1.0 0.01 0.48
-                      <*> numberSlider "Lightness" 0.0 1.0 0.01 0.48
-                      <*> numberSlider "Alpha" 0.0 1.0 0.01 1.0)
+                     (hsl <$> numberSlider "Hue" 0.0 360.0 1.0 231.0
+                          <*> numberSlider "Saturation" 0.0 1.0 0.01 0.48
+                          <*> numberSlider "Lightness" 0.0 1.0 0.01 0.48)
+
+colorBox :: Color -> H.Markup
+colorBox c = H.div ! HA.style css $ H.code (H.text repr)
+  where
+    repr = cssStringHSLA c
+    css = "background-color: " <> repr <> ";" <>
+          "width: 200px; height: 50px; display: inline-block;" <>
+          "margin-right: 10px; border: 1px solid black; padding: 3px;" <>
+          "color: " <> cssStringHSLA textColor
+    textColor = if isLight c then black else white
 
 instance interactiveTColor :: Interactive TColor where
-  interactive ui = (SetHTML <<< pretty) <$> ui
-    where
-      pretty (TColor c) = do
-        H.div ! HA.style css $ H.text ""
-        H.pre $ text $ repr
-
-        where css = "background-color: " <> repr <> ";" <>
-                    "width: 200px; height: 50px; border: 1px solid black"
-              repr = cssStringHSLA c
+  interactive ui = (SetHTML <<< colorBox <<< runTColor) <$> ui
 
 data ColorList = ColorList (Array Color)
 
 instance interactiveColorList :: Interactive ColorList where
   interactive ui = (SetHTML <<< pretty) <$> ui
     where
-      pretty (ColorList cs) = fold do
-        c <- cs
-        let repr = cssStringHSLA c
-            css = "background-color: " <> repr <> ";" <>
-                  "width: 200px; height: 50px; display: inline-block;" <>
-                  "margin-right: 10px; border: 1px solid black"
-        return $ H.div ! HA.style css $ H.text ""
+      pretty (ColorList cs) = foldMap colorBox cs
 
 newtype TBlendMode = TBlendMode BlendMode
 
@@ -74,9 +72,9 @@ main = do
     let doc :: forall t. Interactive t => String -> t -> _
         doc = flareDoc' "doc-color" dict "Color"
 
-    doc "hsla" (id :: TColor -> _)
-    doc "rgba" $
-      (\(Int255 r) (Int255 g) (Int255 b) (Number1 a) -> TColor (rgba r g b a))
+    doc "hsl" (id :: TColor -> _)
+    doc "rgb" $
+      (\(Int255 r) (Int255 g) (Int255 b) -> TColor (rgb r g b))
     doc "cssStringHSLA" (\(TColor c) -> cssStringHSLA c)
     doc "black" (TColor black)
     doc "white" (TColor white)
@@ -86,6 +84,8 @@ main = do
     doc "darken"     (\(Number1 a) (TColor c) -> ColorList [c, darken a c])
     doc "saturate"   (\(Number1 a) (TColor c) -> ColorList [c, saturate a c])
     doc "desaturate" (\(Number1 a) (TColor c) -> ColorList [c, desaturate a c])
+    doc "brightness" (\(TColor c) -> brightness c)
+    doc "isLight"    (\(TColor c) -> isLight c)
 
     let docblend :: forall t. Interactive t => String -> t -> _
         docblend = flareDoc' "doc-blending" dict "Color.Blending"

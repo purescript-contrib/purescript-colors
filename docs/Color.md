@@ -65,7 +65,7 @@ Create a `Color` from hue, saturation, lightness and alpha values.
 hsl :: Number -> Number -> Number -> Color
 ```
 
-Create a `Color` from hue, saturation, lightness and alpha values.
+Create a `Color` from hue, saturation and lightness values.
 
 #### `black`
 
@@ -172,5 +172,22 @@ desaturate :: Number -> Color -> Color
 Decrease the saturation of a color by subtracting a certain amount (number
 between -1.0 and 1.0) from the saturation channel. If the number is
 negative, the color is saturated.
+
+#### `brightness`
+
+``` purescript
+brightness :: Color -> Number
+```
+
+The percieved brightness of the color (A number between 0.0 and 1.0).
+See: https://www.w3.org/TR/AERT#color-contrast
+
+#### `isLight`
+
+``` purescript
+isLight :: Color -> Boolean
+```
+
+Determine whether a color is perceived as a light color.
 
 
