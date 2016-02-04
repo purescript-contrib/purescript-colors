@@ -8,6 +8,8 @@ module Color
   , rgb'
   , hsla
   , hsl
+  , black
+  , white
   , grayscale
   , toHSLA
   , toRGBA
@@ -105,6 +107,14 @@ hsla = HSLA
 -- | Create a `Color` from hue, saturation, lightness and alpha values.
 hsl :: Number -> Number -> Number -> Color
 hsl h s l = HSLA h s l 1.0
+
+-- | The color black.
+black :: Color
+black = hsl 0.0 0.0 0.0
+
+-- | The color white.
+white :: Color
+white = hsl 0.0 0.0 1.0
 
 -- | Create a gray tone from a lightness values (0.0 is black, 1.0 is white).
 grayscale :: Number -> Color

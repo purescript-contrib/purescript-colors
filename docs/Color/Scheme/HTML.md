@@ -1,7 +1,8 @@
 ## Module Color.Scheme.HTML
 
-Sixteen named colors from the HTML 4.01 specification.
-https://www.w3.org/TR/REC-html40/types.html#h-6.5
+Sixteen named colors from the HTML 4.01 specification (except black and
+white).
+See: https://www.w3.org/TR/REC-html40/types.html#h-6.5
 
 
 ### Re-exported from Color.Scheme.X11:
@@ -10,12 +11,6 @@ https://www.w3.org/TR/REC-html40/types.html#h-6.5
 
 ``` purescript
 aqua :: Color
-```
-
-#### `black`
-
-``` purescript
-black :: Color
 ```
 
 #### `blue`
@@ -88,12 +83,6 @@ silver :: Color
 
 ``` purescript
 teal :: Color
-```
-
-#### `white`
-
-``` purescript
-white :: Color
 ```
 
 #### `yellow`

@@ -1,5 +1,7 @@
--- | X11 colors as specified by the CSS3 specification.
--- | https://www.w3.org/TR/css3-color/#svg-color
+-- | X11 colors as specified by the CSS3 specification (except black and
+-- | white).
+-- | See: https://www.w3.org/TR/css3-color/#svg-color
+
 module Color.Scheme.X11 where
 
 import Color (Color(), rgb)
@@ -24,9 +26,6 @@ beige = rgb 245 245 220
 
 bisque :: Color
 bisque = rgb 255 228 196
-
-black :: Color
-black = rgb 0 0 0
 
 blanchedalmond :: Color
 blanchedalmond = rgb 255 235 205
@@ -432,9 +431,6 @@ violet = rgb 238 130 238
 
 wheat :: Color
 wheat = rgb 245 222 179
-
-white :: Color
-white = rgb 255 255 255
 
 whitesmoke :: Color
 whitesmoke = rgb 245 245 245

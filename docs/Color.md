@@ -67,6 +67,22 @@ hsl :: Number -> Number -> Number -> Color
 
 Create a `Color` from hue, saturation, lightness and alpha values.
 
+#### `black`
+
+``` purescript
+black :: Color
+```
+
+The color black.
+
+#### `white`
+
+``` purescript
+white :: Color
+```
+
+The color white.
+
 #### `grayscale`
 
 ``` purescript
