@@ -79,6 +79,7 @@ main = do
     doc "hsl" (id :: TColor -> _)
     doc "rgb" $
       (\(Int255 r) (Int255 g) (Int255 b) -> TColor (rgb r g b))
+    doc "toHexString" (\(TColor c) -> toHexString c)
     doc "cssStringHSLA" (\(TColor c) -> cssStringHSLA c)
     doc "black" (TColor black)
     doc "white" (TColor white)

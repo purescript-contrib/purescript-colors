@@ -5,6 +5,7 @@ import Prelude
 import Data.Array ((..))
 import Data.Foldable (sequence_)
 import Data.Int (toNumber)
+import Data.Maybe (Maybe(..))
 
 import Test.Unit (test, runTest)
 import Test.Unit.Assert (assert, assertFalse, equal)
@@ -54,6 +55,33 @@ main = runTest do
     sequence_ do
       degree <- 0 .. 360
       return $ roundtrip (toNumber degree) 0.5 0.8
+
+  test "fromHexString" do
+    equal (Just black) (fromHexString "#000")
+    equal (Just black) (fromHexString "#000000")
+    equal (Just white) (fromHexString "#fff")
+    equal (Just white) (fromHexString "#fffFFF")
+    equal (Just white) (fromHexString "#ffffff")
+    equal (Just (rgb 87 166 206)) (fromHexString "#57A6CE")
+    equal Nothing (fromHexString "000")
+    equal Nothing (fromHexString "000000")
+    equal Nothing (fromHexString "#0")
+    equal Nothing (fromHexString "#00")
+    equal Nothing (fromHexString "#0000")
+    equal Nothing (fromHexString "#00000")
+    equal Nothing (fromHexString "#0000000")
+
+  test "toHexString" do
+    let hexRoundtrip h s l = equal (Just $ hsl h s l) (fromHexString (toHexString (hsl h s l)))
+    hexRoundtrip 0.0 0.0 1.0
+    hexRoundtrip 0.0 0.0 0.5
+    hexRoundtrip 0.0 0.0 0.0
+    hexRoundtrip 0.0 1.0 0.5
+    hexRoundtrip 60.0 1.0 0.375
+    hexRoundtrip 120.0 1.0 0.25
+    hexRoundtrip 240.0 1.0 0.75
+    hexRoundtrip 49.5 0.893 0.497
+    hexRoundtrip 162.4 0.779 0.447
 
   test "cssStringHSLA" do
     equal "hsla(120, 33%, 55%, 0.3)" (cssStringHSLA (hsla 120.1 0.33 0.55 0.3))

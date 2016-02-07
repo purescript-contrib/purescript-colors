@@ -14,6 +14,8 @@ module Color
   , toHSLA
   , toRGBA
   , toRGBA'
+  , fromHexString
+  , toHexString
   , cssStringHSLA
   , complementary
   , lighten
@@ -25,9 +27,14 @@ module Color
   ) where
 
 import Prelude
+import Control.Bind (join)
+import Data.Array ((!!))
 import Data.Int (toNumber, round)
-import Math (abs, (%))
+import Data.Maybe (Maybe(..))
 import Data.Ord (min, max, clamp)
+import Data.String (length)
+import Data.String.Regex (regex, parseFlags, match)
+import Math (abs, (%))
 
 -- | The representation of a color.
 data Color = HSLA Number Number Number Number
@@ -156,6 +163,42 @@ toRGBA' (HSLA h s l a) = { r: rgb'.r + m, g: rgb'.g + m, b: rgb'.b + m, a }
          | 3.0 <= h' && h' < 4.0 = { r: 0.0, g: x  , b: chr }
          | 4.0 <= h' && h' < 5.0 = { r: x  , g: 0.0, b: chr }
          | otherwise             = { r: chr, g: 0.0, b: x   }
+
+foreign import parseHex :: String -> Int
+
+-- | Parse a hexadecimal RGB code of the form `#rgb` or `#rrggbb`, where the
+-- | hexadecimal digits are of the format [0-9a-f] (case insensitive). Returns
+-- | `Nothing` if the string is in a wrong format.
+fromHexString :: String -> Maybe Color
+fromHexString str = do
+  groups <- match pattern str
+  r <- parseHex <$> join (groups !! 1)
+  g <- parseHex <$> join (groups !! 2)
+  b <- parseHex <$> join (groups !! 3)
+  if isShort
+    then
+      pure $ rgb (16 * r + r) (16 * g + g) (16 * b + b)
+    else
+      pure (rgb r g b)
+  where
+    isShort = length str == 4
+    digit = "[0-9a-f]"
+    single = "(" <> digit <> ")"
+    pair = "(" <> digit <> digit <> ")"
+    variant = if isShort
+                then single <> single <> single
+                else pair <> pair <> pair
+    pattern = regex ("^#(?:" <> variant <> ")$") (parseFlags "i")
+
+foreign import toHex :: Int -> String
+
+-- | Return a hexadecimal representation of the color in the form `#rrggbb`,
+-- | where `rr`, `gg` and `bb` refer to hexadecimal digits corresponding to
+-- | the RGB channel values between `00` and `ff`. The alpha channel is not
+-- | represented.
+toHexString :: Color -> String
+toHexString color = "#" <> toHex c.r <> toHex c.g <> toHex c.b
+  where c = toRGBA color
 
 -- | The CSS representation of the color in the form `hsl(..)` or `hsla(...)`.
 cssStringHSLA :: Color -> String

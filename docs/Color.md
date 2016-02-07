@@ -57,7 +57,9 @@ Create a `Color` from RGB values between 0.0 and 1.0.
 hsla :: Number -> Number -> Number -> Number -> Color
 ```
 
-Create a `Color` from hue, saturation, lightness and alpha values.
+Create a `Color` from hue, saturation, lightness and alpha values. The
+hue is given in degrees, as a `Number` between 0.0 and 360.0. Saturation,
+lightness and alpha are numbers between 0.0 and 1.0.
 
 #### `hsl`
 
@@ -65,7 +67,9 @@ Create a `Color` from hue, saturation, lightness and alpha values.
 hsl :: Number -> Number -> Number -> Color
 ```
 
-Create a `Color` from hue, saturation and lightness values.
+Create a `Color` from hue, saturation and lightness values. The hue is
+given in degrees, as a `Number` between 0.0 and 360.0. Both saturation and
+lightness are numbers between 0.0 and 1.0.
 
 #### `black`
 
@@ -116,6 +120,27 @@ toRGBA' :: Color -> { r :: Number, g :: Number, b :: Number, a :: Number }
 
 Convert a `Color` to its red, green, blue and alpha values. All values
 are numbers in the range from 0.0 to 1.0.
+
+#### `fromHexString`
+
+``` purescript
+fromHexString :: String -> Maybe Color
+```
+
+Parse a HEX code of the form `#ddd` or `#dddddd`, where `d` is a single
+hexadecimal digit ([0-9a-f], case insensitive). Returns `Nothing` if the
+string is in a wrong format.
+
+#### `toHexString`
+
+``` purescript
+toHexString :: Color -> String
+```
+
+Return a hexadecimal representation of the color in the form `#rrggbb`,
+where `rr`, `gg` and `bb` refer to hexadecimal digits corresponding to
+the RGB channel values between `00` and `ff`. The alpha channel is not
+represented.
 
 #### `cssStringHSLA`
 
