@@ -17,6 +17,7 @@ module Color
   , fromHexString
   , toHexString
   , cssStringHSLA
+  , rotateHue
   , complementary
   , lighten
   , darken
@@ -63,6 +64,10 @@ instance eqColor :: Eq Color where
       delta = 0.01
       approxEq v1 v2 = abs (v1 - v2) < delta
 
+-- | Like `%`, but always positive.
+modPos :: Number -> Number -> Number
+modPos x y = (x % y + y) % y
+
 -- | Create a `Color` from integer RGB values between 0 and 255 and a floating
 -- | point alpha value between 0.0 and 1.0.
 rgba :: Int -> Int -> Int -> Number -> Color
@@ -84,8 +89,6 @@ rgba red green blue alpha = HSLA hue saturation lightness alpha
     hue' c | maxChroma == red   = ((g - b) / chroma') `modPos` 6.0
            | maxChroma == green = ((b - r) / chroma') + 2.0
            | otherwise          = ((r - g) / chroma') + 4.0
-
-    modPos x y = (x % y + y) % y
 
     hue = 60.0 * hue' chroma
 
@@ -114,13 +117,17 @@ rgb' r g b = rgba' r g b 1.0
 -- | hue is given in degrees, as a `Number` between 0.0 and 360.0. Saturation,
 -- | lightness and alpha are numbers between 0.0 and 1.0.
 hsla :: Number -> Number -> Number -> Number -> Color
-hsla = HSLA
+hsla h s l a = HSLA h' s' l' a'
+  where h' = h `modPos` 360.0
+        s' = clamp 0.0 1.0 s
+        l' = clamp 0.0 1.0 l
+        a' = clamp 0.0 1.0 a
 
 -- | Create a `Color` from hue, saturation and lightness values. The hue is
 -- | given in degrees, as a `Number` between 0.0 and 360.0. Both saturation and
 -- | lightness are numbers between 0.0 and 1.0.
 hsl :: Number -> Number -> Number -> Color
-hsl h s l = HSLA h s l 1.0
+hsl h s l = hsla h s l 1.0
 
 -- | The color black.
 black :: Color
@@ -214,17 +221,19 @@ cssStringHSLA (HSLA h s l a) =
     alpha = show a
     toString n = show $ toNumber (round (100.0 * n)) / 100.0
 
+-- | Rotate the hue of a `Color` by a certain angle.
+rotateHue :: Number -> Color -> Color
+rotateHue angle (HSLA h s l a) =  hsla (h + angle) s l a
+
 -- | Get the complementary color (hue rotated by 180°).
 complementary :: Color -> Color
-complementary (HSLA h s l a) =  HSLA h' s l a
-  where h' = (h + 180.0) % 360.0
+complementary = rotateHue 180.0
 
 -- | Lighten a color by adding a certain amount (number between -1.0 and 1.0)
 -- | to the lightness channel. If the number is negative, the color is
 -- | darkened.
 lighten :: Number -> Color -> Color
-lighten f (HSLA h s l a) = HSLA h s l' a
-  where l' = clamp 0.0 1.0 (l + f)
+lighten f (HSLA h s l a) = hsla h s (l + f) a
 
 -- | Darken a color by subtracting a certain amount (number between -1.0 and
 -- | 1.0) from the lightness channel. If the number is negative, the color is
@@ -236,8 +245,7 @@ darken f = lighten (- f)
 -- | between -1.0 and 1.0) to the saturation channel. If the number is
 -- | negative, the color is desaturated.
 saturate :: Number -> Color -> Color
-saturate f (HSLA h s l a) = HSLA h s' l a
-  where s' = clamp 0.0 1.0 (s + f)
+saturate f (HSLA h s l a) = hsla h (s + f) l a
 
 -- | Decrease the saturation of a color by subtracting a certain amount (number
 -- | between -1.0 and 1.0) from the saturation channel. If the number is

@@ -150,6 +150,14 @@ cssStringHSLA :: Color -> String
 
 The CSS representation of the color in the form `hsl(..)` or `hsla(...)`.
 
+#### `rotateHue`
+
+``` purescript
+rotateHue :: Number -> Color -> Color
+```
+
+Rotate the hue of a `Color` by a certain angle.
+
 #### `complementary`
 
 ``` purescript
