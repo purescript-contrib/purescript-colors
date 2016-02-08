@@ -127,9 +127,9 @@ are numbers in the range from 0.0 to 1.0.
 fromHexString :: String -> Maybe Color
 ```
 
-Parse a HEX code of the form `#ddd` or `#dddddd`, where `d` is a single
-hexadecimal digit ([0-9a-f], case insensitive). Returns `Nothing` if the
-string is in a wrong format.
+Parse a hexadecimal RGB code of the form `#rgb` or `#rrggbb`, where the
+hexadecimal digits are of the format [0-9a-f] (case insensitive). Returns
+`Nothing` if the string is in a wrong format.
 
 #### `toHexString`
 

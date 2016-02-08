@@ -84,8 +84,8 @@ main = runTest do
     hexRoundtrip 162.4 0.779 0.447
 
   test "cssStringHSLA" do
-    equal "hsla(120, 33%, 55%, 0.3)" (cssStringHSLA (hsla 120.1 0.33 0.55 0.3))
-    equal "hsl(120, 33%, 55%)" (cssStringHSLA (hsla 120.1 0.332 0.549 1.0))
+    equal "hsla(120.1, 33.0%, 55.0%, 0.3)" (cssStringHSLA (hsla 120.1 0.33 0.55 0.3))
+    equal "hsl(120.1, 33.2%, 54.9%)" (cssStringHSLA (hsla 120.1 0.332 0.549 1.0))
 
   test "blend" do
     let b = rgb 255 102 0

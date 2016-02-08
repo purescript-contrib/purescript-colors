@@ -25,16 +25,16 @@ runTColor (TColor c) = c
 
 instance flammableTColor :: Flammable TColor where
   spark = TColor <$> fieldset "Color"
-                     (hsl <$> numberSlider "Hue" 0.0 360.0 1.0 231.0
-                          <*> numberSlider "Saturation" 0.0 1.0 0.01 0.48
-                          <*> numberSlider "Lightness" 0.0 1.0 0.01 0.48)
+                     (hsl <$> numberSlider "Hue" 0.0 360.0 0.1 231.0
+                          <*> numberSlider "Saturation" 0.0 1.0 0.001 0.48
+                          <*> numberSlider "Lightness" 0.0 1.0 0.001 0.48)
 
 colorBox :: Color -> H.Markup
 colorBox c = H.div ! HA.style css $ H.code (H.text repr)
   where
     repr = cssStringHSLA c
     css = "background-color: " <> repr <> ";" <>
-          "width: 30%; height: 50px; display: inline-block;" <>
+          "width: 260px; height: 50px; display: inline-block;" <>
           "margin-top: 10px; margin-right: 10px; border: 1px solid black;" <>
           "padding: 5px; color: " <> cssStringHSLA textColor
     textColor = if isLight c then black else white

@@ -208,10 +208,11 @@ cssStringHSLA (HSLA h s l a) =
     else "hsla(" <> hue <> ", " <> saturation <> ", " <> lightness <> ", "
                  <> alpha <> ")"
   where
-    hue = show (round h)
-    saturation = show (round (s * 100.0)) <> "%"
-    lightness = show (round (l * 100.0)) <> "%"
+    hue = toString h
+    saturation = toString (s * 100.0) <> "%"
+    lightness = toString (l * 100.0) <> "%"
     alpha = show a
+    toString n = show $ toNumber (round (100.0 * n)) / 100.0
 
 -- | Get the complementary color (hue rotated by 180°).
 complementary :: Color -> Color
