@@ -17,13 +17,14 @@ main = runTest do
   test "Eq instance" do
     equal (hsl 120.0 0.3 0.5) (hsl 120.0 0.3 0.5)
     equal (rgba 1 2 3 0.3) (rgba 1 2 3 0.3)
-    equal (rgba 1 2 3 0.3) (rgba 1 2 3 0.30001)
+    equal black (hsl 123.0 0.3 0.0)
+    equal white (hsl 123.0 0.3 1.0)
     assertFalse "should not equal 1" $ hsl 120.0 0.3 0.5 == hsl 122.0 0.3 0.5
     assertFalse "should not equal 2" $ hsl 120.0 0.3 0.5 == hsl 120.0 0.32 0.5
     assertFalse "should not equal 3" $ rgba 1 2 3 0.4 == rgba 2 2 3 0.4
     assertFalse "should not equal 4" $ rgba 1 2 3 0.4 == rgba 1 1 3 0.4
     assertFalse "should not equal 5" $ rgba 1 2 3 0.4 == rgba 1 2 4 0.4
-    assertFalse "should not equal 6" $ rgba 1 2 3 0.4 == rgba 1 2 3 0.45
+    assertFalse "should not equal 7" $ rgba 1 2 3 0.3 == rgba 1 2 3 0.30001
 
   test "rgba / rgb (RGB to HSL conversion)" do
     equal (hsl 0.0 0.0 1.0) (rgb' 1.0 1.0 1.0) -- white

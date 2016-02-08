@@ -46,23 +46,14 @@ instance showColor :: Show Color where
                                 <> show l <> " "
                                 <> show a
 
--- | Equality between two `Color`s is checked up to an accuracy of 1% in the
--- | saturation, lightness and alpha channels and up to an accuracy of 1.5
--- | degree in the hue channel.
+-- | Equality between two `Color`s is checked by comparing the (integer) RGB
+-- | values.
 instance eqColor :: Eq Color where
-  eq (HSLA h s l a) (HSLA h' s' l' a') =
-    approxEqDegree h h' &&
-    approxEq s s' &&
-    approxEq l l' &&
-    approxEq a a'
+  eq c1 c2 = rgb1.r == rgb2.r && rgb1.g == rgb2.g &&
+             rgb1.b == rgb2.b && rgb1.a == rgb2.a
     where
-      deltaDegree = 1.5
-      approxEqDegree d1 d2 = diff < deltaDegree ||
-                             360.0 - diff < deltaDegree
-        where diff = abs (d1 - d2)
-
-      delta = 0.01
-      approxEq v1 v2 = abs (v1 - v2) < delta
+      rgb1 = toRGBA c1
+      rgb2 = toRGBA c2
 
 -- | Like `%`, but always positive.
 modPos :: Number -> Number -> Number
