@@ -12,6 +12,8 @@ import Test.Unit.Assert (assert, assertFalse, equal)
 
 import Color
 import Color.Blending
+import Color.Gradient
+import Color.Scheme.X11
 
 main = runTest do
   test "Eq instance" do
@@ -88,6 +90,27 @@ main = runTest do
     equal "hsla(120.1, 33.0%, 55.0%, 0.3)" (cssStringHSLA (hsla 120.1 0.33 0.55 0.3))
     equal "hsl(120.1, 33.2%, 54.9%)" (cssStringHSLA (hsla 120.1 0.332 0.549 1.0))
 
+  test "complementary" do
+    equal magenta (complementary lime)
+    equal cyan (complementary red)
+    equal yellow (complementary blue)
+
+  test "lighten, darken" do
+    equal white (lighten 1.0 black)
+    equal black (darken 1.0 green)
+    equal green (darken 0.0 green)
+
+  test "saturate, desaturate" do
+    equal (grayscale 0.5) (desaturate 1.0 red)
+    equal (grayscale 0.5) (desaturate 1.0 magenta)
+
+  test "brightness" do
+    equal 1.0 (brightness white)
+    equal 0.5 (brightness (grayscale 0.5))
+    equal 0.0 (brightness black)
+
+  -- Color.Blending
+
   test "blend" do
     let b = rgb 255 102 0
         f = rgb 51 51 51
@@ -95,3 +118,16 @@ main = runTest do
     equal (blend Screen b f) (rgb 255 133 51)
     equal (blend Overlay b f) (rgb 255 41 0)
     equal (blend Average b f) (rgb 153 77 26)
+
+  -- Color.Gradient
+
+  test "hslGradient" do
+    equal [black, white] (hslGradient 0 black white)
+    equal [black, grayscale 0.5, white] (hslGradient 3 black white)
+    equal [white, grayscale 0.5, black] (hslGradient 3 white black)
+
+    let c1 = hsl 40.0 0.3 0.6
+        c2 = hsl 60.0 0.4 0.7
+        c3 = hsl 80.0 0.5 0.8
+    equal [c1, c2, c3] (hslGradient 3 c1 c3)
+    equal [c3, c2, c1] (hslGradient 3 c3 c1)
