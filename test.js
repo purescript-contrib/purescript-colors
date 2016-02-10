@@ -944,6 +944,28 @@ var PS = { };
               };
           };
       };
+  };
+  var minimumBy = function (dictFoldable) {
+      return function (cmp) {
+          var min$prime = function (v) {
+              return function (v1) {
+                  if (v instanceof Data_Maybe.Nothing) {
+                      return new Data_Maybe.Just(v1);
+                  };
+                  if (v instanceof Data_Maybe.Just) {
+                      return new Data_Maybe.Just((function () {
+                          var $91 = cmp(v.value0)(v1);
+                          if ($91 instanceof Prelude.LT) {
+                              return v.value0;
+                          };
+                          return v1;
+                      })());
+                  };
+                  throw new Error("Failed pattern match at Data.Foldable line 261, column 3 - line 262, column 3: " + [ v.constructor.name, v1.constructor.name ]);
+              };
+          };
+          return foldl(dictFoldable)(min$prime)(Data_Maybe.Nothing.value);
+      };
   }; 
   var foldableMaybe = new Foldable(function (dictMonoid) {
       return function (f) {
@@ -1045,6 +1067,7 @@ var PS = { };
       };
   };
   exports["Foldable"] = Foldable;
+  exports["minimumBy"] = minimumBy;
   exports["notElem"] = notElem;
   exports["elem"] = elem;
   exports["all"] = all;
@@ -1427,6 +1450,11 @@ var PS = { };
           };
       };
   };
+  var comparing = function (dictOrd) {
+      return function (f) {
+          return Data_Function.on(Prelude.compare(dictOrd))(f);
+      };
+  };
   var clamp = function (dictOrd) {
       return function (low) {
           return function (hi) {
@@ -1438,7 +1466,8 @@ var PS = { };
   };
   exports["max"] = max;
   exports["min"] = min;
-  exports["clamp"] = clamp;;
+  exports["clamp"] = clamp;
+  exports["comparing"] = comparing;;
  
 })(PS["Data.Ord"] = PS["Data.Ord"] || {});
 (function(exports) {
@@ -1737,7 +1766,7 @@ var PS = { };
                   b: x
               };
           };
-          throw new Error("Failed pattern match at Color line 153, column 1 - line 154, column 1: " + [  ]);
+          throw new Error("Failed pattern match at Color line 151, column 1 - line 152, column 1: " + [  ]);
       })();
       return {
           r: rgb$prime1.r + m, 
@@ -1770,10 +1799,9 @@ var PS = { };
           a: v.value3
       };
   }; 
-  var saturate = function (f) {
-      return function (v) {
-          var s$prime = Data_Ord.clamp(Prelude.ordNumber)(0.0)(1.0)(v.value1 + f);
-          return new HSLA(v.value0, s$prime, v.value2, v.value3);
+  var modPos = function (x) {
+      return function (y) {
+          return $$Math["%"]($$Math["%"](x)(y) + y)(y);
       };
   };
   var rgba = function (red) {
@@ -1781,11 +1809,6 @@ var PS = { };
           return function (blue) {
               return function (alpha) {
                   var r = Data_Int.toNumber(red) / 255.0;
-                  var modPos = function (x) {
-                      return function (y) {
-                          return $$Math["%"]($$Math["%"](x)(y) + y)(y);
-                      };
-                  };
                   var minChroma = Data_Ord.min(Prelude.ordInt)(Data_Ord.min(Prelude.ordInt)(red)(green))(blue);
                   var maxChroma = Data_Ord.max(Prelude.ordInt)(Data_Ord.max(Prelude.ordInt)(red)(green))(blue);
                   var lightness = Data_Int.toNumber(maxChroma + minChroma | 0) / (255.0 * 2.0);
@@ -1799,7 +1822,7 @@ var PS = { };
                       if (Prelude.otherwise) {
                           return chroma$prime / (1.0 - $$Math.abs(2.0 * lightness - 1.0));
                       };
-                      throw new Error("Failed pattern match at Color line 68, column 1 - line 69, column 1: " + [  ]);
+                      throw new Error("Failed pattern match at Color line 64, column 1 - line 65, column 1: " + [  ]);
                   })();
                   var b = Data_Int.toNumber(blue) / 255.0;
                   var hue$prime = function (v) {
@@ -1815,11 +1838,18 @@ var PS = { };
                       if (Prelude.otherwise) {
                           return (r - g) / chroma$prime + 4.0;
                       };
-                      throw new Error("Failed pattern match at Color line 68, column 1 - line 69, column 1: " + [ v.constructor.name ]);
+                      throw new Error("Failed pattern match at Color line 64, column 1 - line 65, column 1: " + [ v.constructor.name ]);
                   };
                   var hue = 60.0 * hue$prime(chroma);
                   return new HSLA(hue, saturation, lightness, alpha);
               };
+          };
+      };
+  };
+  var rgb = function (r) {
+      return function (g) {
+          return function (b) {
+              return rgba(r)(g)(b)(1.0);
           };
       };
   };
@@ -1832,24 +1862,38 @@ var PS = { };
           };
       };
   };
-  var rgb = function (r) {
-      return function (g) {
-          return function (b) {
-              return rgba(r)(g)(b)(1.0);
+  var hsla = function (h) {
+      return function (s) {
+          return function (l) {
+              return function (a) {
+                  var s$prime = Data_Ord.clamp(Prelude.ordNumber)(0.0)(1.0)(s);
+                  var l$prime = Data_Ord.clamp(Prelude.ordNumber)(0.0)(1.0)(l);
+                  var h$prime = modPos(h)(360.0);
+                  var a$prime = Data_Ord.clamp(Prelude.ordNumber)(0.0)(1.0)(a);
+                  return new HSLA(h$prime, s$prime, l$prime, a$prime);
+              };
           };
       };
   };
   var lighten = function (f) {
       return function (v) {
-          var l$prime = Data_Ord.clamp(Prelude.ordNumber)(0.0)(1.0)(v.value2 + f);
-          return new HSLA(v.value0, v.value1, l$prime, v.value3);
+          return hsla(v.value0)(v.value1)(v.value2 + f)(v.value3);
       };
   };
-  var hsla = HSLA.create;
+  var rotateHue = function (angle) {
+      return function (v) {
+          return hsla(v.value0 + angle)(v.value1)(v.value2)(v.value3);
+      };
+  };
+  var saturate = function (f) {
+      return function (v) {
+          return hsla(v.value0)(v.value1 + f)(v.value2)(v.value3);
+      };
+  };
   var hsl = function (h) {
       return function (s) {
           return function (l) {
-              return new HSLA(h, s, l, 1.0);
+              return hsla(h)(s)(l)(1.0);
           };
       };
   };
@@ -1871,19 +1915,16 @@ var PS = { };
       var lightness = toString(v.value2 * 100.0) + "%";
       var hue = toString(v.value0);
       var alpha = Prelude.show(Prelude.showNumber)(v.value3);
-      var $65 = v.value3 === 1.0;
-      if ($65) {
+      var $59 = v.value3 === 1.0;
+      if ($59) {
           return "hsl(" + (hue + (", " + (saturation + (", " + (lightness + ")")))));
       };
-      if (!$65) {
+      if (!$59) {
           return "hsla(" + (hue + (", " + (saturation + (", " + (lightness + (", " + (alpha + ")")))))));
       };
-      throw new Error("Failed pattern match at Color line 204, column 1 - line 205, column 1: " + [ $65.constructor.name ]);
+      throw new Error("Failed pattern match at Color line 202, column 1 - line 203, column 1: " + [ $59.constructor.name ]);
   };
-  var complementary = function (v) {
-      var h$prime = $$Math["%"](v.value0 + 180.0)(360.0);
-      return new HSLA(h$prime, v.value1, v.value2, v.value3);
-  };
+  var complementary = rotateHue(180.0);
   var brightness = function (col) {
       var rgb1 = toRGBA$prime(col);
       return (299.0 * rgb1.r + 587.0 * rgb1.g + 114.0 * rgb1.b) / 1000.0;
@@ -1899,6 +1940,7 @@ var PS = { };
   exports["darken"] = darken;
   exports["lighten"] = lighten;
   exports["complementary"] = complementary;
+  exports["rotateHue"] = rotateHue;
   exports["cssStringHSLA"] = cssStringHSLA;
   exports["toHexString"] = toHexString;
   exports["toRGBA'"] = toRGBA$prime;
@@ -1996,30 +2038,83 @@ var PS = { };
   "use strict";
   var Prelude = PS["Prelude"];
   var Data_Array = PS["Data.Array"];
+  var Data_Foldable = PS["Data.Foldable"];
   var Data_Int = PS["Data.Int"];
+  var Data_Maybe_Unsafe = PS["Data.Maybe.Unsafe"];
   var Data_Ord = PS["Data.Ord"];
+  var $$Math = PS["Math"];
   var Color = PS["Color"];     
-  var hslGradient = function (steps) {
-      return function (from) {
-          return function (to) {
-              var t = Color.toHSLA(to);
-              var steps$prime = Data_Ord.max(Prelude.ordInt)(2)(steps);
-              var interpolate = function (fraction) {
-                  return function (a) {
-                      return function (b) {
-                          return a + fraction * (b - a);
-                      };
-                  };
-              };
-              var f = Color.toHSLA(from);
-              return Prelude.bind(Prelude.bindArray)(Data_Array[".."](0)(steps$prime - 1))(function (v) {
-                  var frac = Data_Int.toNumber(v) / Data_Int.toNumber(steps$prime - 1);
-                  return Prelude["return"](Prelude.applicativeArray)(Color.hsla(interpolate(frac)(f.h)(t.h))(interpolate(frac)(f.s)(t.s))(interpolate(frac)(f.l)(t.l))(interpolate(frac)(f.a)(t.a)));
-              });
+  var HSL = (function () {
+      function HSL() {
+
+      };
+      HSL.value = new HSL();
+      return HSL;
+  })();
+  var RGB = (function () {
+      function RGB() {
+
+      };
+      RGB.value = new RGB();
+      return RGB;
+  })();
+  var interpolateValue = function (fraction) {
+      return function (a) {
+          return function (b) {
+              return a + fraction * (b - a);
           };
       };
   };
-  exports["hslGradient"] = hslGradient;;
+  var interpolate = function (v) {
+      return function (c1) {
+          return function (c2) {
+              return function (frac) {
+                  if (v instanceof HSL) {
+                      var t = Color.toHSLA(c2);
+                      var f = Color.toHSLA(c1);
+                      var paths = [ {
+                          from: f.h, 
+                          to: t.h
+                      }, {
+                          from: f.h, 
+                          to: t.h + 360.0
+                      }, {
+                          from: f.h + 360.0, 
+                          to: t.h
+                      } ];
+                      var dist = function (v1) {
+                          return $$Math.abs(v1.to - v1.from);
+                      };
+                      var hue = Data_Maybe_Unsafe.fromJust(Data_Foldable.minimumBy(Data_Foldable.foldableArray)(Data_Ord.comparing(Prelude.ordNumber)(dist))(paths));
+                      return Color.hsla(interpolateValue(frac)(hue.from)(hue.to))(interpolateValue(frac)(f.s)(t.s))(interpolateValue(frac)(f.l)(t.l))(interpolateValue(frac)(f.a)(t.a));
+                  };
+                  if (v instanceof RGB) {
+                      var t = Color["toRGBA'"](c2);
+                      var f = Color["toRGBA'"](c1);
+                      return Color["rgba'"](interpolateValue(frac)(f.r)(t.r))(interpolateValue(frac)(f.g)(t.g))(interpolateValue(frac)(f.b)(t.b))(interpolateValue(frac)(f.a)(t.a));
+                  };
+                  throw new Error("Failed pattern match at Color.Gradient line 37, column 1 - line 38, column 1: " + [ v.constructor.name, c1.constructor.name, c2.constructor.name, frac.constructor.name ]);
+              };
+          };
+      };
+  };
+  var linearGradient = function (mode) {
+      return function (steps) {
+          return function (c1) {
+              return function (c2) {
+                  var steps$prime = Data_Ord.max(Prelude.ordInt)(2)(steps);
+                  return Prelude.bind(Prelude.bindArray)(Data_Array[".."](0)(steps$prime - 1))(function (v) {
+                      var frac = Data_Int.toNumber(v) / Data_Int.toNumber(steps$prime - 1);
+                      return Prelude.pure(Prelude.applicativeArray)(interpolate(mode)(c1)(c2)(frac));
+                  });
+              };
+          };
+      };
+  };
+  exports["HSL"] = HSL;
+  exports["RGB"] = RGB;
+  exports["interpolate"] = interpolate;
+  exports["linearGradient"] = linearGradient;;
  
 })(PS["Color.Gradient"] = PS["Color.Gradient"] || {});
 (function(exports) {
@@ -8194,6 +8289,9 @@ var PS = { };
   var Test_FlareCheck = PS["Test.FlareCheck"];
   var Flare = PS["Flare"];
   var Control_Monad_Eff = PS["Control.Monad.Eff"];     
+  var TInterpolationMode = function (x) {
+      return x;
+  };
   var TColor = function (x) {
       return x;
   };
@@ -8221,6 +8319,18 @@ var PS = { };
   var runTColor = function (v) {
       return v;
   };
+  var flammableTInterpolationMode = new Test_FlareCheck.Flammable((function () {
+      var toString = function (v) {
+          if (v instanceof Color_Gradient.HSL) {
+              return "HSL";
+          };
+          if (v instanceof Color_Gradient.RGB) {
+              return "RGB";
+          };
+          throw new Error("Failed pattern match at Test.Interactive line 67, column 7 - line 68, column 7: " + [ v.constructor.name ]);
+      };
+      return Prelude["<$>"](Flare.functorUI)(TInterpolationMode)(Flare.select("InterpolationMode")(Color_Gradient.HSL.value)([ Color_Gradient.RGB.value ])(toString));
+  })());
   var flammableTColor = new Test_FlareCheck.Flammable(Prelude["<$>"](Flare.functorUI)(TColor)(Flare.fieldset("Color")(Prelude["<*>"](Flare.applyUI)(Prelude["<*>"](Flare.applyUI)(Prelude["<$>"](Flare.functorUI)(Color.hsl)(Flare.numberSlider("Hue")(0.0)(360.0)(0.1)(231.0)))(Flare.numberSlider("Saturation")(0.0)(1.0)(1.0e-3)(0.48)))(Flare.numberSlider("Lightness")(0.0)(1.0)(1.0e-3)(0.48)))));
   var flammableTBlendMode = new Test_FlareCheck.Flammable((function () {
       var toString = function (v) {
@@ -8245,14 +8355,14 @@ var PS = { };
   var flammableInt255 = new Test_FlareCheck.Flammable(Prelude["<$>"](Flare.functorUI)(Int255)(Flare.intSlider("Int")(0)(255)(100)));
   var colorBox = function (c) {
       var textColor = (function () {
-          var $34 = Color.isLight(c);
-          if ($34) {
+          var $37 = Color.isLight(c);
+          if ($37) {
               return Color.black;
           };
-          if (!$34) {
+          if (!$37) {
               return Color.white;
           };
-          throw new Error("Failed pattern match at Test.Interactive line 36, column 5 - line 40, column 5: " + [ $34.constructor.name ]);
+          throw new Error("Failed pattern match at Test.Interactive line 36, column 5 - line 40, column 5: " + [ $37.constructor.name ]);
       })();
       var repr = Color.cssStringHSLA(c);
       var css = "background-color: " + (repr + (";" + ("width: 260px; height: 50px; display: inline-block;" + ("margin-top: 10px; margin-right: 10px; border: 1px solid black;" + ("padding: 5px; color: " + Color.cssStringHSLA(textColor))))));
@@ -8262,13 +8372,13 @@ var PS = { };
       var pretty = function (v) {
           return Data_Foldable.foldMap(Data_Foldable.foldableArray)(Text_Smolder_Markup.monoidMarkup)(colorBox)(v.value0);
       };
-      return Prelude["<$>"](Flare.functorUI)(function ($60) {
-          return Test_FlareCheck.SetHTML.create(pretty($60));
+      return Prelude["<$>"](Flare.functorUI)(function ($64) {
+          return Test_FlareCheck.SetHTML.create(pretty($64));
       })(ui);
   });
   var interactiveTColor = new Test_FlareCheck.Interactive(function (ui) {
-      return Prelude["<$>"](Flare.functorUI)(function ($61) {
-          return Test_FlareCheck.SetHTML.create(colorBox(runTColor($61)));
+      return Prelude["<$>"](Flare.functorUI)(function ($65) {
+          return Test_FlareCheck.SetHTML.create(colorBox(runTColor($65)));
       })(ui);
   });
   var main = Test_FlareDoc.withPackage("purescript-colors.json")(function (dict) {
@@ -8340,10 +8450,12 @@ var PS = { };
           var docgrad = function (dictInteractive) {
               return Test_FlareDoc["flareDoc'"](dictInteractive)("doc-gradient")(dict)("Color.Gradient");
           };
-          docgrad(Test_FlareCheck.interactiveFunction(flammableSmallInt)(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList))))("hslGradient")(function (v) {
+          docgrad(Test_FlareCheck.interactiveFunction(flammableTInterpolationMode)(Test_FlareCheck.interactiveFunction(flammableSmallInt)(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList)))))("linearGradient")(function (v) {
               return function (v1) {
                   return function (v2) {
-                      return new ColorList(Color_Gradient.hslGradient(v)(v1)(v2));
+                      return function (v3) {
+                          return new ColorList(Color_Gradient.linearGradient(v)(v1)(v2)(v3));
+                      };
                   };
               };
           })();
@@ -8522,6 +8634,7 @@ var PS = { };
   exports["SmallInt"] = SmallInt;
   exports["Int255"] = Int255;
   exports["Number1"] = Number1;
+  exports["TInterpolationMode"] = TInterpolationMode;
   exports["TBlendMode"] = TBlendMode;
   exports["ColorList"] = ColorList;
   exports["TColor"] = TColor;
@@ -8532,6 +8645,7 @@ var PS = { };
   exports["interactiveTColor"] = interactiveTColor;
   exports["interactiveColorList"] = interactiveColorList;
   exports["flammableTBlendMode"] = flammableTBlendMode;
+  exports["flammableTInterpolationMode"] = flammableTInterpolationMode;
   exports["flammableNumber1"] = flammableNumber1;
   exports["flammableInt255"] = flammableInt255;
   exports["flammableSmallInt"] = flammableSmallInt;;
