@@ -15,6 +15,7 @@ import Test.FlareDoc
 import Color
 import Color.Blending
 import Color.Gradient
+import Color.Scheme.Harmonic
 import Color.Scheme.MaterialDesign as MD
 import Color.Scheme.X11
 
@@ -112,6 +113,15 @@ main = do
         docgrad = flareDoc' "doc-gradient" dict "Color.Gradient"
 
     docgrad "linearGradient" (\(TInterpolationMode m) (SmallInt n) (TColor f) (TColor t) -> ColorList (linearGradient m n f t))
+
+    let docharm :: forall t. Interactive t => String -> t -> _
+        docharm = flareDoc' "doc-scheme-harm" dict "Color.Scheme.Harmonic"
+
+    docharm "analogous" (\(TColor c) -> ColorList $ analogous c)
+    docharm "triad" (\(TColor c) -> ColorList $ triad c)
+    docharm "splitComplementary" (\(TColor c) -> ColorList $ splitComplementary c)
+    docharm "shades" (\(TColor c) -> ColorList $ shades c)
+    docharm "tetrad" (\(TColor c) -> ColorList $ tetrad c)
 
     let docmd :: forall t. Interactive t => String -> t -> _
         docmd = flareDoc' "doc-scheme-md" dict "Color.Scheme.MaterialDesign"
