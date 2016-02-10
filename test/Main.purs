@@ -131,3 +131,9 @@ main = runTest do
         c3 = hsl 80.0 0.5 0.8
     equal [c1, c2, c3] (hslGradient 3 c1 c3)
     equal [c3, c2, c1] (hslGradient 3 c3 c1)
+
+    let c4 = hsl  20.0 0.3 0.6
+        c5 = hsl   0.0 0.4 0.7
+        c6 = hsl 340.0 0.5 0.8
+    equal [c4, c5, c6] (hslGradient 3 c4 c6)
+    equal [c6, c5, c4] (hslGradient 3 c6 c4)
