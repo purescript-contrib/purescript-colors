@@ -121,10 +121,17 @@ main = runTest do
 
   -- Color.Gradient
 
-  test "hslGradient" do
+  test "linearGradient" do
+    let hslGradient = linearGradient HSL
+        rgbGradient = linearGradient RGB
+
     equal [black, white] (hslGradient 0 black white)
     equal [black, grayscale 0.5, white] (hslGradient 3 black white)
     equal [white, grayscale 0.5, black] (hslGradient 3 white black)
+
+    equal [black, white] (rgbGradient 0 black white)
+    equal [black, grayscale 0.5, white] (rgbGradient 3 black white)
+    equal [white, grayscale 0.5, black] (rgbGradient 3 white black)
 
     let c1 = hsl 40.0 0.3 0.6
         c2 = hsl 60.0 0.4 0.7
@@ -137,3 +144,9 @@ main = runTest do
         c6 = hsl 340.0 0.5 0.8
     equal [c4, c5, c6] (hslGradient 3 c4 c6)
     equal [c6, c5, c4] (hslGradient 3 c6 c4)
+
+    let c7 = rgba' 0.1 0.2 0.3 1.0
+        c8 = rgba' 0.2 0.3 0.4 1.0
+        c9 = rgba' 0.3 0.4 0.5 1.0
+    equal [c7, c8, c9] (rgbGradient 3 c7 c9)
+    equal [c9, c8, c7] (rgbGradient 3 c9 c7)

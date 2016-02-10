@@ -59,6 +59,14 @@ instance flammableTBlendMode :: Flammable TBlendMode where
       toString Overlay = "Overlay"
       toString Average = "Average"
 
+newtype TInterpolationMode = TInterpolationMode InterpolationMode
+
+instance flammableTInterpolationMode :: Flammable TInterpolationMode where
+  spark = TInterpolationMode <$> select "InterpolationMode" HSL [RGB] toString
+    where
+      toString HSL = "HSL"
+      toString RGB = "RGB"
+
 newtype Number1 = Number1 Number
 instance flammableNumber1 :: Flammable Number1 where
   spark = Number1 <$> numberSlider "Number" 0.0 1.0 0.01 0.3
@@ -103,7 +111,7 @@ main = do
     let docgrad :: forall t. Interactive t => String -> t -> _
         docgrad = flareDoc' "doc-gradient" dict "Color.Gradient"
 
-    docgrad "hslGradient" (\(SmallInt n) (TColor f) (TColor t) -> ColorList (hslGradient n f t))
+    docgrad "linearGradient" (\(TInterpolationMode m) (SmallInt n) (TColor f) (TColor t) -> ColorList (linearGradient m n f t))
 
     let docmd :: forall t. Interactive t => String -> t -> _
         docmd = flareDoc' "doc-scheme-md" dict "Color.Scheme.MaterialDesign"
