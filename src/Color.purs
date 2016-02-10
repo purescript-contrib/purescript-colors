@@ -31,7 +31,7 @@ import Prelude
 import Control.Bind (join)
 import Data.Array ((!!))
 import Data.Int (toNumber, round)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe)
 import Data.Ord (min, max, clamp)
 import Data.String (length)
 import Data.String.Regex (regex, parseFlags, match)
@@ -141,26 +141,26 @@ toHSLA (HSLA h s l a) = { h, s, l, a }
 toRGBA :: Color -> { r :: Int, g :: Int, b :: Int, a :: Number }
 toRGBA col@(HSLA _ _ _ a) = { r, g, b, a }
   where
-    rgb' = toRGBA' col
-    r = round (255.0 * rgb'.r)
-    g = round (255.0 * rgb'.g)
-    b = round (255.0 * rgb'.b)
+    c = toRGBA' col
+    r = round (255.0 * c.r)
+    g = round (255.0 * c.g)
+    b = round (255.0 * c.b)
 
 -- | Convert a `Color` to its red, green, blue and alpha values. All values
 -- | are numbers in the range from 0.0 to 1.0.
 toRGBA' :: Color -> { r :: Number, g :: Number, b :: Number, a :: Number }
-toRGBA' (HSLA h s l a) = { r: rgb'.r + m, g: rgb'.g + m, b: rgb'.b + m, a }
+toRGBA' (HSLA h s l a) = { r: col.r + m, g: col.g + m, b: col.b + m, a }
   where
     h'  = h / 60.0
     chr = (1.0 - abs (2.0 * l - 1.0)) * s
     m   = l - chr / 2.0
     x   = chr * (1.0 - abs (h' % 2.0 - 1.0))
-    rgb' |              h' < 1.0 = { r: chr, g: x  , b: 0.0 }
-         | 1.0 <= h' && h' < 2.0 = { r: x  , g: chr, b: 0.0 }
-         | 2.0 <= h' && h' < 3.0 = { r: 0.0, g: chr, b: x   }
-         | 3.0 <= h' && h' < 4.0 = { r: 0.0, g: x  , b: chr }
-         | 4.0 <= h' && h' < 5.0 = { r: x  , g: 0.0, b: chr }
-         | otherwise             = { r: chr, g: 0.0, b: x   }
+    col |              h' < 1.0 = { r: chr, g: x  , b: 0.0 }
+        | 1.0 <= h' && h' < 2.0 = { r: x  , g: chr, b: 0.0 }
+        | 2.0 <= h' && h' < 3.0 = { r: 0.0, g: chr, b: x   }
+        | 3.0 <= h' && h' < 4.0 = { r: 0.0, g: x  , b: chr }
+        | 4.0 <= h' && h' < 5.0 = { r: x  , g: 0.0, b: chr }
+        | otherwise             = { r: chr, g: 0.0, b: x   }
 
 foreign import parseHex :: String -> Int
 
@@ -247,8 +247,8 @@ desaturate f = saturate (- f)
 -- | The percieved brightness of the color (A number between 0.0 and 1.0).
 -- | See: https://www.w3.org/TR/AERT#color-contrast
 brightness :: Color -> Number
-brightness col = (299.0 * rgb.r + 587.0 * rgb.g + 114.0 * rgb.b) / 1000.0
-  where rgb = toRGBA' col
+brightness col = (299.0 * c.r + 587.0 * c.g + 114.0 * c.b) / 1000.0
+  where c = toRGBA' col
 
 -- | Determine whether a color is perceived as a light color.
 isLight :: Color -> Boolean
