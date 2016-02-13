@@ -17,6 +17,7 @@ module Color
   , fromHexString
   , toHexString
   , cssStringHSLA
+  , cssStringRGBA
   , rotateHue
   , complementary
   , lighten
@@ -213,6 +214,20 @@ cssStringHSLA (HSLA h s l a) =
     lightness = toString (l * 100.0) <> "%"
     alpha = show a
     toString n = show $ toNumber (round (100.0 * n)) / 100.0
+
+-- | The CSS representation of the color in the form `rgb(..)` or `rgba(...)`.
+cssStringRGBA :: Color -> String
+cssStringRGBA col =
+  if c.a == 1.0
+    then "rgb(" <> red <> ", " <> green <> ", " <> blue <> ")"
+    else "rgba(" <> red <> ", " <> green <> ", " <> blue <> ", "
+                 <> alpha <> ")"
+  where
+    c = toRGBA col
+    red = show c.r
+    green = show c.g
+    blue = show c.b
+    alpha = show c.a
 
 -- | Rotate the hue of a `Color` by a certain angle.
 rotateHue :: Number -> Color -> Color

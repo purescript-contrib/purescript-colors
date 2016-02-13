@@ -90,6 +90,9 @@ main = runTest do
     equal "hsla(120.1, 33.0%, 55.0%, 0.3)" (cssStringHSLA (hsla 120.1 0.33 0.55 0.3))
     equal "hsl(120.1, 33.2%, 54.9%)" (cssStringHSLA (hsla 120.1 0.332 0.549 1.0))
 
+  test "cssStringHSLA" do
+    equal "rgba(42, 103, 255, 0.3)" (cssStringRGBA (rgba 42 103 255 0.3))
+
   test "complementary" do
     equal magenta (complementary lime)
     equal cyan (complementary red)
@@ -168,3 +171,4 @@ main = runTest do
     equal "#36e985" (seagreen # lighten 0.2 # saturate 0.3 # toHexString)
     equal 0.5 (orangered # toHSLA # _.l)
     equal 69 (orangered # toRGBA # _.g)
+    equal "#33cc00" (toHexString $ rgb' 0.2 0.8 0.0)
