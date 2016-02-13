@@ -152,3 +152,8 @@ main = runTest do
         c9 = rgba' 0.2 0.0 0.8 1.0
     equal [c7, c8, c9] (rgbGradient 3 c7 c9)
     equal [c9, c8, c7] (rgbGradient 3 c9 c7)
+
+  test "Mixed" do
+    equal "#36e985" (seagreen # lighten 0.2 # saturate 0.3 # toHexString)
+    equal 0.5 (orangered # toHSLA # _.l)
+    equal 69 (orangered # toRGBA # _.g)
