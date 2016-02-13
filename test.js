@@ -1327,6 +1327,12 @@ var PS = { };
 
   exports.abs = Math.abs;
 
+  exports.pow = function (n) {
+    return function (p) {
+      return Math.pow(n, p);
+    };
+  };
+
   exports["%"] = function(n) {
     return function(m) {
       return n % m;
@@ -1342,6 +1348,7 @@ var PS = { };
   var $foreign = PS["Math"];
   exports["%"] = $foreign["%"];
   exports["round"] = $foreign.round;
+  exports["pow"] = $foreign.pow;
   exports["abs"] = $foreign.abs;;
  
 })(PS["Math"] = PS["Math"] || {});
@@ -1694,12 +1701,29 @@ var PS = { };
   var Prelude = PS["Prelude"];
   var Control_Bind = PS["Control.Bind"];
   var Data_Array = PS["Data.Array"];
+  var Data_Foldable = PS["Data.Foldable"];
   var Data_Int = PS["Data.Int"];
+  var Data_Int_Bits = PS["Data.Int.Bits"];
   var Data_Maybe = PS["Data.Maybe"];
+  var Data_Maybe_Unsafe = PS["Data.Maybe.Unsafe"];
   var Data_Ord = PS["Data.Ord"];
   var Data_String = PS["Data.String"];
   var Data_String_Regex = PS["Data.String.Regex"];
   var $$Math = PS["Math"];     
+  var RGB = (function () {
+      function RGB() {
+
+      };
+      RGB.value = new RGB();
+      return RGB;
+  })();
+  var HSL = (function () {
+      function HSL() {
+
+      };
+      HSL.value = new HSL();
+      return HSL;
+  })();
   var HSLA = (function () {
       function HSLA(value0, value1, value2, value3) {
           this.value0 = value0;
@@ -1723,7 +1747,7 @@ var PS = { };
       var chr = (1.0 - $$Math.abs(2.0 * v.value2 - 1.0)) * v.value1;
       var m = v.value2 - chr / 2.0;
       var x = chr * (1.0 - $$Math.abs($$Math["%"](h$prime)(2.0) - 1.0));
-      var rgb$prime1 = (function () {
+      var col = (function () {
           if (h$prime < 1.0) {
               return {
                   r: chr, 
@@ -1766,20 +1790,20 @@ var PS = { };
                   b: x
               };
           };
-          throw new Error("Failed pattern match at Color line 151, column 1 - line 152, column 1: " + [  ]);
+          throw new Error("Failed pattern match at Color line 196, column 1 - line 197, column 1: " + [  ]);
       })();
       return {
-          r: rgb$prime1.r + m, 
-          g: rgb$prime1.g + m, 
-          b: rgb$prime1.b + m, 
+          r: col.r + m, 
+          g: col.g + m, 
+          b: col.b + m, 
           a: v.value3
       };
   };
   var toRGBA = function (v) {
-      var rgb$prime1 = toRGBA$prime(v);
-      var r = Data_Int.round(255.0 * rgb$prime1.r);
-      var g = Data_Int.round(255.0 * rgb$prime1.g);
-      var b = Data_Int.round(255.0 * rgb$prime1.b);
+      var c = toRGBA$prime(v);
+      var g = Data_Int.round(255.0 * c.g);
+      var r = Data_Int.round(255.0 * c.r);
+      var b = Data_Int.round(255.0 * c.b);
       return {
           r: r, 
           g: g, 
@@ -1822,7 +1846,7 @@ var PS = { };
                       if (Prelude.otherwise) {
                           return chroma$prime / (1.0 - $$Math.abs(2.0 * lightness - 1.0));
                       };
-                      throw new Error("Failed pattern match at Color line 64, column 1 - line 65, column 1: " + [  ]);
+                      throw new Error("Failed pattern match at Color line 82, column 1 - line 83, column 1: " + [  ]);
                   })();
                   var b = Data_Int.toNumber(blue) / 255.0;
                   var hue$prime = function (v) {
@@ -1838,7 +1862,7 @@ var PS = { };
                       if (Prelude.otherwise) {
                           return (r - g) / chroma$prime + 4.0;
                       };
-                      throw new Error("Failed pattern match at Color line 64, column 1 - line 65, column 1: " + [ v.constructor.name ]);
+                      throw new Error("Failed pattern match at Color line 82, column 1 - line 83, column 1: " + [ v.constructor.name ]);
                   };
                   var hue = 60.0 * hue$prime(chroma);
                   return new HSLA(hue, saturation, lightness, alpha);
@@ -1862,6 +1886,30 @@ var PS = { };
           };
       };
   };
+  var luminance = function (col) {
+      var val = toRGBA$prime(col);
+      var f = function (x) {
+          var $36 = x <= 3.9279999999999995e-2;
+          if ($36) {
+              return x / 12.92;
+          };
+          if (!$36) {
+              return $$Math.pow((x + 5.500000000000001e-2) / 1.055)(2.4);
+          };
+          throw new Error("Failed pattern match at Color line 333, column 1 - line 334, column 1: " + [ $36.constructor.name ]);
+      };
+      var g = f(val.g);
+      var r = f(val.r);
+      var b = f(val.b);
+      return 0.21259999999999998 * r + 0.7152000000000001 * g + 7.22e-2 * b;
+  };
+  var interpolate = function (fraction) {
+      return function (a) {
+          return function (b) {
+              return a + fraction * (b - a);
+          };
+      };
+  };
   var hsla = function (h) {
       return function (s) {
           return function (l) {
@@ -1878,6 +1926,39 @@ var PS = { };
   var lighten = function (f) {
       return function (v) {
           return hsla(v.value0)(v.value1)(v.value2 + f)(v.value3);
+      };
+  };
+  var mix = function (v) {
+      return function (c1) {
+          return function (c2) {
+              return function (frac) {
+                  if (v instanceof HSL) {
+                      var t = toHSLA(c2);
+                      var f = toHSLA(c1);
+                      var paths = [ {
+                          from: f.h, 
+                          to: t.h
+                      }, {
+                          from: f.h, 
+                          to: t.h + 360.0
+                      }, {
+                          from: f.h + 360.0, 
+                          to: t.h
+                      } ];
+                      var dist = function (v1) {
+                          return $$Math.abs(v1.to - v1.from);
+                      };
+                      var hue = Data_Maybe_Unsafe.fromJust(Data_Foldable.minimumBy(Data_Foldable.foldableArray)(Data_Ord.comparing(Prelude.ordNumber)(dist))(paths));
+                      return hsla(interpolate(frac)(hue.from)(hue.to))(interpolate(frac)(f.s)(t.s))(interpolate(frac)(f.l)(t.l))(interpolate(frac)(f.a)(t.a));
+                  };
+                  if (v instanceof RGB) {
+                      var t = toRGBA$prime(c2);
+                      var f = toRGBA$prime(c1);
+                      return rgba$prime(interpolate(frac)(f.r)(t.r))(interpolate(frac)(f.g)(t.g))(interpolate(frac)(f.b)(t.b))(interpolate(frac)(f.a)(t.a));
+                  };
+                  throw new Error("Failed pattern match at Color line 299, column 1 - line 300, column 1: " + [ v.constructor.name, c1.constructor.name, c2.constructor.name, frac.constructor.name ]);
+              };
+          };
       };
   };
   var rotateHue = function (angle) {
@@ -1915,40 +1996,54 @@ var PS = { };
       var lightness = toString(v.value2 * 100.0) + "%";
       var hue = toString(v.value0);
       var alpha = Prelude.show(Prelude.showNumber)(v.value3);
-      var $59 = v.value3 === 1.0;
-      if ($59) {
+      var $70 = v.value3 === 1.0;
+      if ($70) {
           return "hsl(" + (hue + (", " + (saturation + (", " + (lightness + ")")))));
       };
-      if (!$59) {
+      if (!$70) {
           return "hsla(" + (hue + (", " + (saturation + (", " + (lightness + (", " + (alpha + ")")))))));
       };
-      throw new Error("Failed pattern match at Color line 202, column 1 - line 203, column 1: " + [ $59.constructor.name ]);
+      throw new Error("Failed pattern match at Color line 221, column 1 - line 222, column 1: " + [ $70.constructor.name ]);
   };
   var complementary = rotateHue(180.0);
   var brightness = function (col) {
-      var rgb1 = toRGBA$prime(col);
-      return (299.0 * rgb1.r + 587.0 * rgb1.g + 114.0 * rgb1.b) / 1000.0;
+      var c = toRGBA$prime(col);
+      return (299.0 * c.r + 587.0 * c.g + 114.0 * c.b) / 1000.0;
   };
   var isLight = function (c) {
       return brightness(c) > 0.5;
   };
   var black = hsl(0.0)(0.0)(0.0);
+  var textColor = function (c) {
+      if (isLight(c)) {
+          return black;
+      };
+      if (Prelude.otherwise) {
+          return white;
+      };
+      throw new Error("Failed pattern match at Color line 351, column 1 - line 352, column 1: " + [ c.constructor.name ]);
+  };
+  exports["RGB"] = RGB;
+  exports["HSL"] = HSL;
+  exports["textColor"] = textColor;
   exports["isLight"] = isLight;
+  exports["luminance"] = luminance;
   exports["brightness"] = brightness;
+  exports["mix"] = mix;
   exports["desaturate"] = desaturate;
   exports["saturate"] = saturate;
   exports["darken"] = darken;
   exports["lighten"] = lighten;
   exports["complementary"] = complementary;
   exports["rotateHue"] = rotateHue;
+  exports["grayscale"] = grayscale;
+  exports["white"] = white;
+  exports["black"] = black;
   exports["cssStringHSLA"] = cssStringHSLA;
   exports["toHexString"] = toHexString;
   exports["toRGBA'"] = toRGBA$prime;
   exports["toRGBA"] = toRGBA;
   exports["toHSLA"] = toHSLA;
-  exports["grayscale"] = grayscale;
-  exports["white"] = white;
-  exports["black"] = black;
   exports["hsl"] = hsl;
   exports["hsla"] = hsla;
   exports["rgba'"] = rgba$prime;
@@ -1982,13 +2077,6 @@ var PS = { };
       Overlay.value = new Overlay();
       return Overlay;
   })();
-  var Average = (function () {
-      function Average() {
-
-      };
-      Average.value = new Average();
-      return Average;
-  })();
   var blendChannel = function (v) {
       return function (b) {
           return function (f) {
@@ -2005,9 +2093,6 @@ var PS = { };
                   if (Prelude.otherwise) {
                       return 1.0 - 2.0 * (1.0 - b) * (1.0 - f);
                   };
-              };
-              if (v instanceof Average) {
-                  return (b + f) / 2.0;
               };
               throw new Error("Failed pattern match at Color.Blending line 13, column 1 - line 14, column 1: " + [ v.constructor.name, b.constructor.name, f.constructor.name ]);
           };
@@ -2029,7 +2114,6 @@ var PS = { };
   exports["Multiply"] = Multiply;
   exports["Screen"] = Screen;
   exports["Overlay"] = Overlay;
-  exports["Average"] = Average;
   exports["blend"] = blend;;
  
 })(PS["Color.Blending"] = PS["Color.Blending"] || {});
@@ -2038,66 +2122,9 @@ var PS = { };
   "use strict";
   var Prelude = PS["Prelude"];
   var Data_Array = PS["Data.Array"];
-  var Data_Foldable = PS["Data.Foldable"];
   var Data_Int = PS["Data.Int"];
-  var Data_Maybe_Unsafe = PS["Data.Maybe.Unsafe"];
   var Data_Ord = PS["Data.Ord"];
-  var $$Math = PS["Math"];
   var Color = PS["Color"];     
-  var HSL = (function () {
-      function HSL() {
-
-      };
-      HSL.value = new HSL();
-      return HSL;
-  })();
-  var RGB = (function () {
-      function RGB() {
-
-      };
-      RGB.value = new RGB();
-      return RGB;
-  })();
-  var interpolateValue = function (fraction) {
-      return function (a) {
-          return function (b) {
-              return a + fraction * (b - a);
-          };
-      };
-  };
-  var interpolate = function (v) {
-      return function (c1) {
-          return function (c2) {
-              return function (frac) {
-                  if (v instanceof HSL) {
-                      var t = Color.toHSLA(c2);
-                      var f = Color.toHSLA(c1);
-                      var paths = [ {
-                          from: f.h, 
-                          to: t.h
-                      }, {
-                          from: f.h, 
-                          to: t.h + 360.0
-                      }, {
-                          from: f.h + 360.0, 
-                          to: t.h
-                      } ];
-                      var dist = function (v1) {
-                          return $$Math.abs(v1.to - v1.from);
-                      };
-                      var hue = Data_Maybe_Unsafe.fromJust(Data_Foldable.minimumBy(Data_Foldable.foldableArray)(Data_Ord.comparing(Prelude.ordNumber)(dist))(paths));
-                      return Color.hsla(interpolateValue(frac)(hue.from)(hue.to))(interpolateValue(frac)(f.s)(t.s))(interpolateValue(frac)(f.l)(t.l))(interpolateValue(frac)(f.a)(t.a));
-                  };
-                  if (v instanceof RGB) {
-                      var t = Color["toRGBA'"](c2);
-                      var f = Color["toRGBA'"](c1);
-                      return Color["rgba'"](interpolateValue(frac)(f.r)(t.r))(interpolateValue(frac)(f.g)(t.g))(interpolateValue(frac)(f.b)(t.b))(interpolateValue(frac)(f.a)(t.a));
-                  };
-                  throw new Error("Failed pattern match at Color.Gradient line 37, column 1 - line 38, column 1: " + [ v.constructor.name, c1.constructor.name, c2.constructor.name, frac.constructor.name ]);
-              };
-          };
-      };
-  };
   var linearGradient = function (mode) {
       return function (steps) {
           return function (c1) {
@@ -2105,15 +2132,12 @@ var PS = { };
                   var steps$prime = Data_Ord.max(Prelude.ordInt)(2)(steps);
                   return Prelude.bind(Prelude.bindArray)(Data_Array[".."](0)(steps$prime - 1))(function (v) {
                       var frac = Data_Int.toNumber(v) / Data_Int.toNumber(steps$prime - 1);
-                      return Prelude.pure(Prelude.applicativeArray)(interpolate(mode)(c1)(c2)(frac));
+                      return Prelude.pure(Prelude.applicativeArray)(Color.mix(mode)(c1)(c2)(frac));
                   });
               };
           };
       };
   };
-  exports["HSL"] = HSL;
-  exports["RGB"] = RGB;
-  exports["interpolate"] = interpolate;
   exports["linearGradient"] = linearGradient;;
  
 })(PS["Color.Gradient"] = PS["Color.Gradient"] || {});
@@ -3756,13 +3780,6 @@ var PS = { };
       SigNumber.value = new SigNumber();
       return SigNumber;
   })();
-  var SigBoolean = (function () {
-      function SigBoolean() {
-
-      };
-      SigBoolean.value = new SigBoolean();
-      return SigBoolean;
-  })();
   var SigString = (function () {
       function SigString() {
 
@@ -3801,21 +3818,10 @@ var PS = { };
   }, function (x) {
       return new SNumber(x);
   });
-  var genericBool = new Generic(function (v) {
-      if (v instanceof SBoolean) {
-          return new Data_Maybe.Just(v.value0);
-      };
-      return Data_Maybe.Nothing.value;
-  }, function (v) {
-      return SigBoolean.value;
-  }, function (b) {
-      return new SBoolean(b);
-  });
   var fromSpine = function (dict) {
       return dict.fromSpine;
   };
   exports["SigNumber"] = SigNumber;
-  exports["SigBoolean"] = SigBoolean;
   exports["SigString"] = SigString;
   exports["SProd"] = SProd;
   exports["SRecord"] = SRecord;
@@ -3830,8 +3836,7 @@ var PS = { };
   exports["toSignature"] = toSignature;
   exports["toSpine"] = toSpine;
   exports["genericNumber"] = genericNumber;
-  exports["genericString"] = genericString;
-  exports["genericBool"] = genericBool;;
+  exports["genericString"] = genericString;;
  
 })(PS["Data.Generic"] = PS["Data.Generic"] || {});
 (function(exports) {
@@ -4893,6 +4898,7 @@ var PS = { };
   var Data_Traversable = PS["Data.Traversable"];
   var Control_Apply = PS["Control.Apply"];
   var Control_Monad_Eff = PS["Control.Monad.Eff"];
+  var Color = PS["Color"];
   var DOM = PS["DOM"];
   var DOM_Node_Types = PS["DOM.Node.Types"];
   var Signal = PS["Signal"];
@@ -4948,15 +4954,6 @@ var PS = { };
                   var signal = Signal_Channel.subscribe(v);
                   return new Flare([ v1 ], signal);
               });
-          };
-      };
-  };                   
-  var intRange = function (label) {
-      return function (min) {
-          return function (max) {
-              return function ($$default) {
-                  return createUI($foreign.cIntRange("number")(min)(max))(label)($$default);
-              };
           };
       };
   };                           
@@ -5017,7 +5014,6 @@ var PS = { };
   exports["fieldset"] = fieldset;
   exports["select"] = select;
   exports["intSlider"] = intSlider;
-  exports["intRange"] = intRange;
   exports["numberSlider"] = numberSlider;
   exports["functorFlare"] = functorFlare;
   exports["applyFlare"] = applyFlare;
@@ -6030,6 +6026,7 @@ var PS = { };
   var Data_Array_Unsafe = PS["Data.Array.Unsafe"];
   var Data_Char = PS["Data.Char"];
   var Data_Either = PS["Data.Either"];
+  var Data_Enum = PS["Data.Enum"];
   var Data_Foldable = PS["Data.Foldable"];
   var Data_Generic = PS["Data.Generic"];
   var Data_Int = PS["Data.Int"];
@@ -6047,7 +6044,13 @@ var PS = { };
   var Text_Smolder_HTML_Attributes = PS["Text.Smolder.HTML.Attributes"];
   var Text_Smolder_Renderer_String = PS["Text.Smolder.Renderer.String"];
   var Signal = PS["Signal"];
-  var Flare = PS["Flare"];     
+  var Flare = PS["Flare"];
+  var SmallNumber = function (x) {
+      return x;
+  };
+  var SmallInt = function (x) {
+      return x;
+  };
   var SetText = (function () {
       function SetText(value0) {
           this.value0 = value0;
@@ -6089,7 +6092,7 @@ var PS = { };
           if (v instanceof SetHTML) {
               return $foreign.setHTML(output)(Text_Smolder_Renderer_String.render(v.value0));
           };
-          throw new Error("Failed pattern match at Test.FlareCheck line 325, column 1 - line 328, column 1: " + [ output.constructor.name, v.constructor.name ]);
+          throw new Error("Failed pattern match at Test.FlareCheck line 370, column 1 - line 373, column 1: " + [ output.constructor.name, v.constructor.name ]);
       };
   };                                                                               
   var interactive = function (dict) {
@@ -6123,19 +6126,21 @@ var PS = { };
               };
           };
       };
-  };
+  };                                                                 
+  var flammableSmallNumber = new Flammable(Prelude["<$>"](Flare.functorUI)(SmallNumber)(Flare.numberSlider("Number")(0.0)(1.0)(1.0e-5)(0.5)));
+  var flammableSmallInt = new Flammable(Prelude["<$>"](Flare.functorUI)(SmallInt)(Flare.intSlider("Int")(0)(100)(1)));
   var constructor = function ($$long) {
       var parts = Data_String.split(".")($$long);
       var name = Data_Array_Unsafe.last(parts);
       var modString = (function () {
-          var $67 = Data_Array.length(parts) === 1;
-          if ($67) {
+          var $71 = Data_Array.length(parts) === 1;
+          if ($71) {
               return "Data constructor form unknown module";
           };
-          if (!$67) {
+          if (!$71) {
               return $$long;
           };
-          throw new Error("Failed pattern match at Test.FlareCheck line 181, column 1 - line 182, column 1: " + [ $67.constructor.name ]);
+          throw new Error("Failed pattern match at Test.FlareCheck line 222, column 1 - line 223, column 1: " + [ $71.constructor.name ]);
       })();
       return tooltip(modString)(highlight("constructor")(name));
   };
@@ -6154,14 +6159,14 @@ var PS = { };
                               });
                           });
                       };
-                      throw new Error("Failed pattern match at Test.FlareCheck line 203, column 9 - line 204, column 9: " + [ v1.constructor.name, x.constructor.name ]);
+                      throw new Error("Failed pattern match at Test.FlareCheck line 244, column 9 - line 245, column 9: " + [ v1.constructor.name, x.constructor.name ]);
                   };
               };
-              var $72 = Data_Array["null"](v.value1);
-              if ($72) {
+              var $76 = Data_Array["null"](v.value1);
+              if ($76) {
                   return constructor(v.value0);
               };
-              if (!$72) {
+              if (!$76) {
                   return showParen(d > 10)(Prelude.bind(Text_Smolder_Markup.bindMarkupM)(constructor(v.value0))(function () {
                       return Data_Foldable.for_(Text_Smolder_Markup.applicativeMarkupM)(Data_Foldable.foldableArray)(v.value1)(function (f) {
                           return Prelude.bind(Text_Smolder_Markup.bindMarkupM)(text(" "))(function () {
@@ -6170,7 +6175,7 @@ var PS = { };
                       });
                   }));
               };
-              throw new Error("Failed pattern match: " + [ $72.constructor.name ]);
+              throw new Error("Failed pattern match: " + [ $76.constructor.name ]);
           };
           if (v instanceof Data_Generic.SRecord) {
               var recEntry = function (x) {
@@ -6218,31 +6223,14 @@ var PS = { };
   };
   var pretty = prettyPrec(0);
   var prettyPrint = function (dictGeneric) {
-      return function ($90) {
-          return pretty(Data_Generic.toSpine(dictGeneric)($90));
+      return function ($96) {
+          return pretty(Data_Generic.toSpine(dictGeneric)($96));
       };
   };
-  var interactiveBoolean = new Interactive((function () {
-      var classN = function (v) {
-          if (v) {
-              return "flarecheck-okay";
-          };
-          if (!v) {
-              return "flarecheck-warn";
-          };
-          throw new Error("Failed pattern match at Test.FlareCheck line 261, column 7 - line 263, column 1: " + [ v.constructor.name ]);
-      };
-      var markup = function (v) {
-          return Text_Smolder_Markup["!"](Text_Smolder_Markup.attributableMarkupMF)(Text_Smolder_HTML.pre)(Text_Smolder_HTML_Attributes.className(classN(v)))(prettyPrint(Data_Generic.genericBool)(v));
-      };
-      return Prelude.map(Flare.functorUI)(function ($92) {
-          return SetHTML.create(markup($92));
-      });
-  })());
   var interactiveGeneric = function (dictGeneric) {
       return function (ui) {
-          return Prelude["<$>"](Flare.functorUI)(function ($95) {
-              return SetHTML.create(Text_Smolder_HTML.pre(prettyPrint(dictGeneric)($95)));
+          return Prelude["<$>"](Flare.functorUI)(function ($101) {
+              return SetHTML.create(Text_Smolder_HTML.pre(prettyPrint(dictGeneric)($101)));
           })(ui);
       };
   };                                                                                
@@ -6250,15 +6238,18 @@ var PS = { };
   var interactiveString = new Interactive(interactiveGeneric(Data_Generic.genericString));
   exports["SetText"] = SetText;
   exports["SetHTML"] = SetHTML;
+  exports["SmallNumber"] = SmallNumber;
+  exports["SmallInt"] = SmallInt;
   exports["Interactive"] = Interactive;
   exports["Flammable"] = Flammable;
   exports["flareDoc'"] = flareDoc$prime;
   exports["interactiveGeneric"] = interactiveGeneric;
   exports["interactive"] = interactive;
   exports["spark"] = spark;
+  exports["flammableSmallInt"] = flammableSmallInt;
+  exports["flammableSmallNumber"] = flammableSmallNumber;
   exports["interactiveNumber"] = interactiveNumber;
   exports["interactiveString"] = interactiveString;
-  exports["interactiveBoolean"] = interactiveBoolean;
   exports["interactiveFunction"] = interactiveFunction;;
  
 })(PS["Test.FlareCheck"] = PS["Test.FlareCheck"] || {});
@@ -8131,8 +8122,8 @@ var PS = { };
   // Generated by psc version 0.8.0.0
   "use strict";
   var Prelude = PS["Prelude"];
-  var Control_Monad_Eff = PS["Control.Monad.Eff"];
   var Control_Monad_Aff = PS["Control.Monad.Aff"];
+  var Control_Monad_Eff = PS["Control.Monad.Eff"];
   var Control_Monad_Eff_Class = PS["Control.Monad.Eff.Class"];
   var Control_Monad_Eff_Console = PS["Control.Monad.Eff.Console"];
   var Control_Monad_Eff_Exception = PS["Control.Monad.Eff.Exception"];
@@ -8151,6 +8142,7 @@ var PS = { };
   var Network_HTTP_Affjax = PS["Network.HTTP.Affjax"];
   var Signal_Channel = PS["Signal.Channel"];
   var DOM = PS["DOM"];
+  var Flare = PS["Flare"];
   var Test_FlareCheck = PS["Test.FlareCheck"];
   var Data_List = PS["Data.List"];
   var Data_Monoid = PS["Data.Monoid"];
@@ -8199,7 +8191,7 @@ var PS = { };
           if (v1 instanceof Text_Markdown_SlamDown.SoftBreak) {
               return " ";
           };
-          throw new Error("Failed pattern match at Test.FlareDoc line 105, column 5 - line 106, column 5: " + [ v1.constructor.name ]);
+          throw new Error("Failed pattern match at Test.FlareDoc line 104, column 5 - line 105, column 5: " + [ v1.constructor.name ]);
       };
       var block = function (v1) {
           if (v1 instanceof Text_Markdown_SlamDown.Paragraph) {
@@ -8210,7 +8202,7 @@ var PS = { };
                   return v2 + "\n";
               })(v1.value1) + "</pre>");
           };
-          throw new Error("Failed pattern match at Test.FlareDoc line 102, column 1 - line 103, column 1: " + [ v1.constructor.name ]);
+          throw new Error("Failed pattern match at Test.FlareDoc line 101, column 1 - line 102, column 1: " + [ v1.constructor.name ]);
       };
       return Data_Foldable.foldMap(Data_List.foldableList)(Data_Monoid.monoidString)(block)(v.value0);
   };
@@ -8290,7 +8282,7 @@ var PS = { };
               if ($47 instanceof Data_Either.Right) {
                   return Control_Monad_Eff_Class.liftEff(Control_Monad_Aff.monadEffAff)(run($47.value0));
               };
-              throw new Error("Failed pattern match at Test.FlareDoc line 116, column 1 - line 120, column 1: " + [ $47.constructor.name ]);
+              throw new Error("Failed pattern match at Test.FlareDoc line 115, column 1 - line 118, column 1: " + [ $47.constructor.name ]);
           }));
       };
   };
@@ -8306,7 +8298,7 @@ var PS = { };
   var Text_Smolder_Markup = PS["Text.Smolder.Markup"];
   var Text_Smolder_HTML = PS["Text.Smolder.HTML"];
   var Text_Smolder_HTML_Attributes = PS["Text.Smolder.HTML.Attributes"];
-  var Text_Smolder_Renderer_String = PS["Text.Smolder.Renderer.String"];
+  var Flare = PS["Flare"];
   var Test_FlareDoc = PS["Test.FlareDoc"];
   var Color = PS["Color"];
   var Color_Blending = PS["Color.Blending"];
@@ -8315,21 +8307,14 @@ var PS = { };
   var Color_Scheme_MaterialDesign = PS["Color.Scheme.MaterialDesign"];
   var Color_Scheme_X11 = PS["Color.Scheme.X11"];
   var Test_FlareCheck = PS["Test.FlareCheck"];
-  var Flare = PS["Flare"];
   var Control_Monad_Eff = PS["Control.Monad.Eff"];     
-  var TInterpolationMode = function (x) {
+  var TColorSpace = function (x) {
       return x;
   };
   var TColor = function (x) {
       return x;
   };
   var TBlendMode = function (x) {
-      return x;
-  };
-  var SmallInt = function (x) {
-      return x;
-  };
-  var Number1 = function (x) {
       return x;
   };
   var Int255 = function (x) {
@@ -8347,17 +8332,17 @@ var PS = { };
   var runTColor = function (v) {
       return v;
   };
-  var flammableTInterpolationMode = new Test_FlareCheck.Flammable((function () {
+  var flammableTColorSpace = new Test_FlareCheck.Flammable((function () {
       var toString = function (v) {
-          if (v instanceof Color_Gradient.HSL) {
+          if (v instanceof Color.HSL) {
               return "HSL";
           };
-          if (v instanceof Color_Gradient.RGB) {
+          if (v instanceof Color.RGB) {
               return "RGB";
           };
-          throw new Error("Failed pattern match at Test.Interactive line 68, column 7 - line 69, column 7: " + [ v.constructor.name ]);
+          throw new Error("Failed pattern match at Test.Interactive line 66, column 7 - line 67, column 7: " + [ v.constructor.name ]);
       };
-      return Prelude["<$>"](Flare.functorUI)(TInterpolationMode)(Flare.select("InterpolationMode")(Color_Gradient.HSL.value)([ Color_Gradient.RGB.value ])(toString));
+      return Prelude["<$>"](Flare.functorUI)(TColorSpace)(Flare.select("ColorSpace")(Color.HSL.value)([ Color.RGB.value ])(toString));
   })());
   var flammableTColor = new Test_FlareCheck.Flammable(Prelude["<$>"](Flare.functorUI)(TColor)(Flare.fieldset("Color")(Prelude["<*>"](Flare.applyUI)(Prelude["<*>"](Flare.applyUI)(Prelude["<$>"](Flare.functorUI)(Color.hsl)(Flare.numberSlider("Hue")(0.0)(360.0)(0.1)(231.0)))(Flare.numberSlider("Saturation")(0.0)(1.0)(1.0e-3)(0.48)))(Flare.numberSlider("Lightness")(0.0)(1.0)(1.0e-3)(0.48)))));
   var flammableTBlendMode = new Test_FlareCheck.Flammable((function () {
@@ -8371,42 +8356,27 @@ var PS = { };
           if (v instanceof Color_Blending.Overlay) {
               return "Overlay";
           };
-          if (v instanceof Color_Blending.Average) {
-              return "Average";
-          };
-          throw new Error("Failed pattern match at Test.Interactive line 58, column 7 - line 59, column 7: " + [ v.constructor.name ]);
+          throw new Error("Failed pattern match at Test.Interactive line 57, column 7 - line 58, column 7: " + [ v.constructor.name ]);
       };
-      return Prelude["<$>"](Flare.functorUI)(TBlendMode)(Flare.select("BlendMode")(Color_Blending.Multiply.value)([ Color_Blending.Screen.value, Color_Blending.Overlay.value, Color_Blending.Average.value ])(toString));
+      return Prelude["<$>"](Flare.functorUI)(TBlendMode)(Flare.select("BlendMode")(Color_Blending.Multiply.value)([ Color_Blending.Screen.value, Color_Blending.Overlay.value ])(toString));
   })());
-  var flammableSmallInt = new Test_FlareCheck.Flammable(Prelude["<$>"](Flare.functorUI)(SmallInt)(Flare.intRange("Int")(0)(1000)(18)));
-  var flammableNumber1 = new Test_FlareCheck.Flammable(Prelude["<$>"](Flare.functorUI)(Number1)(Flare.numberSlider("Number")(0.0)(1.0)(1.0e-2)(0.3)));
   var flammableInt255 = new Test_FlareCheck.Flammable(Prelude["<$>"](Flare.functorUI)(Int255)(Flare.intSlider("Int")(0)(255)(100)));
   var colorBox = function (c) {
-      var textColor = (function () {
-          var $43 = Color.isLight(c);
-          if ($43) {
-              return Color.black;
-          };
-          if (!$43) {
-              return Color.white;
-          };
-          throw new Error("Failed pattern match at Test.Interactive line 37, column 5 - line 41, column 5: " + [ $43.constructor.name ]);
-      })();
       var repr = Color.cssStringHSLA(c);
-      var css = "background-color: " + (repr + (";" + ("width: 260px; height: 50px; display: inline-block;" + ("margin-top: 10px; margin-right: 10px; border: 1px solid black;" + ("padding: 5px; color: " + Color.cssStringHSLA(textColor))))));
+      var css = "background-color: " + (repr + (";" + ("width: 260px; height: 50px; display: inline-block;" + ("margin-top: 10px; margin-right: 10px; border: 1px solid black;" + ("padding: 5px; color: " + Color.cssStringHSLA(Color.textColor(c)))))));
       return Text_Smolder_Markup["!"](Text_Smolder_Markup.attributableMarkupMF)(Text_Smolder_HTML.div)(Text_Smolder_HTML_Attributes.style(css))(Text_Smolder_HTML.code(Text_Smolder_Markup.text(repr)));
   };
   var interactiveColorList = new Test_FlareCheck.Interactive(function (ui) {
       var pretty = function (v) {
           return Data_Foldable.foldMap(Data_Foldable.foldableArray)(Text_Smolder_Markup.monoidMarkup)(colorBox)(v.value0);
       };
-      return Prelude["<$>"](Flare.functorUI)(function ($75) {
-          return Test_FlareCheck.SetHTML.create(pretty($75));
+      return Prelude["<$>"](Flare.functorUI)(function ($84) {
+          return Test_FlareCheck.SetHTML.create(pretty($84));
       })(ui);
   });
   var interactiveTColor = new Test_FlareCheck.Interactive(function (ui) {
-      return Prelude["<$>"](Flare.functorUI)(function ($76) {
-          return Test_FlareCheck.SetHTML.create(colorBox(runTColor($76)));
+      return Prelude["<$>"](Flare.functorUI)(function ($85) {
+          return Test_FlareCheck.SetHTML.create(colorBox(runTColor($85)));
       })(ui);
   });
   var main = Test_FlareDoc.withPackage("purescript-colors.json")(function (dict) {
@@ -8430,37 +8400,49 @@ var PS = { };
           })();
           doc(interactiveTColor)("black")(Color.black)();
           doc(interactiveTColor)("white")(Color.white)();
-          doc(Test_FlareCheck.interactiveFunction(flammableNumber1)(interactiveTColor))("grayscale")(function (v) {
+          doc(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallNumber)(interactiveTColor))("grayscale")(function (v) {
               return Color.grayscale(v);
           })();
           doc(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList))("complementary")(function (v) {
               return new ColorList([ v, Color.complementary(v) ]);
           })();
-          doc(Test_FlareCheck.interactiveFunction(flammableNumber1)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList)))("lighten")(function (v) {
+          doc(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallNumber)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList)))("lighten")(function (v) {
               return function (v1) {
                   return new ColorList([ v1, Color.lighten(v)(v1) ]);
               };
           })();
-          doc(Test_FlareCheck.interactiveFunction(flammableNumber1)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList)))("darken")(function (v) {
+          doc(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallNumber)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList)))("darken")(function (v) {
               return function (v1) {
                   return new ColorList([ v1, Color.darken(v)(v1) ]);
               };
           })();
-          doc(Test_FlareCheck.interactiveFunction(flammableNumber1)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList)))("saturate")(function (v) {
+          doc(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallNumber)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList)))("saturate")(function (v) {
               return function (v1) {
                   return new ColorList([ v1, Color.saturate(v)(v1) ]);
               };
           })();
-          doc(Test_FlareCheck.interactiveFunction(flammableNumber1)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList)))("desaturate")(function (v) {
+          doc(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallNumber)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList)))("desaturate")(function (v) {
               return function (v1) {
                   return new ColorList([ v1, Color.desaturate(v)(v1) ]);
+              };
+          })();
+          doc(Test_FlareCheck.interactiveFunction(flammableTColorSpace)(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallNumber)(interactiveColorList)))))("mix")(function (v) {
+              return function (v1) {
+                  return function (v2) {
+                      return function (v3) {
+                          return new ColorList([ v1, v2, Color.mix(v)(v1)(v2)(v3) ]);
+                      };
+                  };
               };
           })();
           doc(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveNumber))("brightness")(function (v) {
               return Color.brightness(v);
           })();
-          doc(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveBoolean))("isLight")(function (v) {
-              return Color.isLight(v);
+          doc(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveNumber))("luminance")(function (v) {
+              return Color.luminance(v);
+          })();
+          doc(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList))("textColor")(function (v) {
+              return new ColorList([ v, Color.textColor(v) ]);
           })();
           var docblend = function (dictInteractive) {
               return Test_FlareDoc["flareDoc'"](dictInteractive)("doc-blending")(dict)("Color.Blending");
@@ -8478,7 +8460,7 @@ var PS = { };
           var docgrad = function (dictInteractive) {
               return Test_FlareDoc["flareDoc'"](dictInteractive)("doc-gradient")(dict)("Color.Gradient");
           };
-          docgrad(Test_FlareCheck.interactiveFunction(flammableTInterpolationMode)(Test_FlareCheck.interactiveFunction(flammableSmallInt)(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList)))))("linearGradient")(function (v) {
+          docgrad(Test_FlareCheck.interactiveFunction(flammableTColorSpace)(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallInt)(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList)))))("linearGradient")(function (v) {
               return function (v1) {
                   return function (v2) {
                       return function (v3) {
@@ -8677,24 +8659,7 @@ var PS = { };
           return docx11(interactiveTColor)("yellowgreen")(Color_Scheme_X11.yellowgreen)();
       };
   });
-  exports["SmallInt"] = SmallInt;
-  exports["Int255"] = Int255;
-  exports["Number1"] = Number1;
-  exports["TInterpolationMode"] = TInterpolationMode;
-  exports["TBlendMode"] = TBlendMode;
-  exports["ColorList"] = ColorList;
-  exports["TColor"] = TColor;
-  exports["main"] = main;
-  exports["colorBox"] = colorBox;
-  exports["runTColor"] = runTColor;
-  exports["flammableTColor"] = flammableTColor;
-  exports["interactiveTColor"] = interactiveTColor;
-  exports["interactiveColorList"] = interactiveColorList;
-  exports["flammableTBlendMode"] = flammableTBlendMode;
-  exports["flammableTInterpolationMode"] = flammableTInterpolationMode;
-  exports["flammableNumber1"] = flammableNumber1;
-  exports["flammableInt255"] = flammableInt255;
-  exports["flammableSmallInt"] = flammableSmallInt;;
+  exports["main"] = main;;
  
 })(PS["Test.Interactive"] = PS["Test.Interactive"] || {});
 
