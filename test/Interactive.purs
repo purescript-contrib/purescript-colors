@@ -98,7 +98,8 @@ main = do
     doc "saturate"   (\(Number1 a) (TColor c) -> ColorList [c, saturate a c])
     doc "desaturate" (\(Number1 a) (TColor c) -> ColorList [c, desaturate a c])
     doc "brightness" (\(TColor c) -> brightness c)
-    doc "isLight"    (\(TColor c) -> isLight c)
+    doc "luminance"  (\(TColor c) -> luminance c)
+    doc "textColor"  (\(TColor c) -> TColor (textColor c))
 
     let docblend :: forall t. Interactive t => String -> t -> _
         docblend = flareDoc' "doc-blending" dict "Color.Blending"

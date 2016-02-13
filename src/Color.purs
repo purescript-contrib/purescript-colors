@@ -24,6 +24,7 @@ module Color
   , saturate
   , desaturate
   , brightness
+  , luminance
   , isLight
   , textColor
   ) where
@@ -36,7 +37,7 @@ import Data.Maybe (Maybe)
 import Data.Ord (min, max, clamp)
 import Data.String (length)
 import Data.String.Regex (regex, parseFlags, match)
-import Math (abs, (%))
+import Math (abs, (%), pow)
 
 -- | The representation of a color.
 data Color = HSLA Number Number Number Number
@@ -250,6 +251,21 @@ desaturate f = saturate (- f)
 brightness :: Color -> Number
 brightness col = (299.0 * c.r + 587.0 * c.g + 114.0 * c.b) / 1000.0
   where c = toRGBA' col
+
+-- | The relative brightness of a color (normalized to 0.0 for darkest black
+-- | and 1.0 for lightest white), according to the WCAG definition.
+-- | See: https://www.w3.org/TR/2008/REC-WCAG20-20081211/#relativeluminancedef
+luminance :: Color -> Number
+luminance col = 0.2126 * r + 0.7152 * g + 0.0722 * b
+  where r = f val.r
+        g = f val.g
+        b = f val.b
+
+        f x = if x <= 0.03928
+                then x / 12.92
+                else ((x + 0.055) / 1.055) `pow` 2.4
+
+        val = toRGBA' col
 
 -- | Determine whether a color is perceived as a light color.
 isLight :: Color -> Boolean

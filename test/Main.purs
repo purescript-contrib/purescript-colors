@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Array ((..))
 import Data.Foldable (sequence_)
-import Data.Int (toNumber)
+import Data.Int (toNumber, round)
 import Data.Maybe (Maybe(..))
 
 import Test.Unit (test, runTest)
@@ -108,6 +108,17 @@ main = runTest do
     equal 1.0 (brightness white)
     equal 0.5 (brightness (grayscale 0.5))
     equal 0.0 (brightness black)
+
+  test "luminance" do
+    equal 1.0 (luminance white)
+    equal 808 (round (1000.0 * luminance aquamarine))
+    equal 347 (round (1000.0 * luminance hotpink))
+    equal  66 (round (1000.0 * luminance darkslateblue))
+    equal 0.0 (luminance black)
+
+  test "textColor" do
+    equal black (textColor $ grayscale 0.6)
+    equal white (textColor $ grayscale 0.4)
 
   -- Color.Blending
 
