@@ -5,7 +5,7 @@ module Color.Blending
 
 import Prelude
 
-import Color
+import Color (Color, rgba', toRGBA')
 
 data BlendMode = Multiply | Screen | Overlay
 

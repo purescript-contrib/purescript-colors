@@ -1,15 +1,15 @@
-module Test.Interactive where
+module Test.Interactive (main) where
 
 import Prelude
 
 import Data.Foldable (foldMap)
 
 import Text.Smolder.Markup as H
-import Text.Smolder.Markup ((!), text)
+import Text.Smolder.Markup ((!))
 import Text.Smolder.HTML as H
 import Text.Smolder.HTML.Attributes as HA
-import Text.Smolder.Renderer.String as H
 
+import Flare
 import Test.FlareDoc
 
 import Color
@@ -58,25 +58,17 @@ instance flammableTBlendMode :: Flammable TBlendMode where
       toString Screen = "Screen"
       toString Overlay = "Overlay"
 
-newtype TInterpolationMode = TInterpolationMode InterpolationMode
+newtype TColorSpace = TColorSpace ColorSpace
 
-instance flammableTInterpolationMode :: Flammable TInterpolationMode where
-  spark = TInterpolationMode <$> select "InterpolationMode" HSL [RGB] toString
+instance flammableTColorSpace :: Flammable TColorSpace where
+  spark = TColorSpace <$> select "ColorSpace" HSL [RGB] toString
     where
       toString HSL = "HSL"
       toString RGB = "RGB"
 
-newtype Number1 = Number1 Number
-instance flammableNumber1 :: Flammable Number1 where
-  spark = Number1 <$> numberSlider "Number" 0.0 1.0 0.01 0.3
-
 newtype Int255 = Int255 Int
 instance flammableInt255 :: Flammable Int255 where
   spark = Int255 <$> intSlider "Int" 0 255 100
-
-newtype SmallInt = SmallInt Int
-instance flammableSmallInt :: Flammable SmallInt where
-  spark = SmallInt <$> intRange "Int" 0 1000 18
 
 main = do
   withPackage "purescript-colors.json" $ \dict -> do
@@ -90,15 +82,16 @@ main = do
     doc "cssStringHSLA" (\(TColor c) -> cssStringHSLA c)
     doc "black" (TColor black)
     doc "white" (TColor white)
-    doc "grayscale" (\(Number1 s) -> TColor (grayscale s))
+    doc "grayscale" (\(SmallNumber s) -> TColor (grayscale s))
     doc "complementary" (\(TColor c) -> ColorList [c, complementary c])
-    doc "lighten"    (\(Number1 a) (TColor c) -> ColorList [c, lighten a c])
-    doc "darken"     (\(Number1 a) (TColor c) -> ColorList [c, darken a c])
-    doc "saturate"   (\(Number1 a) (TColor c) -> ColorList [c, saturate a c])
-    doc "desaturate" (\(Number1 a) (TColor c) -> ColorList [c, desaturate a c])
+    doc "lighten"    (\(SmallNumber a) (TColor c) -> ColorList [c, lighten a c])
+    doc "darken"     (\(SmallNumber a) (TColor c) -> ColorList [c, darken a c])
+    doc "saturate"   (\(SmallNumber a) (TColor c) -> ColorList [c, saturate a c])
+    doc "desaturate" (\(SmallNumber a) (TColor c) -> ColorList [c, desaturate a c])
+    doc "mix"        (\(TColorSpace s) (TColor b) (TColor f) (SmallNumber frac) -> ColorList [b, f, mix s b f frac])
     doc "brightness" (\(TColor c) -> brightness c)
     doc "luminance"  (\(TColor c) -> luminance c)
-    doc "textColor"  (\(TColor c) -> TColor (textColor c))
+    doc "textColor"  (\(TColor c) -> ColorList [c, textColor c])
 
     let docblend :: forall t. Interactive t => String -> t -> _
         docblend = flareDoc' "doc-blending" dict "Color.Blending"
@@ -111,7 +104,7 @@ main = do
     let docgrad :: forall t. Interactive t => String -> t -> _
         docgrad = flareDoc' "doc-gradient" dict "Color.Gradient"
 
-    docgrad "linearGradient" (\(TInterpolationMode m) (SmallInt n) (TColor f) (TColor t) -> ColorList (linearGradient m n f t))
+    docgrad "linearGradient" (\(TColorSpace m) (SmallInt n) (TColor f) (TColor t) -> ColorList (linearGradient m n f t))
 
     let docharm :: forall t. Interactive t => String -> t -> _
         docharm = flareDoc' "doc-scheme-harm" dict "Color.Scheme.Harmonic"

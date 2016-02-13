@@ -2,29 +2,37 @@
 -- | the conversion between different color spaces and color manipulations.
 module Color
   ( Color()
+  , ColorSpace(..)
+  -- Construct
   , rgba
   , rgb
   , rgba'
   , rgb'
   , hsla
   , hsl
-  , black
-  , white
-  , grayscale
+  , fromHexString
+  , fromInt
+  -- Convert
   , toHSLA
   , toRGBA
   , toRGBA'
-  , fromHexString
   , toHexString
-  , fromInt
   , cssStringHSLA
   , cssStringRGBA
+  -- Basic
+  , black
+  , white
+  , grayscale
+  -- Modify
   , rotateHue
   , complementary
   , lighten
   , darken
   , saturate
   , desaturate
+  -- Combine
+  , mix
+  -- Analyze
   , brightness
   , luminance
   , isLight
@@ -34,16 +42,21 @@ module Color
 import Prelude
 import Control.Bind (join)
 import Data.Array ((!!))
+import Data.Foldable (minimumBy)
 import Data.Int (toNumber, round)
 import Data.Int.Bits ((.&.), shr)
 import Data.Maybe (Maybe)
-import Data.Ord (min, max, clamp)
+import Data.Maybe.Unsafe (fromJust)
+import Data.Ord (min, max, clamp, comparing)
 import Data.String (length)
 import Data.String.Regex (regex, parseFlags, match)
 import Math (abs, (%), pow)
 
 -- | The representation of a color.
 data Color = HSLA Number Number Number Number
+
+-- | Definition of a color space.
+data ColorSpace = RGB | HSL
 
 instance showColor :: Show Color where
   show (HSLA h s l a) = "hsla " <> show h <> " "
@@ -125,17 +138,44 @@ hsla h s l a = HSLA h' s' l' a'
 hsl :: Number -> Number -> Number -> Color
 hsl h s l = hsla h s l 1.0
 
--- | The color black.
-black :: Color
-black = hsl 0.0 0.0 0.0
+foreign import parseHex :: String -> Int
 
--- | The color white.
-white :: Color
-white = hsl 0.0 0.0 1.0
+-- | Parse a hexadecimal RGB code of the form `#rgb` or `#rrggbb`, where the
+-- | hexadecimal digits are of the format [0-9a-f] (case insensitive). Returns
+-- | `Nothing` if the string is in a wrong format.
+fromHexString :: String -> Maybe Color
+fromHexString str = do
+  groups <- match pattern str
+  r <- parseHex <$> join (groups !! 1)
+  g <- parseHex <$> join (groups !! 2)
+  b <- parseHex <$> join (groups !! 3)
+  if isShort
+    then
+      pure $ rgb (16 * r + r) (16 * g + g) (16 * b + b)
+    else
+      pure (rgb r g b)
+  where
+    isShort = length str == 4
+    digit = "[0-9a-f]"
+    single = "(" <> digit <> ")"
+    pair = "(" <> digit <> digit <> ")"
+    variant = if isShort
+                then single <> single <> single
+                else pair <> pair <> pair
+    pattern = regex ("^#(?:" <> variant <> ")$") (parseFlags "i")
 
--- | Create a gray tone from a lightness values (0.0 is black, 1.0 is white).
-grayscale :: Number -> Color
-grayscale l = hsl 0.0 0.0 l
+-- | Converts an integer value to a color. 0 is black and 0xffffff is white.
+-- | Values outside this range will be clamped.
+-- | Example:
+-- | ``` purs
+-- | fromInt 0xff0000 == red
+-- | ```
+fromInt :: Int -> Color
+fromInt m = rgb r g b
+  where b = n .&. 0xff
+        g = (n `shr` 8) .&. 0xff
+        r = (n `shr` 16) .&. 0xff
+        n = clamp 0 0xffffff m
 
 -- | Convert a `Color` to its hue, saturation, lightness and alpha values.
 toHSLA :: Color -> { h :: Number, s :: Number, l :: Number, a :: Number }
@@ -167,32 +207,6 @@ toRGBA' (HSLA h s l a) = { r: col.r + m, g: col.g + m, b: col.b + m, a }
         | 4.0 <= h' && h' < 5.0 = { r: x  , g: 0.0, b: chr }
         | otherwise             = { r: chr, g: 0.0, b: x   }
 
-foreign import parseHex :: String -> Int
-
--- | Parse a hexadecimal RGB code of the form `#rgb` or `#rrggbb`, where the
--- | hexadecimal digits are of the format [0-9a-f] (case insensitive). Returns
--- | `Nothing` if the string is in a wrong format.
-fromHexString :: String -> Maybe Color
-fromHexString str = do
-  groups <- match pattern str
-  r <- parseHex <$> join (groups !! 1)
-  g <- parseHex <$> join (groups !! 2)
-  b <- parseHex <$> join (groups !! 3)
-  if isShort
-    then
-      pure $ rgb (16 * r + r) (16 * g + g) (16 * b + b)
-    else
-      pure (rgb r g b)
-  where
-    isShort = length str == 4
-    digit = "[0-9a-f]"
-    single = "(" <> digit <> ")"
-    pair = "(" <> digit <> digit <> ")"
-    variant = if isShort
-                then single <> single <> single
-                else pair <> pair <> pair
-    pattern = regex ("^#(?:" <> variant <> ")$") (parseFlags "i")
-
 foreign import toHex :: Int -> String
 
 -- | Return a hexadecimal representation of the color in the form `#rrggbb`,
@@ -202,19 +216,6 @@ foreign import toHex :: Int -> String
 toHexString :: Color -> String
 toHexString color = "#" <> toHex c.r <> toHex c.g <> toHex c.b
   where c = toRGBA color
-
--- | Converts an integer value to a color. 0 is black and 0xffffff is white.
--- | Values outside this range will be clamped.
--- | Example:
--- | ``` purs
--- | fromInt 0xff0000 == red
--- | ```
-fromInt :: Int -> Color
-fromInt m = rgb r g b
-  where b = n .&. 0xff
-        g = (n `shr` 8) .&. 0xff
-        r = (n `shr` 16) .&. 0xff
-        n = clamp 0 0xffffff m
 
 -- | The CSS representation of the color in the form `hsl(..)` or `hsla(...)`.
 cssStringHSLA :: Color -> String
@@ -243,6 +244,18 @@ cssStringRGBA col =
     green = show c.g
     blue = show c.b
     alpha = show c.a
+
+-- | The color black.
+black :: Color
+black = hsl 0.0 0.0 0.0
+
+-- | The color white.
+white :: Color
+white = hsl 0.0 0.0 1.0
+
+-- | Create a gray tone from a lightness values (0.0 is black, 1.0 is white).
+grayscale :: Number -> Color
+grayscale l = hsl 0.0 0.0 l
 
 -- | Rotate the hue of a `Color` by a certain angle.
 rotateHue :: Number -> Color -> Color
@@ -275,6 +288,38 @@ saturate f (HSLA h s l a) = hsla h (s + f) l a
 -- | negative, the color is saturated.
 desaturate :: Number -> Color -> Color
 desaturate f = saturate (- f)
+
+-- | Linearly interpolate between two values
+interpolate :: Number -> Number -> Number -> Number
+interpolate fraction a b = a + fraction * (b - a)
+
+-- | Mix two colors by linearly interpolating between them in the specified
+-- | color space. For the HSL colorspace, the shortest path is chosen along the
+-- | circle of hue values.
+mix :: ColorSpace -> Color -> Color -> Number -> Color
+mix HSL c1 c2 frac = hsla
+    (interpolate frac hue.from hue.to)
+    (interpolate frac f.s t.s)
+    (interpolate frac f.l t.l)
+    (interpolate frac f.a t.a)
+  where
+    f = toHSLA c1
+    t = toHSLA c2
+    paths = [ { from: f.h, to: t.h }
+            , { from: f.h, to: t.h + 360.0 }
+            , { from: f.h + 360.0, to: t.h }
+            ]
+    dist { from, to } = abs (to - from)
+    hue = fromJust (minimumBy (comparing dist) paths)
+
+mix RGB c1 c2 frac = rgba'
+    (interpolate frac f.r t.r)
+    (interpolate frac f.g t.g)
+    (interpolate frac f.b t.b)
+    (interpolate frac f.a t.a)
+  where
+    f = toRGBA' c1
+    t = toRGBA' c2
 
 -- | The percieved brightness of the color (A number between 0.0 and 1.0).
 -- | See: https://www.w3.org/TR/AERT#color-contrast

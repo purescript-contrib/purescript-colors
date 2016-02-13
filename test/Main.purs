@@ -8,7 +8,7 @@ import Data.Int (toNumber, round)
 import Data.Maybe (Maybe(..))
 
 import Test.Unit (test, runTest)
-import Test.Unit.Assert (assert, assertFalse, equal)
+import Test.Unit.Assert (assertFalse, equal)
 
 import Color
 import Color.Blending
@@ -98,7 +98,7 @@ main = runTest do
     equal "hsla(120.1, 33.0%, 55.0%, 0.3)" (cssStringHSLA (hsla 120.1 0.33 0.55 0.3))
     equal "hsl(120.1, 33.2%, 54.9%)" (cssStringHSLA (hsla 120.1 0.332 0.549 1.0))
 
-  test "cssStringHSLA" do
+  test "cssStringRGB" do
     equal "rgba(42, 103, 255, 0.3)" (cssStringRGBA (rgba 42 103 255 0.3))
 
   test "complementary" do
@@ -114,6 +114,10 @@ main = runTest do
   test "saturate, desaturate" do
     equal (grayscale 0.5) (desaturate 1.0 red)
     equal (grayscale 0.5) (desaturate 1.0 magenta)
+
+  test "mix" do
+    equal (fromInt 0x800080) (mix RGB red blue 0.5)
+    equal (fromInt 0xff00ff) (mix HSL red blue 0.5)
 
   test "brightness" do
     equal 1.0 (brightness white)

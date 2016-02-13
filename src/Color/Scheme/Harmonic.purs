@@ -8,7 +8,7 @@ module Color.Scheme.Harmonic
 
 import Prelude
 
-import Color
+import Color (Color, rotateHue, darken, lighten)
 
 -- | The given color plus a lighter and darker variant.
 shades :: Color -> Array Color
