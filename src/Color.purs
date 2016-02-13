@@ -35,6 +35,7 @@ module Color
   -- Analyze
   , brightness
   , luminance
+  , contrast
   , isLight
   , textColor
   ) where
@@ -341,6 +342,17 @@ luminance col = 0.2126 * r + 0.7152 * g + 0.0722 * b
                 else ((x + 0.055) / 1.055) `pow` 2.4
 
         val = toRGBA' col
+
+-- | The contrast ratio of two colors. A minimum contrast ratio of 4.5 is
+-- | recommended to ensure that text is readable on a colored background.
+-- | See http://www.w3.org/TR/2008/REC-WCAG20-20081211/#contrast-ratiodef
+contrast :: Color -> Color -> Number
+contrast c1 c2 = if l1 > l2
+                   then (l1 + o) / (l2 + o)
+                   else (l2 + o) / (l1 + o)
+  where l1 = luminance c1
+        l2 = luminance c2
+        o = 0.05
 
 -- | Determine whether a color is perceived as a light color.
 isLight :: Color -> Boolean

@@ -21,4 +21,4 @@ A package for dealing with colors in PureScript.
 
 ## Credit
 
-Based on initial work by paf31 and inspired by (the PureScript version of) [Elm.Color](https://github.com/brainrape/purescript-elm-color) and [TinyColor](https://github.com/bgrins/TinyColor).
+Based on initial work by paf31 and inspired by (the PureScript version of) [Elm.Color](https://github.com/brainrape/purescript-elm-color), [TinyColor](https://github.com/bgrins/TinyColor) and [Chroma.js](https://github.com/gka/chroma.js).

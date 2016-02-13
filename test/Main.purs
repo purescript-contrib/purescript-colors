@@ -131,6 +131,12 @@ main = runTest do
     equal  66 (round (1000.0 * luminance darkslateblue))
     equal 0.0 (luminance black)
 
+  test "contrast" do
+    equal 21.0 (contrast black white)
+    equal 1.0 (contrast white white)
+    equal 1721 (round (1000.0 * contrast pink hotpink))
+    equal 6124 (round (1000.0 * contrast pink purple))
+
   test "textColor" do
     equal black (textColor $ grayscale 0.6)
     equal white (textColor $ grayscale 0.4)
