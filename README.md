@@ -3,7 +3,8 @@
 A package for dealing with colors in PureScript.
 
 - [Interactive documentation](http://sharkdp.github.io/purescript-colors/)
+- [Module documentation](https://pursuit.purescript.org/packages/purescript-colors)
 
 ## Credit
 
-Inspired by [Graphics.Drawing.Color](https://github.com/paf31/purescript-drawing/blob/master/src/Graphics/Drawing/Color.purs) and (the PureScript version of) [Elm.Color](https://github.com/brainrape/purescript-elm-color),
+Based on initial work by paf31 and inspired by (the PureScript version of) [Elm.Color](https://github.com/brainrape/purescript-elm-color) and [TinyColor](https://github.com/bgrins/TinyColor).
