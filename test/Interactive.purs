@@ -52,12 +52,11 @@ instance interactiveColorList :: Interactive ColorList where
 newtype TBlendMode = TBlendMode BlendMode
 
 instance flammableTBlendMode :: Flammable TBlendMode where
-  spark = TBlendMode <$> select "BlendMode" Multiply [Screen, Overlay, Average] toString
+  spark = TBlendMode <$> select "BlendMode" Multiply [Screen, Overlay] toString
     where
       toString Multiply = "Multiply"
       toString Screen = "Screen"
       toString Overlay = "Overlay"
-      toString Average = "Average"
 
 newtype TInterpolationMode = TInterpolationMode InterpolationMode
 

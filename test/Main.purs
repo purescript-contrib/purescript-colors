@@ -136,10 +136,9 @@ main = runTest do
   test "blend" do
     let b = rgb 255 102 0
         f = rgb 51 51 51
-    equal (blend Multiply b f) (rgb 51 20 0)
-    equal (blend Screen b f) (rgb 255 133 51)
-    equal (blend Overlay b f) (rgb 255 41 0)
-    equal (blend Average b f) (rgb 153 77 26)
+    equal (rgb 51 20 0) (blend Multiply b f)
+    equal (rgb 255 133 51) (blend Screen b f)
+    equal (rgb 255 41 0) (blend Overlay b f)
 
   -- Color.Gradient
 

@@ -7,7 +7,7 @@ import Prelude
 
 import Color
 
-data BlendMode = Multiply | Screen | Overlay | Average
+data BlendMode = Multiply | Screen | Overlay
 
 -- | Blend two RGB channel values (numbers between 0.0 and 1.0).
 blendChannel :: BlendMode -> Number -> Number -> Number
@@ -15,7 +15,6 @@ blendChannel Multiply b f = b * f
 blendChannel Screen   b f = 1.0 - (1.0 - b) * (1.0 - f)
 blendChannel Overlay  b f | b < 0.5   = 2.0 * b * f
                           | otherwise = 1.0 - 2.0 * (1.0 - b) * (1.0 - f)
-blendChannel Average  b f = (b + f) / 2.0
 
 -- | Blend two colors with a specified blend mode. The first color is the
 -- | background color, the second one is the foreground color. The resulting
