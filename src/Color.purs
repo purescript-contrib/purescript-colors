@@ -25,6 +25,7 @@ module Color
   , desaturate
   , brightness
   , isLight
+  , textColor
   ) where
 
 import Prelude
@@ -253,3 +254,9 @@ brightness col = (299.0 * c.r + 587.0 * c.g + 114.0 * c.b) / 1000.0
 -- | Determine whether a color is perceived as a light color.
 isLight :: Color -> Boolean
 isLight c = brightness c > 0.5
+
+-- | Return a readable foreground text color (either `black` or `white`) for a
+-- | given background color.
+textColor :: Color -> Color
+textColor c | isLight c = black
+            | otherwise = white

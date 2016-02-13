@@ -37,8 +37,7 @@ colorBox c = H.div ! HA.style css $ H.code (H.text repr)
     css = "background-color: " <> repr <> ";" <>
           "width: 260px; height: 50px; display: inline-block;" <>
           "margin-top: 10px; margin-right: 10px; border: 1px solid black;" <>
-          "padding: 5px; color: " <> cssStringHSLA textColor
-    textColor = if isLight c then black else white
+          "padding: 5px; color: " <> cssStringHSLA (textColor c)
 
 instance interactiveTColor :: Interactive TColor where
   interactive ui = (SetHTML <<< colorBox <<< runTColor) <$> ui
