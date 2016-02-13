@@ -86,6 +86,14 @@ main = runTest do
     hexRoundtrip 49.5 0.893 0.497
     hexRoundtrip 162.4 0.779 0.447
 
+  test "fromInt" do
+    equal black (fromInt 0)
+    equal white (fromInt 0xffffff)
+    equal black (fromInt (-1))
+    equal white (fromInt (0xffffff + 1))
+    equal (fromHexString "#123456") (Just (fromInt 0x123456))
+    equal (fromHexString "#abcdef") (Just (fromInt 0xabcdef))
+
   test "cssStringHSLA" do
     equal "hsla(120.1, 33.0%, 55.0%, 0.3)" (cssStringHSLA (hsla 120.1 0.33 0.55 0.3))
     equal "hsl(120.1, 33.2%, 54.9%)" (cssStringHSLA (hsla 120.1 0.332 0.549 1.0))

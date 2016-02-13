@@ -16,6 +16,7 @@ module Color
   , toRGBA'
   , fromHexString
   , toHexString
+  , fromInt
   , cssStringHSLA
   , cssStringRGBA
   , rotateHue
@@ -34,6 +35,7 @@ import Prelude
 import Control.Bind (join)
 import Data.Array ((!!))
 import Data.Int (toNumber, round)
+import Data.Int.Bits ((.&.), shr)
 import Data.Maybe (Maybe)
 import Data.Ord (min, max, clamp)
 import Data.String (length)
@@ -200,6 +202,19 @@ foreign import toHex :: Int -> String
 toHexString :: Color -> String
 toHexString color = "#" <> toHex c.r <> toHex c.g <> toHex c.b
   where c = toRGBA color
+
+-- | Converts an integer value to a color. 0 is black and 0xffffff is white.
+-- | Values outside this range will be clamped.
+-- | Example:
+-- | ``` purs
+-- | fromInt 0xff0000 == red
+-- | ```
+fromInt :: Int -> Color
+fromInt m = rgb r g b
+  where b = n .&. 0xff
+        g = (n `shr` 8) .&. 0xff
+        r = (n `shr` 16) .&. 0xff
+        n = clamp 0 0xffffff m
 
 -- | The CSS representation of the color in the form `hsl(..)` or `hsla(...)`.
 cssStringHSLA :: Color -> String
