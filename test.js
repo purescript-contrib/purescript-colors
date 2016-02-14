@@ -6,6 +6,11 @@ var PS = { };
 
   "use strict";
 
+  // Parse a string which guaranteed to be of the form `[0-9a-f]{1,2}`.
+  exports.parseHex = function(str) {
+    return parseInt(str, 16);
+  };
+
   // Convert a number between 0 and 255 to a hex value between 00 and ff.
   exports.toHex = function(n) {
     var str = n.toString(16);
@@ -517,6 +522,12 @@ var PS = { };
           };
       };
   };
+  var join = function (dictBind) {
+      return function (m) {
+          return Prelude[">>="](dictBind)(m)(Prelude.id(Prelude.categoryFn));
+      };
+  };
+  exports["join"] = join;
   exports["<=<"] = $less$eq$less;;
  
 })(PS["Control.Bind"] = PS["Control.Bind"] || {});
@@ -555,6 +566,20 @@ var PS = { };
       var l1 = l.slice();
       l1.push(e);
       return l1;
+    };
+  };
+
+  //------------------------------------------------------------------------------
+  // Indexed operations ----------------------------------------------------------
+  //------------------------------------------------------------------------------
+
+  exports.indexImpl = function (just) {
+    return function (nothing) {
+      return function (xs) {
+        return function (i) {
+          return i < 0 || i >= xs.length ? nothing :  just(xs[i]);
+        };
+      };
     };
   };
 
@@ -1293,6 +1318,10 @@ var PS = { };
   var $$null = function (xs) {
       return $foreign.length(xs) === 0;
   };
+  var index = $foreign.indexImpl(Data_Maybe.Just.create)(Data_Maybe.Nothing.value);
+  var $bang$bang = index;
+  exports["index"] = index;
+  exports["!!"] = $bang$bang;
   exports["null"] = $$null;
   exports[".."] = $dot$dot;
   exports["snoc"] = $foreign.snoc;
@@ -1599,10 +1628,16 @@ var PS = { };
       return function (s) {
           return $foreign.drop($foreign.count(p)(s))(s);
       };
+  };
+  var contains = function (x) {
+      return function (s) {
+          return Data_Maybe.isJust(indexOf(x)(s));
+      };
   };                                                                                      
   var charAt = $foreign._charAt(Data_Maybe.Just.create)(Data_Maybe.Nothing.value);
   exports["dropWhile"] = dropWhile;
   exports["indexOf"] = indexOf;
+  exports["contains"] = contains;
   exports["fromChar"] = fromChar;
   exports["charAt"] = charAt;
   exports["joinWith"] = $foreign.joinWith;
@@ -1630,6 +1665,25 @@ var PS = { };
   exports.test = function (r) {
     return function (s) {
       return r.test(s);
+    };
+  };
+
+  exports._match = function (just) {
+    return function (nothing) {
+      return function (r) {
+        return function (s) {
+          var m = s.match(r);
+          if (m == null) {
+            return nothing;
+          } else {
+            var list = [];
+            for (var i = 0; i < m.length; i++) {
+              list.push(m[i] == null ? nothing : just(m[i]));
+            }
+            return just(list);
+          }
+        };
+      };
     };
   };
  
@@ -1689,6 +1743,18 @@ var PS = { };
           return $foreign["regex'"](s)(renderFlags(f));
       };
   };
+  var parseFlags = function (s) {
+      return {
+          global: Data_String.contains("g")(s), 
+          ignoreCase: Data_String.contains("i")(s), 
+          multiline: Data_String.contains("m")(s), 
+          sticky: Data_String.contains("y")(s), 
+          unicode: Data_String.contains("u")(s)
+      };
+  };
+  var match = $foreign._match(Data_Maybe.Just.create)(Data_Maybe.Nothing.value);
+  exports["match"] = match;
+  exports["parseFlags"] = parseFlags;
   exports["renderFlags"] = renderFlags;
   exports["regex"] = regex;
   exports["test"] = $foreign.test;;
@@ -1790,7 +1856,7 @@ var PS = { };
                   b: x
               };
           };
-          throw new Error("Failed pattern match at Color line 196, column 1 - line 197, column 1: " + [  ]);
+          throw new Error("Failed pattern match at Color line 217, column 1 - line 218, column 1: " + [  ]);
       })();
       return {
           r: col.r + m, 
@@ -1846,7 +1912,7 @@ var PS = { };
                       if (Prelude.otherwise) {
                           return chroma$prime / (1.0 - $$Math.abs(2.0 * lightness - 1.0));
                       };
-                      throw new Error("Failed pattern match at Color line 82, column 1 - line 83, column 1: " + [  ]);
+                      throw new Error("Failed pattern match at Color line 101, column 1 - line 102, column 1: " + [  ]);
                   })();
                   var b = Data_Int.toNumber(blue) / 255.0;
                   var hue$prime = function (v) {
@@ -1862,7 +1928,7 @@ var PS = { };
                       if (Prelude.otherwise) {
                           return (r - g) / chroma$prime + 4.0;
                       };
-                      throw new Error("Failed pattern match at Color line 82, column 1 - line 83, column 1: " + [ v.constructor.name ]);
+                      throw new Error("Failed pattern match at Color line 101, column 1 - line 102, column 1: " + [ v.constructor.name ]);
                   };
                   var hue = 60.0 * hue$prime(chroma);
                   return new HSLA(hue, saturation, lightness, alpha);
@@ -1896,7 +1962,7 @@ var PS = { };
           if (!$36) {
               return $$Math.pow((x + 5.500000000000001e-2) / 1.055)(2.4);
           };
-          throw new Error("Failed pattern match at Color line 333, column 1 - line 334, column 1: " + [ $36.constructor.name ]);
+          throw new Error("Failed pattern match at Color line 356, column 1 - line 357, column 1: " + [ $36.constructor.name ]);
       };
       var g = f(val.g);
       var r = f(val.r);
@@ -1956,7 +2022,7 @@ var PS = { };
                       var f = toRGBA$prime(c1);
                       return rgba$prime(interpolate(frac)(f.r)(t.r))(interpolate(frac)(f.g)(t.g))(interpolate(frac)(f.b)(t.b))(interpolate(frac)(f.a)(t.a));
                   };
-                  throw new Error("Failed pattern match at Color line 299, column 1 - line 300, column 1: " + [ v.constructor.name, c1.constructor.name, c2.constructor.name, frac.constructor.name ]);
+                  throw new Error("Failed pattern match at Color line 320, column 1 - line 321, column 1: " + [ v.constructor.name, c1.constructor.name, c2.constructor.name, frac.constructor.name ]);
               };
           };
       };
@@ -1981,6 +2047,36 @@ var PS = { };
   var white = hsl(0.0)(0.0)(1.0);
   var grayscale = function (l) {
       return hsl(0.0)(0.0)(l);
+  };
+  var fromHexString = function (str) {
+      var isShort = Data_String.length(str) === 4;
+      var pair = "(" + ("[0-9a-f]" + ("[0-9a-f]" + ")"));
+      var single = "(" + ("[0-9a-f]" + ")");
+      var variant = (function () {
+          if (isShort) {
+              return single + (single + single);
+          };
+          if (!isShort) {
+              return pair + (pair + pair);
+          };
+          throw new Error("Failed pattern match at Color line 164, column 1 - line 165, column 1: " + [ isShort.constructor.name ]);
+      })();
+      var pattern = Data_String_Regex.regex("^#(?:" + (variant + ")$"))(Data_String_Regex.parseFlags("i"));
+      return Prelude.bind(Data_Maybe.bindMaybe)(Data_String_Regex.match(pattern)(str))(function (v) {
+          return Prelude.bind(Data_Maybe.bindMaybe)(Prelude["<$>"](Data_Maybe.functorMaybe)($foreign.parseHex)(Control_Bind.join(Data_Maybe.bindMaybe)(Data_Array["!!"](v)(1))))(function (v1) {
+              return Prelude.bind(Data_Maybe.bindMaybe)(Prelude["<$>"](Data_Maybe.functorMaybe)($foreign.parseHex)(Control_Bind.join(Data_Maybe.bindMaybe)(Data_Array["!!"](v)(2))))(function (v2) {
+                  return Prelude.bind(Data_Maybe.bindMaybe)(Prelude["<$>"](Data_Maybe.functorMaybe)($foreign.parseHex)(Control_Bind.join(Data_Maybe.bindMaybe)(Data_Array["!!"](v)(3))))(function (v3) {
+                      if (isShort) {
+                          return Prelude.pure(Data_Maybe.applicativeMaybe)(rgb((16 * v1 | 0) + v1 | 0)((16 * v2 | 0) + v2 | 0)((16 * v3 | 0) + v3 | 0));
+                      };
+                      if (!isShort) {
+                          return Prelude.pure(Data_Maybe.applicativeMaybe)(rgb(v1)(v2)(v3));
+                      };
+                      throw new Error("Failed pattern match at Color line 164, column 1 - line 165, column 1: " + [ isShort.constructor.name ]);
+                  });
+              });
+          });
+      });
   }; 
   var desaturate = function (f) {
       return saturate(-f);
@@ -2003,7 +2099,26 @@ var PS = { };
       if (!$70) {
           return "hsla(" + (hue + (", " + (saturation + (", " + (lightness + (", " + (alpha + ")")))))));
       };
-      throw new Error("Failed pattern match at Color line 221, column 1 - line 222, column 1: " + [ $70.constructor.name ]);
+      throw new Error("Failed pattern match at Color line 242, column 1 - line 243, column 1: " + [ $70.constructor.name ]);
+  };
+  var contrast = function (c1) {
+      return function (c2) {
+          var l2 = luminance(c2);
+          var l1 = luminance(c1);
+          var $75 = l1 > l2;
+          if ($75) {
+              return (l1 + 5.0e-2) / (l2 + 5.0e-2);
+          };
+          if (!$75) {
+              return (l2 + 5.0e-2) / (l1 + 5.0e-2);
+          };
+          throw new Error("Failed pattern match at Color line 374, column 1 - line 375, column 1: " + [ $75.constructor.name ]);
+      };
+  };
+  var isReadable = function (c1) {
+      return function (c2) {
+          return contrast(c1)(c2) > 4.5;
+      };
   };
   var complementary = rotateHue(180.0);
   var brightness = function (col) {
@@ -2021,12 +2136,14 @@ var PS = { };
       if (Prelude.otherwise) {
           return white;
       };
-      throw new Error("Failed pattern match at Color line 351, column 1 - line 352, column 1: " + [ c.constructor.name ]);
+      throw new Error("Failed pattern match at Color line 402, column 1 - line 403, column 1: " + [ c.constructor.name ]);
   };
   exports["RGB"] = RGB;
   exports["HSL"] = HSL;
   exports["textColor"] = textColor;
+  exports["isReadable"] = isReadable;
   exports["isLight"] = isLight;
+  exports["contrast"] = contrast;
   exports["luminance"] = luminance;
   exports["brightness"] = brightness;
   exports["mix"] = mix;
@@ -2044,6 +2161,7 @@ var PS = { };
   exports["toRGBA'"] = toRGBA$prime;
   exports["toRGBA"] = toRGBA;
   exports["toHSLA"] = toHSLA;
+  exports["fromHexString"] = fromHexString;
   exports["hsl"] = hsl;
   exports["hsla"] = hsla;
   exports["rgba'"] = rgba$prime;
@@ -4614,6 +4732,33 @@ var PS = { };
 
   "use strict";
 
+  exports.renderString = function(target) {
+    return function(content) {
+      return function() {
+        document.getElementById(target).innerHTML = content;
+      };
+    };
+  };
+
+  exports.removeChildren = function(target) {
+    return function() {
+      var el = document.getElementById(target);
+
+      // http://stackoverflow.com/a/3955238/704831
+      while (el.firstChild) {
+        el.removeChild(el.firstChild);
+      }
+    };
+  };
+
+  exports.appendComponent = function(target) {
+    return function(el) {
+      return function() {
+        document.getElementById(target).appendChild(el);
+      };
+    };
+  };
+
   // This function maintains a global state `window.flareID` to generate unique
   // DOM element IDs. It is only called from functions with a DOM effect.
   function getUniqueID() {
@@ -4760,6 +4905,19 @@ var PS = { };
       return fieldset;
     };
   };
+
+  exports.cColor = createComponent("color",
+    function(initial) {
+      var input = document.createElement("input");
+      input.type = "color";
+      input.value = initial;
+      return input;
+    },
+    "input",
+    function(t, initial) {
+      return t.value;
+    }
+  );
 
   // vim: ts=2:sw=2
  
@@ -4927,6 +5085,23 @@ var PS = { };
           };
       };
   };
+  var runFlareWith = function (controls) {
+      return function (handler) {
+          return function (v) {
+              return function __do() {
+                  var v1 = v();
+                  $foreign.removeChildren(controls)();
+                  Data_Foldable.traverse_(Control_Monad_Eff.applicativeEff)(Data_Foldable.foldableArray)($foreign.appendComponent(controls))(v1.value0)();
+                  return Signal.runSignal(Prelude.map(Signal.functorSignal)(handler)(v1.value1))();
+              };
+          };
+      };
+  };
+  var runFlare = function (controls) {
+      return function (target) {
+          return runFlareWith(controls)($foreign.renderString(target));
+      };
+  };
   var functorFlare = new Prelude.Functor(function (f) {
       return function (v) {
           return new Flare(v.value0, Prelude.map(Signal.functorSignal)(f)(v.value1));
@@ -4985,6 +5160,13 @@ var PS = { };
               };
           };
       };
+  };                                     
+  var color = function (label) {
+      return function ($$default) {
+          return Prelude["<$>"](functorUI)(function ($78) {
+              return Data_Maybe.fromMaybe($$default)(Color.fromHexString($78));
+          })(createUI($foreign.cColor)(label)(Color.toHexString($$default)));
+      };
   };
   var applyFlare = new Prelude.Apply(function () {
       return functorFlare;
@@ -5010,8 +5192,11 @@ var PS = { };
   }, function (x) {
       return UI(Prelude["return"](Control_Monad_Eff.applicativeEff)(Prelude.pure(applicativeFlare)(x)));
   });
+  exports["runFlare"] = runFlare;
+  exports["runFlareWith"] = runFlareWith;
   exports["setupFlare"] = setupFlare;
   exports["fieldset"] = fieldset;
+  exports["color"] = color;
   exports["select"] = select;
   exports["intSlider"] = intSlider;
   exports["numberSlider"] = numberSlider;
@@ -5023,6 +5208,303 @@ var PS = { };
   exports["applicativeUI"] = applicativeUI;;
  
 })(PS["Flare"] = PS["Flare"] || {});
+(function(exports) {
+  // Generated by psc version 0.8.0.0
+  "use strict";
+  var Prelude = PS["Prelude"];
+  var Data_Maybe = PS["Data.Maybe"];
+  var Data_Monoid = PS["Data.Monoid"];
+  var Control_Apply = PS["Control.Apply"];     
+  var Attr = (function () {
+      function Attr(value0, value1) {
+          this.value0 = value0;
+          this.value1 = value1;
+      };
+      Attr.create = function (value0) {
+          return function (value1) {
+              return new Attr(value0, value1);
+          };
+      };
+      return Attr;
+  })();
+  var Attribute = (function () {
+      function Attribute(value0) {
+          this.value0 = value0;
+      };
+      Attribute.create = function (value0) {
+          return new Attribute(value0);
+      };
+      return Attribute;
+  })();
+  var Element = (function () {
+      function Element(value0, value1, value2, value3) {
+          this.value0 = value0;
+          this.value1 = value1;
+          this.value2 = value2;
+          this.value3 = value3;
+      };
+      Element.create = function (value0) {
+          return function (value1) {
+              return function (value2) {
+                  return function (value3) {
+                      return new Element(value0, value1, value2, value3);
+                  };
+              };
+          };
+      };
+      return Element;
+  })();
+  var Content = (function () {
+      function Content(value0, value1) {
+          this.value0 = value0;
+          this.value1 = value1;
+      };
+      Content.create = function (value0) {
+          return function (value1) {
+              return new Content(value0, value1);
+          };
+      };
+      return Content;
+  })();
+  var Return = (function () {
+      function Return(value0) {
+          this.value0 = value0;
+      };
+      Return.create = function (value0) {
+          return new Return(value0);
+      };
+      return Return;
+  })();
+  var Attributable = function ($$with) {
+      this["with"] = $$with;
+  };
+  var $$with = function (dict) {
+      return dict["with"];
+  };
+  var $bang = function (dictAttributable) {
+      return $$with(dictAttributable);
+  };
+  var text = function (s) {
+      return new Content(s, new Return(Prelude.unit));
+  }; 
+  var parent = function (el) {
+      return function (kids) {
+          return new Element(el, new Data_Maybe.Just(kids), [  ], new Return(Prelude.unit));
+      };
+  };
+  var functorMarkupM = new Prelude.Functor(function (f) {
+      return function (v) {
+          if (v instanceof Element) {
+              return new Element(v.value0, v.value1, v.value2, Prelude.map(functorMarkupM)(f)(v.value3));
+          };
+          if (v instanceof Content) {
+              return new Content(v.value0, Prelude.map(functorMarkupM)(f)(v.value1));
+          };
+          if (v instanceof Return) {
+              return new Return(f(v.value0));
+          };
+          throw new Error("Failed pattern match: " + [ f.constructor.name, v.constructor.name ]);
+      };
+  });
+  var attribute = function (key) {
+      return function (value) {
+          return new Attribute([ new Attr(key, value) ]);
+      };
+  };
+  var attributableMarkupM = new Attributable(function (v) {
+      return function (v1) {
+          if (v instanceof Element) {
+              return new Element(v.value0, v.value1, Prelude["<>"](Prelude.semigroupArray)(v.value2)(v1.value0), v.value3);
+          };
+          throw new Error("Failed pattern match at Text.Smolder.Markup line 79, column 1 - line 82, column 1: " + [ v.constructor.name, v1.constructor.name ]);
+      };
+  });
+  var attributableMarkupMF = new Attributable(function (k) {
+      return function (xs) {
+          return function (m) {
+              return $$with(attributableMarkupM)(k(m))(xs);
+          };
+      };
+  });
+  var monadMarkupM = new Prelude.Monad(function () {
+      return applicativeMarkupM;
+  }, function () {
+      return bindMarkupM;
+  });
+  var bindMarkupM = new Prelude.Bind(function () {
+      return applyMarkupM;
+  }, function (v) {
+      return function (f) {
+          if (v instanceof Element) {
+              return new Element(v.value0, v.value1, v.value2, Prelude.bind(bindMarkupM)(v.value3)(f));
+          };
+          if (v instanceof Content) {
+              return new Content(v.value0, Prelude.bind(bindMarkupM)(v.value1)(f));
+          };
+          if (v instanceof Return) {
+              return f(v.value0);
+          };
+          throw new Error("Failed pattern match: " + [ v.constructor.name, f.constructor.name ]);
+      };
+  });
+  var applyMarkupM = new Prelude.Apply(function () {
+      return functorMarkupM;
+  }, Prelude.ap(monadMarkupM));
+  var applicativeMarkupM = new Prelude.Applicative(function () {
+      return applyMarkupM;
+  }, Return.create);
+  var semigroupMarkupM = new Prelude.Semigroup(function (x) {
+      return function (y) {
+          return Control_Apply["*>"](applyMarkupM)(x)(y);
+      };
+  });
+  var monoidMarkup = new Data_Monoid.Monoid(function () {
+      return semigroupMarkupM;
+  }, new Return(Prelude.unit));
+  exports["Attr"] = Attr;
+  exports["Element"] = Element;
+  exports["Content"] = Content;
+  exports["Return"] = Return;
+  exports["Attributable"] = Attributable;
+  exports["!"] = $bang;
+  exports["attribute"] = attribute;
+  exports["text"] = text;
+  exports["parent"] = parent;
+  exports["semigroupMarkupM"] = semigroupMarkupM;
+  exports["monoidMarkup"] = monoidMarkup;
+  exports["functorMarkupM"] = functorMarkupM;
+  exports["applyMarkupM"] = applyMarkupM;
+  exports["applicativeMarkupM"] = applicativeMarkupM;
+  exports["bindMarkupM"] = bindMarkupM;
+  exports["monadMarkupM"] = monadMarkupM;
+  exports["attributableMarkupM"] = attributableMarkupM;
+  exports["attributableMarkupMF"] = attributableMarkupMF;;
+ 
+})(PS["Text.Smolder.Markup"] = PS["Text.Smolder.Markup"] || {});
+(function(exports) {
+  // Generated by psc version 0.8.0.0
+  "use strict";
+  var Prelude = PS["Prelude"];
+  var Data_Maybe = PS["Data.Maybe"];
+  var Data_Tuple = PS["Data.Tuple"];
+  var Data_List = PS["Data.List"];
+  var Data_Map = PS["Data.Map"];
+  var Text_Smolder_Markup = PS["Text.Smolder.Markup"];
+  var Data_Foldable = PS["Data.Foldable"];     
+  var Element = (function () {
+      function Element(value0, value1, value2) {
+          this.value0 = value0;
+          this.value1 = value1;
+          this.value2 = value2;
+      };
+      Element.create = function (value0) {
+          return function (value1) {
+              return function (value2) {
+                  return new Element(value0, value1, value2);
+              };
+          };
+      };
+      return Element;
+  })();
+  var Text = (function () {
+      function Text(value0) {
+          this.value0 = value0;
+      };
+      Text.create = function (value0) {
+          return new Text(value0);
+      };
+      return Text;
+  })();
+  var renderAttrs = (function () {
+      var toTuple = function (v) {
+          return new Data_Tuple.Tuple(v.value0, v.value1);
+      };
+      return function ($18) {
+          return Data_Map.fromList(Prelude.ordString)(Prelude.map(Data_List.functorList)(toTuple)(Data_List.toList(Data_Foldable.foldableArray)($18)));
+      };
+  })();
+  var renderMarkup = function (v) {
+      if (v instanceof Text_Smolder_Markup.Element && v.value1 instanceof Data_Maybe.Just) {
+          return Data_List[":"](new Element(v.value0, renderAttrs(v.value2), renderMarkup(v.value1.value0)))(renderMarkup(v.value3));
+      };
+      if (v instanceof Text_Smolder_Markup.Element && v.value1 instanceof Data_Maybe.Nothing) {
+          return Data_List[":"](new Element(v.value0, renderAttrs(v.value2), Data_List.Nil.value))(renderMarkup(v.value3));
+      };
+      if (v instanceof Text_Smolder_Markup.Content) {
+          return Data_List[":"](new Text(v.value0))(renderMarkup(v.value1));
+      };
+      if (v instanceof Text_Smolder_Markup.Return) {
+          return Data_List.Nil.value;
+      };
+      throw new Error("Failed pattern match: " + [ v.constructor.name ]);
+  };
+  exports["Element"] = Element;
+  exports["Text"] = Text;
+  exports["renderMarkup"] = renderMarkup;;
+ 
+})(PS["Text.Smolder.Renderer.Util"] = PS["Text.Smolder.Renderer.Util"] || {});
+(function(exports) {
+  // Generated by psc version 0.8.0.0
+  "use strict";
+  var Prelude = PS["Prelude"];
+  var Data_List = PS["Data.List"];
+  var Data_Maybe = PS["Data.Maybe"];
+  var Data_String = PS["Data.String"];
+  var Data_Foldable = PS["Data.Foldable"];
+  var Data_Map = PS["Data.Map"];
+  var Text_Smolder_Markup = PS["Text.Smolder.Markup"];
+  var Text_Smolder_Renderer_Util = PS["Text.Smolder.Renderer.Util"];
+  var Data_Monoid = PS["Data.Monoid"];     
+  var renderNode = function (v) {
+      if (v instanceof Text_Smolder_Renderer_Util.Element) {
+          var showTail = function (v1) {
+              if (v1 instanceof Data_List.Nil) {
+                  return "/>";
+              };
+              return ">" + (Data_Foldable.fold(Data_List.foldableList)(Data_Monoid.monoidString)(Prelude.map(Data_List.functorList)(renderNode)(v1)) + ("</" + (v.value0 + ">")));
+          };
+          var showAttrs = function (a1) {
+              var pair = function (k) {
+                  return " " + (k + Data_Foldable.foldMap(Data_Foldable.foldableMaybe)(Data_Monoid.monoidString)(function (v1) {
+                      return "=\"" + (v1 + "\"");
+                  })(Data_Map.lookup(Prelude.ordString)(k)(a1)));
+              };
+              return Data_Foldable.fold(Data_List.foldableList)(Data_Monoid.monoidString)(Prelude.map(Data_List.functorList)(pair)(Data_Map.keys(a1)));
+          };
+          return "<" + (v.value0 + (showAttrs(v.value1) + showTail(v.value2)));
+      };
+      if (v instanceof Text_Smolder_Renderer_Util.Text) {
+          return v.value0;
+      };
+      throw new Error("Failed pattern match: " + [ v.constructor.name ]);
+  };
+  var render = function ($8) {
+      return Data_Foldable.fold(Data_List.foldableList)(Data_Monoid.monoidString)(Prelude.map(Data_List.functorList)(renderNode)(Text_Smolder_Renderer_Util.renderMarkup($8)));
+  };
+  exports["renderNode"] = renderNode;
+  exports["render"] = render;;
+ 
+})(PS["Text.Smolder.Renderer.String"] = PS["Text.Smolder.Renderer.String"] || {});
+(function(exports) {
+  // Generated by psc version 0.8.0.0
+  "use strict";
+  var Prelude = PS["Prelude"];
+  var Control_Monad_Eff = PS["Control.Monad.Eff"];
+  var DOM = PS["DOM"];
+  var Signal_Channel = PS["Signal.Channel"];
+  var Text_Smolder_Markup = PS["Text.Smolder.Markup"];
+  var Text_Smolder_Renderer_String = PS["Text.Smolder.Renderer.String"];
+  var Flare = PS["Flare"];     
+  var runFlareHTML = function (controls) {
+      return function (target) {
+          return function ($0) {
+              return Flare.runFlare(controls)(target)(Prelude.map(Flare.functorUI)(Text_Smolder_Renderer_String.render)($0));
+          };
+      };
+  };
+  exports["runFlareHTML"] = runFlareHTML;;
+ 
+})(PS["Flare.Smolder"] = PS["Flare.Smolder"] || {});
 (function(exports) {
   /* global exports */
   /* global XMLHttpRequest */
@@ -5715,188 +6197,19 @@ var PS = { };
   // Generated by psc version 0.8.0.0
   "use strict";
   var Prelude = PS["Prelude"];
-  var Data_Maybe = PS["Data.Maybe"];
-  var Data_Monoid = PS["Data.Monoid"];
-  var Control_Apply = PS["Control.Apply"];     
-  var Attr = (function () {
-      function Attr(value0, value1) {
-          this.value0 = value0;
-          this.value1 = value1;
-      };
-      Attr.create = function (value0) {
-          return function (value1) {
-              return new Attr(value0, value1);
-          };
-      };
-      return Attr;
-  })();
-  var Attribute = (function () {
-      function Attribute(value0) {
-          this.value0 = value0;
-      };
-      Attribute.create = function (value0) {
-          return new Attribute(value0);
-      };
-      return Attribute;
-  })();
-  var Element = (function () {
-      function Element(value0, value1, value2, value3) {
-          this.value0 = value0;
-          this.value1 = value1;
-          this.value2 = value2;
-          this.value3 = value3;
-      };
-      Element.create = function (value0) {
-          return function (value1) {
-              return function (value2) {
-                  return function (value3) {
-                      return new Element(value0, value1, value2, value3);
-                  };
-              };
-          };
-      };
-      return Element;
-  })();
-  var Content = (function () {
-      function Content(value0, value1) {
-          this.value0 = value0;
-          this.value1 = value1;
-      };
-      Content.create = function (value0) {
-          return function (value1) {
-              return new Content(value0, value1);
-          };
-      };
-      return Content;
-  })();
-  var Return = (function () {
-      function Return(value0) {
-          this.value0 = value0;
-      };
-      Return.create = function (value0) {
-          return new Return(value0);
-      };
-      return Return;
-  })();
-  var Attributable = function ($$with) {
-      this["with"] = $$with;
-  };
-  var $$with = function (dict) {
-      return dict["with"];
-  };
-  var $bang = function (dictAttributable) {
-      return $$with(dictAttributable);
-  };
-  var text = function (s) {
-      return new Content(s, new Return(Prelude.unit));
-  }; 
-  var parent = function (el) {
-      return function (kids) {
-          return new Element(el, new Data_Maybe.Just(kids), [  ], new Return(Prelude.unit));
-      };
-  };
-  var functorMarkupM = new Prelude.Functor(function (f) {
-      return function (v) {
-          if (v instanceof Element) {
-              return new Element(v.value0, v.value1, v.value2, Prelude.map(functorMarkupM)(f)(v.value3));
-          };
-          if (v instanceof Content) {
-              return new Content(v.value0, Prelude.map(functorMarkupM)(f)(v.value1));
-          };
-          if (v instanceof Return) {
-              return new Return(f(v.value0));
-          };
-          throw new Error("Failed pattern match: " + [ f.constructor.name, v.constructor.name ]);
-      };
-  });
-  var attribute = function (key) {
-      return function (value) {
-          return new Attribute([ new Attr(key, value) ]);
-      };
-  };
-  var attributableMarkupM = new Attributable(function (v) {
-      return function (v1) {
-          if (v instanceof Element) {
-              return new Element(v.value0, v.value1, Prelude["<>"](Prelude.semigroupArray)(v.value2)(v1.value0), v.value3);
-          };
-          throw new Error("Failed pattern match at Text.Smolder.Markup line 79, column 1 - line 82, column 1: " + [ v.constructor.name, v1.constructor.name ]);
-      };
-  });
-  var attributableMarkupMF = new Attributable(function (k) {
-      return function (xs) {
-          return function (m) {
-              return $$with(attributableMarkupM)(k(m))(xs);
-          };
-      };
-  });
-  var monadMarkupM = new Prelude.Monad(function () {
-      return applicativeMarkupM;
-  }, function () {
-      return bindMarkupM;
-  });
-  var bindMarkupM = new Prelude.Bind(function () {
-      return applyMarkupM;
-  }, function (v) {
-      return function (f) {
-          if (v instanceof Element) {
-              return new Element(v.value0, v.value1, v.value2, Prelude.bind(bindMarkupM)(v.value3)(f));
-          };
-          if (v instanceof Content) {
-              return new Content(v.value0, Prelude.bind(bindMarkupM)(v.value1)(f));
-          };
-          if (v instanceof Return) {
-              return f(v.value0);
-          };
-          throw new Error("Failed pattern match: " + [ v.constructor.name, f.constructor.name ]);
-      };
-  });
-  var applyMarkupM = new Prelude.Apply(function () {
-      return functorMarkupM;
-  }, Prelude.ap(monadMarkupM));
-  var applicativeMarkupM = new Prelude.Applicative(function () {
-      return applyMarkupM;
-  }, Return.create);
-  var semigroupMarkupM = new Prelude.Semigroup(function (x) {
-      return function (y) {
-          return Control_Apply["*>"](applyMarkupM)(x)(y);
-      };
-  });
-  var monoidMarkup = new Data_Monoid.Monoid(function () {
-      return semigroupMarkupM;
-  }, new Return(Prelude.unit));
-  exports["Attr"] = Attr;
-  exports["Element"] = Element;
-  exports["Content"] = Content;
-  exports["Return"] = Return;
-  exports["Attributable"] = Attributable;
-  exports["!"] = $bang;
-  exports["attribute"] = attribute;
-  exports["text"] = text;
-  exports["parent"] = parent;
-  exports["semigroupMarkupM"] = semigroupMarkupM;
-  exports["monoidMarkup"] = monoidMarkup;
-  exports["functorMarkupM"] = functorMarkupM;
-  exports["applyMarkupM"] = applyMarkupM;
-  exports["applicativeMarkupM"] = applicativeMarkupM;
-  exports["bindMarkupM"] = bindMarkupM;
-  exports["monadMarkupM"] = monadMarkupM;
-  exports["attributableMarkupM"] = attributableMarkupM;
-  exports["attributableMarkupMF"] = attributableMarkupMF;;
- 
-})(PS["Text.Smolder.Markup"] = PS["Text.Smolder.Markup"] || {});
-(function(exports) {
-  // Generated by psc version 0.8.0.0
-  "use strict";
-  var Prelude = PS["Prelude"];
   var Text_Smolder_Markup = PS["Text.Smolder.Markup"];
   var span = Text_Smolder_Markup.parent("span");        
-  var pre = Text_Smolder_Markup.parent("pre");
+  var pre = Text_Smolder_Markup.parent("pre");  
+  var p = Text_Smolder_Markup.parent("p");  
   var div = Text_Smolder_Markup.parent("div");
   var code = Text_Smolder_Markup.parent("code");
+  var b = Text_Smolder_Markup.parent("b");
   exports["span"] = span;
   exports["pre"] = pre;
+  exports["p"] = p;
   exports["div"] = div;
-  exports["code"] = code;;
+  exports["code"] = code;
+  exports["b"] = b;;
  
 })(PS["Text.Smolder.HTML"] = PS["Text.Smolder.HTML"] || {});
 (function(exports) {
@@ -5912,110 +6225,6 @@ var PS = { };
   exports["className"] = className;;
  
 })(PS["Text.Smolder.HTML.Attributes"] = PS["Text.Smolder.HTML.Attributes"] || {});
-(function(exports) {
-  // Generated by psc version 0.8.0.0
-  "use strict";
-  var Prelude = PS["Prelude"];
-  var Data_Maybe = PS["Data.Maybe"];
-  var Data_Tuple = PS["Data.Tuple"];
-  var Data_List = PS["Data.List"];
-  var Data_Map = PS["Data.Map"];
-  var Text_Smolder_Markup = PS["Text.Smolder.Markup"];
-  var Data_Foldable = PS["Data.Foldable"];     
-  var Element = (function () {
-      function Element(value0, value1, value2) {
-          this.value0 = value0;
-          this.value1 = value1;
-          this.value2 = value2;
-      };
-      Element.create = function (value0) {
-          return function (value1) {
-              return function (value2) {
-                  return new Element(value0, value1, value2);
-              };
-          };
-      };
-      return Element;
-  })();
-  var Text = (function () {
-      function Text(value0) {
-          this.value0 = value0;
-      };
-      Text.create = function (value0) {
-          return new Text(value0);
-      };
-      return Text;
-  })();
-  var renderAttrs = (function () {
-      var toTuple = function (v) {
-          return new Data_Tuple.Tuple(v.value0, v.value1);
-      };
-      return function ($18) {
-          return Data_Map.fromList(Prelude.ordString)(Prelude.map(Data_List.functorList)(toTuple)(Data_List.toList(Data_Foldable.foldableArray)($18)));
-      };
-  })();
-  var renderMarkup = function (v) {
-      if (v instanceof Text_Smolder_Markup.Element && v.value1 instanceof Data_Maybe.Just) {
-          return Data_List[":"](new Element(v.value0, renderAttrs(v.value2), renderMarkup(v.value1.value0)))(renderMarkup(v.value3));
-      };
-      if (v instanceof Text_Smolder_Markup.Element && v.value1 instanceof Data_Maybe.Nothing) {
-          return Data_List[":"](new Element(v.value0, renderAttrs(v.value2), Data_List.Nil.value))(renderMarkup(v.value3));
-      };
-      if (v instanceof Text_Smolder_Markup.Content) {
-          return Data_List[":"](new Text(v.value0))(renderMarkup(v.value1));
-      };
-      if (v instanceof Text_Smolder_Markup.Return) {
-          return Data_List.Nil.value;
-      };
-      throw new Error("Failed pattern match: " + [ v.constructor.name ]);
-  };
-  exports["Element"] = Element;
-  exports["Text"] = Text;
-  exports["renderMarkup"] = renderMarkup;;
- 
-})(PS["Text.Smolder.Renderer.Util"] = PS["Text.Smolder.Renderer.Util"] || {});
-(function(exports) {
-  // Generated by psc version 0.8.0.0
-  "use strict";
-  var Prelude = PS["Prelude"];
-  var Data_List = PS["Data.List"];
-  var Data_Maybe = PS["Data.Maybe"];
-  var Data_String = PS["Data.String"];
-  var Data_Foldable = PS["Data.Foldable"];
-  var Data_Map = PS["Data.Map"];
-  var Text_Smolder_Markup = PS["Text.Smolder.Markup"];
-  var Text_Smolder_Renderer_Util = PS["Text.Smolder.Renderer.Util"];
-  var Data_Monoid = PS["Data.Monoid"];     
-  var renderNode = function (v) {
-      if (v instanceof Text_Smolder_Renderer_Util.Element) {
-          var showTail = function (v1) {
-              if (v1 instanceof Data_List.Nil) {
-                  return "/>";
-              };
-              return ">" + (Data_Foldable.fold(Data_List.foldableList)(Data_Monoid.monoidString)(Prelude.map(Data_List.functorList)(renderNode)(v1)) + ("</" + (v.value0 + ">")));
-          };
-          var showAttrs = function (a1) {
-              var pair = function (k) {
-                  return " " + (k + Data_Foldable.foldMap(Data_Foldable.foldableMaybe)(Data_Monoid.monoidString)(function (v1) {
-                      return "=\"" + (v1 + "\"");
-                  })(Data_Map.lookup(Prelude.ordString)(k)(a1)));
-              };
-              return Data_Foldable.fold(Data_List.foldableList)(Data_Monoid.monoidString)(Prelude.map(Data_List.functorList)(pair)(Data_Map.keys(a1)));
-          };
-          return "<" + (v.value0 + (showAttrs(v.value1) + showTail(v.value2)));
-      };
-      if (v instanceof Text_Smolder_Renderer_Util.Text) {
-          return v.value0;
-      };
-      throw new Error("Failed pattern match: " + [ v.constructor.name ]);
-  };
-  var render = function ($8) {
-      return Data_Foldable.fold(Data_List.foldableList)(Data_Monoid.monoidString)(Prelude.map(Data_List.functorList)(renderNode)(Text_Smolder_Renderer_Util.renderMarkup($8)));
-  };
-  exports["renderNode"] = renderNode;
-  exports["render"] = render;;
- 
-})(PS["Text.Smolder.Renderer.String"] = PS["Text.Smolder.Renderer.String"] || {});
 (function(exports) {
   // Generated by psc version 0.8.0.0
   "use strict";
@@ -8299,6 +8508,7 @@ var PS = { };
   var Text_Smolder_HTML = PS["Text.Smolder.HTML"];
   var Text_Smolder_HTML_Attributes = PS["Text.Smolder.HTML.Attributes"];
   var Flare = PS["Flare"];
+  var Flare_Smolder = PS["Flare.Smolder"];
   var Test_FlareDoc = PS["Test.FlareDoc"];
   var Color = PS["Color"];
   var Color_Blending = PS["Color.Blending"];
@@ -8329,9 +8539,54 @@ var PS = { };
       };
       return ColorList;
   })();
+  var textReadable = function (bgColor) {
+      return function (textColor) {
+          var ratio = Color.contrast(bgColor)(textColor);
+          var width = Prelude.show(Prelude.showNumber)((ratio - 1.0) * 20.0);
+          var isRead = Color.isReadable(bgColor)(textColor);
+          var css = "background-color: " + (Color.cssStringHSLA(bgColor) + (";" + ("width: 380px; height: 50px;" + ("border: 1px solid black;" + ("padding: 10px; color: " + Color.cssStringHSLA(textColor))))));
+          var barFg = Color.cssStringHSLA((function () {
+              if (isRead) {
+                  return Color_Scheme_X11.green;
+              };
+              if (!isRead) {
+                  return Color_Scheme_X11.red;
+              };
+              throw new Error("Failed pattern match at Test.Interactive line 73, column 1 - line 92, column 1: " + [ isRead.constructor.name ]);
+          })());
+          var barBg = Color.cssStringHSLA(Color.black);
+          var answ = (function () {
+              if (isRead) {
+                  return "yes";
+              };
+              if (!isRead) {
+                  return "no";
+              };
+              throw new Error("Failed pattern match at Test.Interactive line 73, column 1 - line 92, column 1: " + [ isRead.constructor.name ]);
+          })();
+          return Prelude.bind(Text_Smolder_Markup.bindMarkupM)(Text_Smolder_Markup["!"](Text_Smolder_Markup.attributableMarkupMF)(Text_Smolder_HTML.div)(Text_Smolder_HTML_Attributes.style(css))(Text_Smolder_Markup.text("Is this text well readable?")))(function () {
+              return Prelude.bind(Text_Smolder_Markup.bindMarkupM)(Text_Smolder_HTML.p(Prelude["<>"](Text_Smolder_Markup.semigroupMarkupM)(Text_Smolder_Markup.text("WCAG says: "))(Text_Smolder_HTML.b(Text_Smolder_Markup.text(answ)))))(function () {
+                  return Text_Smolder_Markup["!"](Text_Smolder_Markup.attributableMarkupMF)(Text_Smolder_HTML.div)(Text_Smolder_HTML_Attributes.style("width: 400px; height: 15px; background-color: " + barBg))(Text_Smolder_Markup["!"](Text_Smolder_Markup.attributableMarkupMF)(Text_Smolder_HTML.div)(Text_Smolder_HTML_Attributes.style("width: " + (width + ("px; height: 15px;" + ("background-color: " + barFg)))))(Text_Smolder_Markup.text("")));
+              });
+          });
+      };
+  };
   var runTColor = function (v) {
       return v;
   };
+  var modeToString = function (v) {
+      if (v instanceof Color_Blending.Multiply) {
+          return "Multiply";
+      };
+      if (v instanceof Color_Blending.Screen) {
+          return "Screen";
+      };
+      if (v instanceof Color_Blending.Overlay) {
+          return "Overlay";
+      };
+      throw new Error("Failed pattern match at Test.Interactive line 55, column 1 - line 56, column 1: " + [ v.constructor.name ]);
+  };
+  var flare1 = Prelude["<*>"](Flare.applyUI)(Prelude["<$>"](Flare.functorUI)(textReadable)(Flare.color("Background")(Color_Scheme_X11.mediumvioletred)))(Flare.color("Text")(Color.black));
   var flammableTColorSpace = new Test_FlareCheck.Flammable((function () {
       var toString = function (v) {
           if (v instanceof Color.HSL) {
@@ -8345,21 +8600,7 @@ var PS = { };
       return Prelude["<$>"](Flare.functorUI)(TColorSpace)(Flare.select("ColorSpace")(Color.HSL.value)([ Color.RGB.value ])(toString));
   })());
   var flammableTColor = new Test_FlareCheck.Flammable(Prelude["<$>"](Flare.functorUI)(TColor)(Flare.fieldset("Color")(Prelude["<*>"](Flare.applyUI)(Prelude["<*>"](Flare.applyUI)(Prelude["<$>"](Flare.functorUI)(Color.hsl)(Flare.numberSlider("Hue")(0.0)(360.0)(0.1)(231.0)))(Flare.numberSlider("Saturation")(0.0)(1.0)(1.0e-3)(0.48)))(Flare.numberSlider("Lightness")(0.0)(1.0)(1.0e-3)(0.48)))));
-  var flammableTBlendMode = new Test_FlareCheck.Flammable((function () {
-      var toString = function (v) {
-          if (v instanceof Color_Blending.Multiply) {
-              return "Multiply";
-          };
-          if (v instanceof Color_Blending.Screen) {
-              return "Screen";
-          };
-          if (v instanceof Color_Blending.Overlay) {
-              return "Overlay";
-          };
-          throw new Error("Failed pattern match at Test.Interactive line 57, column 7 - line 58, column 7: " + [ v.constructor.name ]);
-      };
-      return Prelude["<$>"](Flare.functorUI)(TBlendMode)(Flare.select("BlendMode")(Color_Blending.Multiply.value)([ Color_Blending.Screen.value, Color_Blending.Overlay.value ])(toString));
-  })());
+  var flammableTBlendMode = new Test_FlareCheck.Flammable(Prelude["<$>"](Flare.functorUI)(TBlendMode)(Flare.select("BlendMode")(Color_Blending.Multiply.value)([ Color_Blending.Screen.value, Color_Blending.Overlay.value ])(modeToString)));
   var flammableInt255 = new Test_FlareCheck.Flammable(Prelude["<$>"](Flare.functorUI)(Int255)(Flare.intSlider("Int")(0)(255)(100)));
   var colorBox = function (c) {
       var repr = Color.cssStringHSLA(c);
@@ -8370,295 +8611,316 @@ var PS = { };
       var pretty = function (v) {
           return Data_Foldable.foldMap(Data_Foldable.foldableArray)(Text_Smolder_Markup.monoidMarkup)(colorBox)(v.value0);
       };
-      return Prelude["<$>"](Flare.functorUI)(function ($84) {
-          return Test_FlareCheck.SetHTML.create(pretty($84));
+      return Prelude["<$>"](Flare.functorUI)(function ($86) {
+          return Test_FlareCheck.SetHTML.create(pretty($86));
       })(ui);
   });
   var interactiveTColor = new Test_FlareCheck.Interactive(function (ui) {
-      return Prelude["<$>"](Flare.functorUI)(function ($85) {
-          return Test_FlareCheck.SetHTML.create(colorBox(runTColor($85)));
+      return Prelude["<$>"](Flare.functorUI)(function ($87) {
+          return Test_FlareCheck.SetHTML.create(colorBox(runTColor($87)));
       })(ui);
   });
-  var main = Test_FlareDoc.withPackage("purescript-colors.json")(function (dict) {
-      var doc = function (dictInteractive) {
-          return Test_FlareDoc["flareDoc'"](dictInteractive)("doc-color")(dict)("Color");
+  var blendUI = function (c1) {
+      return function (c2) {
+          return function (mode) {
+              var css3 = "background-color: " + (Color.cssStringHSLA(Color_Blending.blend(mode)(c1)(c2)) + (";" + ("width: 50px; height: 50px; border: 1px solid black;" + "position: absolute; top: 50px; left: 50px;")));
+              var css2 = "background-color: " + (Color.cssStringHSLA(c2) + (";" + ("width: 100px; height: 100px; border: 1px solid black;" + "position: absolute; top: 50px; left: 50px;")));
+              var css1 = "background-color: " + (Color.cssStringHSLA(c1) + (";" + ("width: 100px; height: 100px; border: 1px solid black;" + "position: absolute; top: 0px; left: 0px;")));
+              return Prelude.bind(Text_Smolder_Markup.bindMarkupM)(Text_Smolder_HTML.p(Text_Smolder_Markup.text("These are three separate divs (no transparency):")))(function () {
+                  return Text_Smolder_Markup["!"](Text_Smolder_Markup.attributableMarkupMF)(Text_Smolder_HTML.div)(Text_Smolder_HTML_Attributes.style("position: relative; height: 150px;"))(Prelude.bind(Text_Smolder_Markup.bindMarkupM)(Text_Smolder_Markup["!"](Text_Smolder_Markup.attributableMarkupMF)(Text_Smolder_HTML.div)(Text_Smolder_HTML_Attributes.style(css1))(Text_Smolder_Markup.text("")))(function () {
+                      return Prelude.bind(Text_Smolder_Markup.bindMarkupM)(Text_Smolder_Markup["!"](Text_Smolder_Markup.attributableMarkupMF)(Text_Smolder_HTML.div)(Text_Smolder_HTML_Attributes.style(css2))(Text_Smolder_Markup.text("")))(function () {
+                          return Text_Smolder_Markup["!"](Text_Smolder_Markup.attributableMarkupMF)(Text_Smolder_HTML.div)(Text_Smolder_HTML_Attributes.style(css3))(Text_Smolder_Markup.text(""));
+                      });
+                  }));
+              });
+          };
       };
-      return function __do() {
-          doc(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveTColor))("hsl")(Prelude.id(Prelude.categoryFn))();
-          doc(Test_FlareCheck.interactiveFunction(flammableInt255)(Test_FlareCheck.interactiveFunction(flammableInt255)(Test_FlareCheck.interactiveFunction(flammableInt255)(interactiveTColor))))("rgb")(function (v) {
-              return function (v1) {
-                  return function (v2) {
-                      return Color.rgb(v)(v1)(v2);
-                  };
-              };
-          })();
-          doc(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveString))("toHexString")(function (v) {
-              return Color.toHexString(v);
-          })();
-          doc(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveString))("cssStringHSLA")(function (v) {
-              return Color.cssStringHSLA(v);
-          })();
-          doc(interactiveTColor)("black")(Color.black)();
-          doc(interactiveTColor)("white")(Color.white)();
-          doc(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallNumber)(interactiveTColor))("grayscale")(function (v) {
-              return Color.grayscale(v);
-          })();
-          doc(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList))("complementary")(function (v) {
-              return new ColorList([ v, Color.complementary(v) ]);
-          })();
-          doc(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallNumber)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList)))("lighten")(function (v) {
-              return function (v1) {
-                  return new ColorList([ v1, Color.lighten(v)(v1) ]);
-              };
-          })();
-          doc(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallNumber)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList)))("darken")(function (v) {
-              return function (v1) {
-                  return new ColorList([ v1, Color.darken(v)(v1) ]);
-              };
-          })();
-          doc(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallNumber)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList)))("saturate")(function (v) {
-              return function (v1) {
-                  return new ColorList([ v1, Color.saturate(v)(v1) ]);
-              };
-          })();
-          doc(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallNumber)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList)))("desaturate")(function (v) {
-              return function (v1) {
-                  return new ColorList([ v1, Color.desaturate(v)(v1) ]);
-              };
-          })();
-          doc(Test_FlareCheck.interactiveFunction(flammableTColorSpace)(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallNumber)(interactiveColorList)))))("mix")(function (v) {
-              return function (v1) {
-                  return function (v2) {
-                      return function (v3) {
-                          return new ColorList([ v1, v2, Color.mix(v)(v1)(v2)(v3) ]);
+  };
+  var flare2 = Prelude["<*>"](Flare.applyUI)(Prelude["<*>"](Flare.applyUI)(Prelude["<$>"](Flare.functorUI)(blendUI)(Flare.color("Background")(Color_Scheme_X11.royalblue)))(Flare.color("Foreground")(Color_Scheme_X11.gold)))(Flare.select("BlendMode")(Color_Blending.Multiply.value)([ Color_Blending.Screen.value, Color_Blending.Overlay.value ])(modeToString));
+  var main = function __do() {
+      Test_FlareDoc.withPackage("purescript-colors.json")(function (dict) {
+          var doc = function (dictInteractive) {
+              return Test_FlareDoc["flareDoc'"](dictInteractive)("doc-color")(dict)("Color");
+          };
+          return function __do() {
+              doc(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveTColor))("hsl")(Prelude.id(Prelude.categoryFn))();
+              doc(Test_FlareCheck.interactiveFunction(flammableInt255)(Test_FlareCheck.interactiveFunction(flammableInt255)(Test_FlareCheck.interactiveFunction(flammableInt255)(interactiveTColor))))("rgb")(function (v) {
+                  return function (v1) {
+                      return function (v2) {
+                          return Color.rgb(v)(v1)(v2);
                       };
                   };
-              };
-          })();
-          doc(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveNumber))("brightness")(function (v) {
-              return Color.brightness(v);
-          })();
-          doc(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveNumber))("luminance")(function (v) {
-              return Color.luminance(v);
-          })();
-          doc(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList))("textColor")(function (v) {
-              return new ColorList([ v, Color.textColor(v) ]);
-          })();
-          var docblend = function (dictInteractive) {
-              return Test_FlareDoc["flareDoc'"](dictInteractive)("doc-blending")(dict)("Color.Blending");
-          };
-          docblend(Test_FlareCheck.interactiveFunction(flammableTBlendMode)(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList))))("blend")(function (v) {
-              return function (v1) {
-                  return function (v2) {
-                      return new ColorList([ v1, v2, Color_Blending.blend(v)(v1)(v2) ]);
+              })();
+              doc(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveString))("toHexString")(function (v) {
+                  return Color.toHexString(v);
+              })();
+              doc(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveString))("cssStringHSLA")(function (v) {
+                  return Color.cssStringHSLA(v);
+              })();
+              doc(interactiveTColor)("black")(Color.black)();
+              doc(interactiveTColor)("white")(Color.white)();
+              doc(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallNumber)(interactiveTColor))("grayscale")(function (v) {
+                  return Color.grayscale(v);
+              })();
+              doc(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList))("complementary")(function (v) {
+                  return new ColorList([ v, Color.complementary(v) ]);
+              })();
+              doc(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallNumber)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList)))("lighten")(function (v) {
+                  return function (v1) {
+                      return new ColorList([ v1, Color.lighten(v)(v1) ]);
                   };
-              };
-          })();
-          var docmd = function (dictInteractive) {
-              return Test_FlareDoc["flareDoc'"](dictInteractive)("doc-scheme-md")(dict)("Color.Scheme.MaterialDesign");
-          };
-          var docgrad = function (dictInteractive) {
-              return Test_FlareDoc["flareDoc'"](dictInteractive)("doc-gradient")(dict)("Color.Gradient");
-          };
-          docgrad(Test_FlareCheck.interactiveFunction(flammableTColorSpace)(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallInt)(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList)))))("linearGradient")(function (v) {
-              return function (v1) {
-                  return function (v2) {
-                      return function (v3) {
-                          return new ColorList(Color_Gradient.linearGradient(v)(v1)(v2)(v3));
+              })();
+              doc(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallNumber)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList)))("darken")(function (v) {
+                  return function (v1) {
+                      return new ColorList([ v1, Color.darken(v)(v1) ]);
+                  };
+              })();
+              doc(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallNumber)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList)))("saturate")(function (v) {
+                  return function (v1) {
+                      return new ColorList([ v1, Color.saturate(v)(v1) ]);
+                  };
+              })();
+              doc(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallNumber)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList)))("desaturate")(function (v) {
+                  return function (v1) {
+                      return new ColorList([ v1, Color.desaturate(v)(v1) ]);
+                  };
+              })();
+              doc(Test_FlareCheck.interactiveFunction(flammableTColorSpace)(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallNumber)(interactiveColorList)))))("mix")(function (v) {
+                  return function (v1) {
+                      return function (v2) {
+                          return function (v3) {
+                              return new ColorList([ v1, v2, Color.mix(v)(v1)(v2)(v3) ]);
+                          };
                       };
                   };
+              })();
+              doc(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveNumber))("brightness")(function (v) {
+                  return Color.brightness(v);
+              })();
+              doc(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveNumber))("luminance")(function (v) {
+                  return Color.luminance(v);
+              })();
+              doc(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList))("textColor")(function (v) {
+                  return new ColorList([ v, Color.textColor(v) ]);
+              })();
+              var docblend = function (dictInteractive) {
+                  return Test_FlareDoc["flareDoc'"](dictInteractive)("doc-blending")(dict)("Color.Blending");
               };
-          })();
-          var docharm = function (dictInteractive) {
-              return Test_FlareDoc["flareDoc'"](dictInteractive)("doc-scheme-harm")(dict)("Color.Scheme.Harmonic");
+              docblend(Test_FlareCheck.interactiveFunction(flammableTBlendMode)(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList))))("blend")(function (v) {
+                  return function (v1) {
+                      return function (v2) {
+                          return new ColorList([ v1, v2, Color_Blending.blend(v)(v1)(v2) ]);
+                      };
+                  };
+              })();
+              var docmd = function (dictInteractive) {
+                  return Test_FlareDoc["flareDoc'"](dictInteractive)("doc-scheme-md")(dict)("Color.Scheme.MaterialDesign");
+              };
+              var docgrad = function (dictInteractive) {
+                  return Test_FlareDoc["flareDoc'"](dictInteractive)("doc-gradient")(dict)("Color.Gradient");
+              };
+              docgrad(Test_FlareCheck.interactiveFunction(flammableTColorSpace)(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallInt)(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList)))))("linearGradient")(function (v) {
+                  return function (v1) {
+                      return function (v2) {
+                          return function (v3) {
+                              return new ColorList(Color_Gradient.linearGradient(v)(v1)(v2)(v3));
+                          };
+                      };
+                  };
+              })();
+              var docharm = function (dictInteractive) {
+                  return Test_FlareDoc["flareDoc'"](dictInteractive)("doc-scheme-harm")(dict)("Color.Scheme.Harmonic");
+              };
+              docharm(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList))("analogous")(function (v) {
+                  return ColorList.create(Color_Scheme_Harmonic.analogous(v));
+              })();
+              docharm(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList))("triad")(function (v) {
+                  return ColorList.create(Color_Scheme_Harmonic.triad(v));
+              })();
+              docharm(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList))("splitComplementary")(function (v) {
+                  return ColorList.create(Color_Scheme_Harmonic.splitComplementary(v));
+              })();
+              docharm(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList))("shades")(function (v) {
+                  return ColorList.create(Color_Scheme_Harmonic.shades(v));
+              })();
+              docharm(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList))("tetrad")(function (v) {
+                  return ColorList.create(Color_Scheme_Harmonic.tetrad(v));
+              })();
+              var docmd1 = function (dictInteractive) {
+                  return Test_FlareDoc["flareDoc'"](dictInteractive)("doc-scheme-md")(dict)("Color.Scheme.MaterialDesign");
+              };
+              docmd1(interactiveTColor)("red")(Color_Scheme_MaterialDesign.red)();
+              docmd1(interactiveTColor)("pink")(Color_Scheme_MaterialDesign.pink)();
+              docmd1(interactiveTColor)("purple")(Color_Scheme_MaterialDesign.purple)();
+              docmd1(interactiveTColor)("deepPurple")(Color_Scheme_MaterialDesign.deepPurple)();
+              docmd1(interactiveTColor)("indigo")(Color_Scheme_MaterialDesign.indigo)();
+              docmd1(interactiveTColor)("blue")(Color_Scheme_MaterialDesign.blue)();
+              docmd1(interactiveTColor)("lightBlue")(Color_Scheme_MaterialDesign.lightBlue)();
+              docmd1(interactiveTColor)("cyan")(Color_Scheme_MaterialDesign.cyan)();
+              docmd1(interactiveTColor)("teal")(Color_Scheme_MaterialDesign.teal)();
+              docmd1(interactiveTColor)("green")(Color_Scheme_MaterialDesign.green)();
+              docmd1(interactiveTColor)("lightGreen")(Color_Scheme_MaterialDesign.lightGreen)();
+              docmd1(interactiveTColor)("lime")(Color_Scheme_MaterialDesign.lime)();
+              docmd1(interactiveTColor)("yellow")(Color_Scheme_MaterialDesign.yellow)();
+              docmd1(interactiveTColor)("amber")(Color_Scheme_MaterialDesign.amber)();
+              docmd1(interactiveTColor)("orange")(Color_Scheme_MaterialDesign.orange)();
+              docmd1(interactiveTColor)("deepOrange")(Color_Scheme_MaterialDesign.deepOrange)();
+              docmd1(interactiveTColor)("brown")(Color_Scheme_MaterialDesign.brown)();
+              docmd1(interactiveTColor)("grey")(Color_Scheme_MaterialDesign.grey)();
+              docmd1(interactiveTColor)("blueGrey")(Color_Scheme_MaterialDesign.blueGrey)();
+              var docx11 = function (dictInteractive) {
+                  return Test_FlareDoc["flareDoc'"](dictInteractive)("doc-scheme-x11")(dict)("Color.Scheme.X11");
+              };
+              docx11(interactiveTColor)("aliceblue")(Color_Scheme_X11.aliceblue)();
+              docx11(interactiveTColor)("antiquewhite")(Color_Scheme_X11.antiquewhite)();
+              docx11(interactiveTColor)("aqua")(Color_Scheme_X11.aqua)();
+              docx11(interactiveTColor)("aquamarine")(Color_Scheme_X11.aquamarine)();
+              docx11(interactiveTColor)("azure")(Color_Scheme_X11.azure)();
+              docx11(interactiveTColor)("beige")(Color_Scheme_X11.beige)();
+              docx11(interactiveTColor)("bisque")(Color_Scheme_X11.bisque)();
+              docx11(interactiveTColor)("blanchedalmond")(Color_Scheme_X11.blanchedalmond)();
+              docx11(interactiveTColor)("blue")(Color_Scheme_X11.blue)();
+              docx11(interactiveTColor)("blueviolet")(Color_Scheme_X11.blueviolet)();
+              docx11(interactiveTColor)("brown")(Color_Scheme_X11.brown)();
+              docx11(interactiveTColor)("burlywood")(Color_Scheme_X11.burlywood)();
+              docx11(interactiveTColor)("cadetblue")(Color_Scheme_X11.cadetblue)();
+              docx11(interactiveTColor)("chartreuse")(Color_Scheme_X11.chartreuse)();
+              docx11(interactiveTColor)("chocolate")(Color_Scheme_X11.chocolate)();
+              docx11(interactiveTColor)("coral")(Color_Scheme_X11.coral)();
+              docx11(interactiveTColor)("cornflowerblue")(Color_Scheme_X11.cornflowerblue)();
+              docx11(interactiveTColor)("cornsilk")(Color_Scheme_X11.cornsilk)();
+              docx11(interactiveTColor)("crimson")(Color_Scheme_X11.crimson)();
+              docx11(interactiveTColor)("cyan")(Color_Scheme_X11.cyan)();
+              docx11(interactiveTColor)("darkblue")(Color_Scheme_X11.darkblue)();
+              docx11(interactiveTColor)("darkcyan")(Color_Scheme_X11.darkcyan)();
+              docx11(interactiveTColor)("darkgoldenrod")(Color_Scheme_X11.darkgoldenrod)();
+              docx11(interactiveTColor)("darkgray")(Color_Scheme_X11.darkgray)();
+              docx11(interactiveTColor)("darkgreen")(Color_Scheme_X11.darkgreen)();
+              docx11(interactiveTColor)("darkgrey")(Color_Scheme_X11.darkgrey)();
+              docx11(interactiveTColor)("darkkhaki")(Color_Scheme_X11.darkkhaki)();
+              docx11(interactiveTColor)("darkmagenta")(Color_Scheme_X11.darkmagenta)();
+              docx11(interactiveTColor)("darkolivegreen")(Color_Scheme_X11.darkolivegreen)();
+              docx11(interactiveTColor)("darkorange")(Color_Scheme_X11.darkorange)();
+              docx11(interactiveTColor)("darkorchid")(Color_Scheme_X11.darkorchid)();
+              docx11(interactiveTColor)("darkred")(Color_Scheme_X11.darkred)();
+              docx11(interactiveTColor)("darksalmon")(Color_Scheme_X11.darksalmon)();
+              docx11(interactiveTColor)("darkseagreen")(Color_Scheme_X11.darkseagreen)();
+              docx11(interactiveTColor)("darkslateblue")(Color_Scheme_X11.darkslateblue)();
+              docx11(interactiveTColor)("darkslategray")(Color_Scheme_X11.darkslategray)();
+              docx11(interactiveTColor)("darkslategrey")(Color_Scheme_X11.darkslategrey)();
+              docx11(interactiveTColor)("darkturquoise")(Color_Scheme_X11.darkturquoise)();
+              docx11(interactiveTColor)("darkviolet")(Color_Scheme_X11.darkviolet)();
+              docx11(interactiveTColor)("deeppink")(Color_Scheme_X11.deeppink)();
+              docx11(interactiveTColor)("deepskyblue")(Color_Scheme_X11.deepskyblue)();
+              docx11(interactiveTColor)("dimgray")(Color_Scheme_X11.dimgray)();
+              docx11(interactiveTColor)("dimgrey")(Color_Scheme_X11.dimgrey)();
+              docx11(interactiveTColor)("dodgerblue")(Color_Scheme_X11.dodgerblue)();
+              docx11(interactiveTColor)("firebrick")(Color_Scheme_X11.firebrick)();
+              docx11(interactiveTColor)("floralwhite")(Color_Scheme_X11.floralwhite)();
+              docx11(interactiveTColor)("forestgreen")(Color_Scheme_X11.forestgreen)();
+              docx11(interactiveTColor)("fuchsia")(Color_Scheme_X11.fuchsia)();
+              docx11(interactiveTColor)("gainsboro")(Color_Scheme_X11.gainsboro)();
+              docx11(interactiveTColor)("ghostwhite")(Color_Scheme_X11.ghostwhite)();
+              docx11(interactiveTColor)("gold")(Color_Scheme_X11.gold)();
+              docx11(interactiveTColor)("goldenrod")(Color_Scheme_X11.goldenrod)();
+              docx11(interactiveTColor)("gray")(Color_Scheme_X11.gray)();
+              docx11(interactiveTColor)("green")(Color_Scheme_X11.green)();
+              docx11(interactiveTColor)("greenyellow")(Color_Scheme_X11.greenyellow)();
+              docx11(interactiveTColor)("grey")(Color_Scheme_X11.grey)();
+              docx11(interactiveTColor)("honeydew")(Color_Scheme_X11.honeydew)();
+              docx11(interactiveTColor)("hotpink")(Color_Scheme_X11.hotpink)();
+              docx11(interactiveTColor)("indianred")(Color_Scheme_X11.indianred)();
+              docx11(interactiveTColor)("indigo")(Color_Scheme_X11.indigo)();
+              docx11(interactiveTColor)("ivory")(Color_Scheme_X11.ivory)();
+              docx11(interactiveTColor)("khaki")(Color_Scheme_X11.khaki)();
+              docx11(interactiveTColor)("lavender")(Color_Scheme_X11.lavender)();
+              docx11(interactiveTColor)("lavenderblush")(Color_Scheme_X11.lavenderblush)();
+              docx11(interactiveTColor)("lawngreen")(Color_Scheme_X11.lawngreen)();
+              docx11(interactiveTColor)("lemonchiffon")(Color_Scheme_X11.lemonchiffon)();
+              docx11(interactiveTColor)("lightblue")(Color_Scheme_X11.lightblue)();
+              docx11(interactiveTColor)("lightcoral")(Color_Scheme_X11.lightcoral)();
+              docx11(interactiveTColor)("lightcyan")(Color_Scheme_X11.lightcyan)();
+              docx11(interactiveTColor)("lightgoldenrodyellow")(Color_Scheme_X11.lightgoldenrodyellow)();
+              docx11(interactiveTColor)("lightgray")(Color_Scheme_X11.lightgray)();
+              docx11(interactiveTColor)("lightgreen")(Color_Scheme_X11.lightgreen)();
+              docx11(interactiveTColor)("lightgrey")(Color_Scheme_X11.lightgrey)();
+              docx11(interactiveTColor)("lightpink")(Color_Scheme_X11.lightpink)();
+              docx11(interactiveTColor)("lightsalmon")(Color_Scheme_X11.lightsalmon)();
+              docx11(interactiveTColor)("lightseagreen")(Color_Scheme_X11.lightseagreen)();
+              docx11(interactiveTColor)("lightskyblue")(Color_Scheme_X11.lightskyblue)();
+              docx11(interactiveTColor)("lightslategray")(Color_Scheme_X11.lightslategray)();
+              docx11(interactiveTColor)("lightslategrey")(Color_Scheme_X11.lightslategrey)();
+              docx11(interactiveTColor)("lightsteelblue")(Color_Scheme_X11.lightsteelblue)();
+              docx11(interactiveTColor)("lightyellow")(Color_Scheme_X11.lightyellow)();
+              docx11(interactiveTColor)("lime")(Color_Scheme_X11.lime)();
+              docx11(interactiveTColor)("limegreen")(Color_Scheme_X11.limegreen)();
+              docx11(interactiveTColor)("linen")(Color_Scheme_X11.linen)();
+              docx11(interactiveTColor)("magenta")(Color_Scheme_X11.magenta)();
+              docx11(interactiveTColor)("maroon")(Color_Scheme_X11.maroon)();
+              docx11(interactiveTColor)("mediumaquamarine")(Color_Scheme_X11.mediumaquamarine)();
+              docx11(interactiveTColor)("mediumblue")(Color_Scheme_X11.mediumblue)();
+              docx11(interactiveTColor)("mediumorchid")(Color_Scheme_X11.mediumorchid)();
+              docx11(interactiveTColor)("mediumpurple")(Color_Scheme_X11.mediumpurple)();
+              docx11(interactiveTColor)("mediumseagreen")(Color_Scheme_X11.mediumseagreen)();
+              docx11(interactiveTColor)("mediumslateblue")(Color_Scheme_X11.mediumslateblue)();
+              docx11(interactiveTColor)("mediumspringgreen")(Color_Scheme_X11.mediumspringgreen)();
+              docx11(interactiveTColor)("mediumturquoise")(Color_Scheme_X11.mediumturquoise)();
+              docx11(interactiveTColor)("mediumvioletred")(Color_Scheme_X11.mediumvioletred)();
+              docx11(interactiveTColor)("midnightblue")(Color_Scheme_X11.midnightblue)();
+              docx11(interactiveTColor)("mintcream")(Color_Scheme_X11.mintcream)();
+              docx11(interactiveTColor)("mistyrose")(Color_Scheme_X11.mistyrose)();
+              docx11(interactiveTColor)("moccasin")(Color_Scheme_X11.moccasin)();
+              docx11(interactiveTColor)("navajowhite")(Color_Scheme_X11.navajowhite)();
+              docx11(interactiveTColor)("navy")(Color_Scheme_X11.navy)();
+              docx11(interactiveTColor)("oldlace")(Color_Scheme_X11.oldlace)();
+              docx11(interactiveTColor)("olive")(Color_Scheme_X11.olive)();
+              docx11(interactiveTColor)("olivedrab")(Color_Scheme_X11.olivedrab)();
+              docx11(interactiveTColor)("orange")(Color_Scheme_X11.orange)();
+              docx11(interactiveTColor)("orangered")(Color_Scheme_X11.orangered)();
+              docx11(interactiveTColor)("orchid")(Color_Scheme_X11.orchid)();
+              docx11(interactiveTColor)("palegoldenrod")(Color_Scheme_X11.palegoldenrod)();
+              docx11(interactiveTColor)("palegreen")(Color_Scheme_X11.palegreen)();
+              docx11(interactiveTColor)("paleturquoise")(Color_Scheme_X11.paleturquoise)();
+              docx11(interactiveTColor)("palevioletred")(Color_Scheme_X11.palevioletred)();
+              docx11(interactiveTColor)("papayawhip")(Color_Scheme_X11.papayawhip)();
+              docx11(interactiveTColor)("peachpuff")(Color_Scheme_X11.peachpuff)();
+              docx11(interactiveTColor)("peru")(Color_Scheme_X11.peru)();
+              docx11(interactiveTColor)("pink")(Color_Scheme_X11.pink)();
+              docx11(interactiveTColor)("plum")(Color_Scheme_X11.plum)();
+              docx11(interactiveTColor)("powderblue")(Color_Scheme_X11.powderblue)();
+              docx11(interactiveTColor)("purple")(Color_Scheme_X11.purple)();
+              docx11(interactiveTColor)("red")(Color_Scheme_X11.red)();
+              docx11(interactiveTColor)("rosybrown")(Color_Scheme_X11.rosybrown)();
+              docx11(interactiveTColor)("royalblue")(Color_Scheme_X11.royalblue)();
+              docx11(interactiveTColor)("saddlebrown")(Color_Scheme_X11.saddlebrown)();
+              docx11(interactiveTColor)("salmon")(Color_Scheme_X11.salmon)();
+              docx11(interactiveTColor)("sandybrown")(Color_Scheme_X11.sandybrown)();
+              docx11(interactiveTColor)("seagreen")(Color_Scheme_X11.seagreen)();
+              docx11(interactiveTColor)("seashell")(Color_Scheme_X11.seashell)();
+              docx11(interactiveTColor)("sienna")(Color_Scheme_X11.sienna)();
+              docx11(interactiveTColor)("silver")(Color_Scheme_X11.silver)();
+              docx11(interactiveTColor)("skyblue")(Color_Scheme_X11.skyblue)();
+              docx11(interactiveTColor)("slateblue")(Color_Scheme_X11.slateblue)();
+              docx11(interactiveTColor)("slategray")(Color_Scheme_X11.slategray)();
+              docx11(interactiveTColor)("slategrey")(Color_Scheme_X11.slategrey)();
+              docx11(interactiveTColor)("snow")(Color_Scheme_X11.snow)();
+              docx11(interactiveTColor)("springgreen")(Color_Scheme_X11.springgreen)();
+              docx11(interactiveTColor)("steelblue")(Color_Scheme_X11.steelblue)();
+              docx11(interactiveTColor)("tan")(Color_Scheme_X11.tan)();
+              docx11(interactiveTColor)("teal")(Color_Scheme_X11.teal)();
+              docx11(interactiveTColor)("thistle")(Color_Scheme_X11.thistle)();
+              docx11(interactiveTColor)("tomato")(Color_Scheme_X11.tomato)();
+              docx11(interactiveTColor)("turquoise")(Color_Scheme_X11.turquoise)();
+              docx11(interactiveTColor)("violet")(Color_Scheme_X11.violet)();
+              docx11(interactiveTColor)("wheat")(Color_Scheme_X11.wheat)();
+              docx11(interactiveTColor)("whitesmoke")(Color_Scheme_X11.whitesmoke)();
+              docx11(interactiveTColor)("yellow")(Color_Scheme_X11.yellow)();
+              return docx11(interactiveTColor)("yellowgreen")(Color_Scheme_X11.yellowgreen)();
           };
-          docharm(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList))("analogous")(function (v) {
-              return ColorList.create(Color_Scheme_Harmonic.analogous(v));
-          })();
-          docharm(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList))("triad")(function (v) {
-              return ColorList.create(Color_Scheme_Harmonic.triad(v));
-          })();
-          docharm(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList))("splitComplementary")(function (v) {
-              return ColorList.create(Color_Scheme_Harmonic.splitComplementary(v));
-          })();
-          docharm(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList))("shades")(function (v) {
-              return ColorList.create(Color_Scheme_Harmonic.shades(v));
-          })();
-          docharm(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList))("tetrad")(function (v) {
-              return ColorList.create(Color_Scheme_Harmonic.tetrad(v));
-          })();
-          var docmd1 = function (dictInteractive) {
-              return Test_FlareDoc["flareDoc'"](dictInteractive)("doc-scheme-md")(dict)("Color.Scheme.MaterialDesign");
-          };
-          docmd1(interactiveTColor)("red")(Color_Scheme_MaterialDesign.red)();
-          docmd1(interactiveTColor)("pink")(Color_Scheme_MaterialDesign.pink)();
-          docmd1(interactiveTColor)("purple")(Color_Scheme_MaterialDesign.purple)();
-          docmd1(interactiveTColor)("deepPurple")(Color_Scheme_MaterialDesign.deepPurple)();
-          docmd1(interactiveTColor)("indigo")(Color_Scheme_MaterialDesign.indigo)();
-          docmd1(interactiveTColor)("blue")(Color_Scheme_MaterialDesign.blue)();
-          docmd1(interactiveTColor)("lightBlue")(Color_Scheme_MaterialDesign.lightBlue)();
-          docmd1(interactiveTColor)("cyan")(Color_Scheme_MaterialDesign.cyan)();
-          docmd1(interactiveTColor)("teal")(Color_Scheme_MaterialDesign.teal)();
-          docmd1(interactiveTColor)("green")(Color_Scheme_MaterialDesign.green)();
-          docmd1(interactiveTColor)("lightGreen")(Color_Scheme_MaterialDesign.lightGreen)();
-          docmd1(interactiveTColor)("lime")(Color_Scheme_MaterialDesign.lime)();
-          docmd1(interactiveTColor)("yellow")(Color_Scheme_MaterialDesign.yellow)();
-          docmd1(interactiveTColor)("amber")(Color_Scheme_MaterialDesign.amber)();
-          docmd1(interactiveTColor)("orange")(Color_Scheme_MaterialDesign.orange)();
-          docmd1(interactiveTColor)("deepOrange")(Color_Scheme_MaterialDesign.deepOrange)();
-          docmd1(interactiveTColor)("brown")(Color_Scheme_MaterialDesign.brown)();
-          docmd1(interactiveTColor)("grey")(Color_Scheme_MaterialDesign.grey)();
-          docmd1(interactiveTColor)("blueGrey")(Color_Scheme_MaterialDesign.blueGrey)();
-          var docx11 = function (dictInteractive) {
-              return Test_FlareDoc["flareDoc'"](dictInteractive)("doc-scheme-x11")(dict)("Color.Scheme.X11");
-          };
-          docx11(interactiveTColor)("aliceblue")(Color_Scheme_X11.aliceblue)();
-          docx11(interactiveTColor)("antiquewhite")(Color_Scheme_X11.antiquewhite)();
-          docx11(interactiveTColor)("aqua")(Color_Scheme_X11.aqua)();
-          docx11(interactiveTColor)("aquamarine")(Color_Scheme_X11.aquamarine)();
-          docx11(interactiveTColor)("azure")(Color_Scheme_X11.azure)();
-          docx11(interactiveTColor)("beige")(Color_Scheme_X11.beige)();
-          docx11(interactiveTColor)("bisque")(Color_Scheme_X11.bisque)();
-          docx11(interactiveTColor)("blanchedalmond")(Color_Scheme_X11.blanchedalmond)();
-          docx11(interactiveTColor)("blue")(Color_Scheme_X11.blue)();
-          docx11(interactiveTColor)("blueviolet")(Color_Scheme_X11.blueviolet)();
-          docx11(interactiveTColor)("brown")(Color_Scheme_X11.brown)();
-          docx11(interactiveTColor)("burlywood")(Color_Scheme_X11.burlywood)();
-          docx11(interactiveTColor)("cadetblue")(Color_Scheme_X11.cadetblue)();
-          docx11(interactiveTColor)("chartreuse")(Color_Scheme_X11.chartreuse)();
-          docx11(interactiveTColor)("chocolate")(Color_Scheme_X11.chocolate)();
-          docx11(interactiveTColor)("coral")(Color_Scheme_X11.coral)();
-          docx11(interactiveTColor)("cornflowerblue")(Color_Scheme_X11.cornflowerblue)();
-          docx11(interactiveTColor)("cornsilk")(Color_Scheme_X11.cornsilk)();
-          docx11(interactiveTColor)("crimson")(Color_Scheme_X11.crimson)();
-          docx11(interactiveTColor)("cyan")(Color_Scheme_X11.cyan)();
-          docx11(interactiveTColor)("darkblue")(Color_Scheme_X11.darkblue)();
-          docx11(interactiveTColor)("darkcyan")(Color_Scheme_X11.darkcyan)();
-          docx11(interactiveTColor)("darkgoldenrod")(Color_Scheme_X11.darkgoldenrod)();
-          docx11(interactiveTColor)("darkgray")(Color_Scheme_X11.darkgray)();
-          docx11(interactiveTColor)("darkgreen")(Color_Scheme_X11.darkgreen)();
-          docx11(interactiveTColor)("darkgrey")(Color_Scheme_X11.darkgrey)();
-          docx11(interactiveTColor)("darkkhaki")(Color_Scheme_X11.darkkhaki)();
-          docx11(interactiveTColor)("darkmagenta")(Color_Scheme_X11.darkmagenta)();
-          docx11(interactiveTColor)("darkolivegreen")(Color_Scheme_X11.darkolivegreen)();
-          docx11(interactiveTColor)("darkorange")(Color_Scheme_X11.darkorange)();
-          docx11(interactiveTColor)("darkorchid")(Color_Scheme_X11.darkorchid)();
-          docx11(interactiveTColor)("darkred")(Color_Scheme_X11.darkred)();
-          docx11(interactiveTColor)("darksalmon")(Color_Scheme_X11.darksalmon)();
-          docx11(interactiveTColor)("darkseagreen")(Color_Scheme_X11.darkseagreen)();
-          docx11(interactiveTColor)("darkslateblue")(Color_Scheme_X11.darkslateblue)();
-          docx11(interactiveTColor)("darkslategray")(Color_Scheme_X11.darkslategray)();
-          docx11(interactiveTColor)("darkslategrey")(Color_Scheme_X11.darkslategrey)();
-          docx11(interactiveTColor)("darkturquoise")(Color_Scheme_X11.darkturquoise)();
-          docx11(interactiveTColor)("darkviolet")(Color_Scheme_X11.darkviolet)();
-          docx11(interactiveTColor)("deeppink")(Color_Scheme_X11.deeppink)();
-          docx11(interactiveTColor)("deepskyblue")(Color_Scheme_X11.deepskyblue)();
-          docx11(interactiveTColor)("dimgray")(Color_Scheme_X11.dimgray)();
-          docx11(interactiveTColor)("dimgrey")(Color_Scheme_X11.dimgrey)();
-          docx11(interactiveTColor)("dodgerblue")(Color_Scheme_X11.dodgerblue)();
-          docx11(interactiveTColor)("firebrick")(Color_Scheme_X11.firebrick)();
-          docx11(interactiveTColor)("floralwhite")(Color_Scheme_X11.floralwhite)();
-          docx11(interactiveTColor)("forestgreen")(Color_Scheme_X11.forestgreen)();
-          docx11(interactiveTColor)("fuchsia")(Color_Scheme_X11.fuchsia)();
-          docx11(interactiveTColor)("gainsboro")(Color_Scheme_X11.gainsboro)();
-          docx11(interactiveTColor)("ghostwhite")(Color_Scheme_X11.ghostwhite)();
-          docx11(interactiveTColor)("gold")(Color_Scheme_X11.gold)();
-          docx11(interactiveTColor)("goldenrod")(Color_Scheme_X11.goldenrod)();
-          docx11(interactiveTColor)("gray")(Color_Scheme_X11.gray)();
-          docx11(interactiveTColor)("green")(Color_Scheme_X11.green)();
-          docx11(interactiveTColor)("greenyellow")(Color_Scheme_X11.greenyellow)();
-          docx11(interactiveTColor)("grey")(Color_Scheme_X11.grey)();
-          docx11(interactiveTColor)("honeydew")(Color_Scheme_X11.honeydew)();
-          docx11(interactiveTColor)("hotpink")(Color_Scheme_X11.hotpink)();
-          docx11(interactiveTColor)("indianred")(Color_Scheme_X11.indianred)();
-          docx11(interactiveTColor)("indigo")(Color_Scheme_X11.indigo)();
-          docx11(interactiveTColor)("ivory")(Color_Scheme_X11.ivory)();
-          docx11(interactiveTColor)("khaki")(Color_Scheme_X11.khaki)();
-          docx11(interactiveTColor)("lavender")(Color_Scheme_X11.lavender)();
-          docx11(interactiveTColor)("lavenderblush")(Color_Scheme_X11.lavenderblush)();
-          docx11(interactiveTColor)("lawngreen")(Color_Scheme_X11.lawngreen)();
-          docx11(interactiveTColor)("lemonchiffon")(Color_Scheme_X11.lemonchiffon)();
-          docx11(interactiveTColor)("lightblue")(Color_Scheme_X11.lightblue)();
-          docx11(interactiveTColor)("lightcoral")(Color_Scheme_X11.lightcoral)();
-          docx11(interactiveTColor)("lightcyan")(Color_Scheme_X11.lightcyan)();
-          docx11(interactiveTColor)("lightgoldenrodyellow")(Color_Scheme_X11.lightgoldenrodyellow)();
-          docx11(interactiveTColor)("lightgray")(Color_Scheme_X11.lightgray)();
-          docx11(interactiveTColor)("lightgreen")(Color_Scheme_X11.lightgreen)();
-          docx11(interactiveTColor)("lightgrey")(Color_Scheme_X11.lightgrey)();
-          docx11(interactiveTColor)("lightpink")(Color_Scheme_X11.lightpink)();
-          docx11(interactiveTColor)("lightsalmon")(Color_Scheme_X11.lightsalmon)();
-          docx11(interactiveTColor)("lightseagreen")(Color_Scheme_X11.lightseagreen)();
-          docx11(interactiveTColor)("lightskyblue")(Color_Scheme_X11.lightskyblue)();
-          docx11(interactiveTColor)("lightslategray")(Color_Scheme_X11.lightslategray)();
-          docx11(interactiveTColor)("lightslategrey")(Color_Scheme_X11.lightslategrey)();
-          docx11(interactiveTColor)("lightsteelblue")(Color_Scheme_X11.lightsteelblue)();
-          docx11(interactiveTColor)("lightyellow")(Color_Scheme_X11.lightyellow)();
-          docx11(interactiveTColor)("lime")(Color_Scheme_X11.lime)();
-          docx11(interactiveTColor)("limegreen")(Color_Scheme_X11.limegreen)();
-          docx11(interactiveTColor)("linen")(Color_Scheme_X11.linen)();
-          docx11(interactiveTColor)("magenta")(Color_Scheme_X11.magenta)();
-          docx11(interactiveTColor)("maroon")(Color_Scheme_X11.maroon)();
-          docx11(interactiveTColor)("mediumaquamarine")(Color_Scheme_X11.mediumaquamarine)();
-          docx11(interactiveTColor)("mediumblue")(Color_Scheme_X11.mediumblue)();
-          docx11(interactiveTColor)("mediumorchid")(Color_Scheme_X11.mediumorchid)();
-          docx11(interactiveTColor)("mediumpurple")(Color_Scheme_X11.mediumpurple)();
-          docx11(interactiveTColor)("mediumseagreen")(Color_Scheme_X11.mediumseagreen)();
-          docx11(interactiveTColor)("mediumslateblue")(Color_Scheme_X11.mediumslateblue)();
-          docx11(interactiveTColor)("mediumspringgreen")(Color_Scheme_X11.mediumspringgreen)();
-          docx11(interactiveTColor)("mediumturquoise")(Color_Scheme_X11.mediumturquoise)();
-          docx11(interactiveTColor)("mediumvioletred")(Color_Scheme_X11.mediumvioletred)();
-          docx11(interactiveTColor)("midnightblue")(Color_Scheme_X11.midnightblue)();
-          docx11(interactiveTColor)("mintcream")(Color_Scheme_X11.mintcream)();
-          docx11(interactiveTColor)("mistyrose")(Color_Scheme_X11.mistyrose)();
-          docx11(interactiveTColor)("moccasin")(Color_Scheme_X11.moccasin)();
-          docx11(interactiveTColor)("navajowhite")(Color_Scheme_X11.navajowhite)();
-          docx11(interactiveTColor)("navy")(Color_Scheme_X11.navy)();
-          docx11(interactiveTColor)("oldlace")(Color_Scheme_X11.oldlace)();
-          docx11(interactiveTColor)("olive")(Color_Scheme_X11.olive)();
-          docx11(interactiveTColor)("olivedrab")(Color_Scheme_X11.olivedrab)();
-          docx11(interactiveTColor)("orange")(Color_Scheme_X11.orange)();
-          docx11(interactiveTColor)("orangered")(Color_Scheme_X11.orangered)();
-          docx11(interactiveTColor)("orchid")(Color_Scheme_X11.orchid)();
-          docx11(interactiveTColor)("palegoldenrod")(Color_Scheme_X11.palegoldenrod)();
-          docx11(interactiveTColor)("palegreen")(Color_Scheme_X11.palegreen)();
-          docx11(interactiveTColor)("paleturquoise")(Color_Scheme_X11.paleturquoise)();
-          docx11(interactiveTColor)("palevioletred")(Color_Scheme_X11.palevioletred)();
-          docx11(interactiveTColor)("papayawhip")(Color_Scheme_X11.papayawhip)();
-          docx11(interactiveTColor)("peachpuff")(Color_Scheme_X11.peachpuff)();
-          docx11(interactiveTColor)("peru")(Color_Scheme_X11.peru)();
-          docx11(interactiveTColor)("pink")(Color_Scheme_X11.pink)();
-          docx11(interactiveTColor)("plum")(Color_Scheme_X11.plum)();
-          docx11(interactiveTColor)("powderblue")(Color_Scheme_X11.powderblue)();
-          docx11(interactiveTColor)("purple")(Color_Scheme_X11.purple)();
-          docx11(interactiveTColor)("red")(Color_Scheme_X11.red)();
-          docx11(interactiveTColor)("rosybrown")(Color_Scheme_X11.rosybrown)();
-          docx11(interactiveTColor)("royalblue")(Color_Scheme_X11.royalblue)();
-          docx11(interactiveTColor)("saddlebrown")(Color_Scheme_X11.saddlebrown)();
-          docx11(interactiveTColor)("salmon")(Color_Scheme_X11.salmon)();
-          docx11(interactiveTColor)("sandybrown")(Color_Scheme_X11.sandybrown)();
-          docx11(interactiveTColor)("seagreen")(Color_Scheme_X11.seagreen)();
-          docx11(interactiveTColor)("seashell")(Color_Scheme_X11.seashell)();
-          docx11(interactiveTColor)("sienna")(Color_Scheme_X11.sienna)();
-          docx11(interactiveTColor)("silver")(Color_Scheme_X11.silver)();
-          docx11(interactiveTColor)("skyblue")(Color_Scheme_X11.skyblue)();
-          docx11(interactiveTColor)("slateblue")(Color_Scheme_X11.slateblue)();
-          docx11(interactiveTColor)("slategray")(Color_Scheme_X11.slategray)();
-          docx11(interactiveTColor)("slategrey")(Color_Scheme_X11.slategrey)();
-          docx11(interactiveTColor)("snow")(Color_Scheme_X11.snow)();
-          docx11(interactiveTColor)("springgreen")(Color_Scheme_X11.springgreen)();
-          docx11(interactiveTColor)("steelblue")(Color_Scheme_X11.steelblue)();
-          docx11(interactiveTColor)("tan")(Color_Scheme_X11.tan)();
-          docx11(interactiveTColor)("teal")(Color_Scheme_X11.teal)();
-          docx11(interactiveTColor)("thistle")(Color_Scheme_X11.thistle)();
-          docx11(interactiveTColor)("tomato")(Color_Scheme_X11.tomato)();
-          docx11(interactiveTColor)("turquoise")(Color_Scheme_X11.turquoise)();
-          docx11(interactiveTColor)("violet")(Color_Scheme_X11.violet)();
-          docx11(interactiveTColor)("wheat")(Color_Scheme_X11.wheat)();
-          docx11(interactiveTColor)("whitesmoke")(Color_Scheme_X11.whitesmoke)();
-          docx11(interactiveTColor)("yellow")(Color_Scheme_X11.yellow)();
-          return docx11(interactiveTColor)("yellowgreen")(Color_Scheme_X11.yellowgreen)();
-      };
-  });
+      })();
+      Flare_Smolder.runFlareHTML("input1")("output1")(flare1)();
+      return Flare_Smolder.runFlareHTML("input2")("output2")(flare2)();
+  };
   exports["main"] = main;;
  
 })(PS["Test.Interactive"] = PS["Test.Interactive"] || {});
