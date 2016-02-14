@@ -10,6 +10,7 @@ import Text.Smolder.HTML as H
 import Text.Smolder.HTML.Attributes as HA
 
 import Flare
+import Flare.Smolder
 import Test.FlareDoc
 
 import Color
@@ -51,12 +52,11 @@ instance interactiveColorList :: Interactive ColorList where
 
 newtype TBlendMode = TBlendMode BlendMode
 
+modeToString Multiply = "Multiply"
+modeToString Screen = "Screen"
+modeToString Overlay = "Overlay"
 instance flammableTBlendMode :: Flammable TBlendMode where
-  spark = TBlendMode <$> select "BlendMode" Multiply [Screen, Overlay] toString
-    where
-      toString Multiply = "Multiply"
-      toString Screen = "Screen"
-      toString Overlay = "Overlay"
+  spark = TBlendMode <$> select "BlendMode" Multiply [Screen, Overlay] modeToString
 
 newtype TColorSpace = TColorSpace ColorSpace
 
@@ -69,6 +69,51 @@ instance flammableTColorSpace :: Flammable TColorSpace where
 newtype Int255 = Int255 Int
 instance flammableInt255 :: Flammable Int255 where
   spark = Int255 <$> intSlider "Int" 0 255 100
+
+textReadable bgColor textColor = do
+  H.div ! HA.style css $ H.text "Is this text well readable?"
+  H.p (H.text ("WCAG says: ") <> H.b (H.text answ))
+  H.div ! HA.style ("width: 400px; height: 15px; background-color: " <> barBg) $ do
+    H.div ! HA.style ("width: " <> width <> "px; height: 15px;" <>
+                      "background-color: " <> barFg) $ H.text ""
+
+  where
+    css = "background-color: " <> cssStringHSLA bgColor <> ";" <>
+          "width: 380px; height: 50px;" <>
+          "border: 1px solid black;" <>
+          "padding: 10px; color: " <> cssStringHSLA textColor
+    isRead = isReadable bgColor textColor
+    answ = if isRead then "yes" else "no"
+    ratio = contrast bgColor textColor
+    width = show ((ratio - 1.0) * 20.0)
+    barBg = cssStringHSLA black
+    barFg = cssStringHSLA (if isRead then green else red)
+
+flare1 = textReadable <$> color "Background" mediumvioletred
+                      <*> color "Text" black
+
+blendUI c1 c2 mode = do
+  H.p (H.text "These are three separate divs (no transparency):")
+  H.div ! HA.style "position: relative; height: 150px;" $ do
+    (H.div ! HA.style css1) (H.text "")
+    (H.div ! HA.style css2) (H.text "")
+    (H.div ! HA.style css3) (H.text "")
+
+  where
+    css1 = "background-color: " <> cssStringHSLA c1 <> ";" <>
+           "width: 100px; height: 100px; border: 1px solid black;" <>
+           "position: absolute; top: 0px; left: 0px;"
+    css2 = "background-color: " <> cssStringHSLA c2 <> ";" <>
+           "width: 100px; height: 100px; border: 1px solid black;" <>
+           "position: absolute; top: 50px; left: 50px;"
+    css3 = "background-color: " <> cssStringHSLA (blend mode c1 c2) <> ";" <>
+           "width: 50px; height: 50px; border: 1px solid black;" <>
+           "position: absolute; top: 50px; left: 50px;"
+
+
+flare2 = blendUI <$> color "Background" royalblue
+                 <*> color "Foreground" gold
+                 <*> select "BlendMode" Multiply [Screen, Overlay] modeToString
 
 main = do
   withPackage "purescript-colors.json" $ \dict -> do
@@ -286,3 +331,6 @@ main = do
     docx11 "whitesmoke" (TColor whitesmoke)
     docx11 "yellow" (TColor yellow)
     docx11 "yellowgreen" (TColor yellowgreen)
+
+  runFlareHTML "input1" "output1" flare1
+  runFlareHTML "input2" "output2" flare2
