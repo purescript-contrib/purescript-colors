@@ -14,8 +14,12 @@ A package for dealing with colors in PureScript.
 > cssStringHSLA (seagreen # lighten 0.2 # saturate 0.3)
 "hsl(146.45, 80.27%, 56.27%)"
 
-> toHexString <$> linearGradient HSL 5 hotpink darksalmon 
+> toHexString <$> linearGradient HSL 5 hotpink darksalmon
 ["#ff69b4","#fa6d99","#f47182","#ef7d76","#e9967a"]
+
+> toHexString <$> (sortBy (comparing luminance) [black, white, blue, lightgreen])
+["#000000","#0000ff","#90ee90","#ffffff"]
+
 
 ```
 

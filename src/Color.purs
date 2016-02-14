@@ -1,5 +1,17 @@
--- | This module provides types and functions for dealing with colors, such as
--- | the conversion between different color spaces and color manipulations.
+-- | This module provides basic types and functions for dealing with colors.
+-- |
+-- | Colors can be constructed from HSL values, RGB values or Hex strings /
+-- | integers. In addition, a lot of standardized named colors can be found in
+-- | `Color.Scheme.X11`.
+-- |
+-- | This module also provides functions to modify colors (e.g. lighten/darken,
+-- | saturate/desaturate, complementary), to combine colors (mix) and to
+-- | analyze colors (e.g. brightness, luminance, contrast).
+-- |
+-- | Implementation detail: Colors are represented by their HSL values (hue,
+-- | saturation, lightness) internally, as this provides more flexibility than
+-- | storing RGB values.
+
 module Color
   ( Color()
   , ColorSpace(..)
@@ -37,6 +49,7 @@ module Color
   , luminance
   , contrast
   , isLight
+  , isReadable
   , textColor
   ) where
 
@@ -54,9 +67,16 @@ import Data.String.Regex (regex, parseFlags, match)
 import Math (abs, (%), pow)
 
 -- | The representation of a color.
+-- |
+-- | Note: the `Eq` instance compares two `Color`s by comparing their (integer)
+-- | RGB values. This is different from comparing the HSL values (the HSL
+-- | colorspace is bigger than the RGB colorspace).
 data Color = HSLA Number Number Number Number
 
 -- | Definition of a color space.
+-- |
+-- | * `RGB`: red, green, blue
+-- | * `HSL`: hue, saturation, lightness
 data ColorSpace = RGB | HSL
 
 instance showColor :: Show Color where
@@ -65,8 +85,6 @@ instance showColor :: Show Color where
                                 <> show l <> " "
                                 <> show a
 
--- | Equality between two `Color`s is checked by comparing the (integer) RGB
--- | values.
 instance eqColor :: Eq Color where
   eq c1 c2 = rgb1.r == rgb2.r && rgb1.g == rgb2.g &&
              rgb1.b == rgb2.b && rgb1.a == rgb2.a
@@ -107,12 +125,11 @@ rgba red green blue alpha = HSLA hue saturation lightness alpha
     saturation | chroma == 0 = 0.0
                | otherwise = chroma' / (1.0 - abs (2.0 * lightness - 1.0))
 
--- | Create a `Color` from RGB values between 0 and 255.
+-- | Create a `Color` from integer RGB values between 0 and 255.
 rgb :: Int -> Int -> Int -> Color
 rgb r g b = rgba r g b 1.0
 
--- | Create a `Color` from RGB values between 0.0 and 1.0 and an alpha value
--- | between 0.0 and 1.0.
+-- | Create a `Color` from RGB and alpha values between 0.0 and 1.0.
 rgba' :: Number -> Number -> Number -> Number -> Color
 rgba' r g b a = rgba (round $ r * 255.0)
                      (round $ g * 255.0)
@@ -141,9 +158,9 @@ hsl h s l = hsla h s l 1.0
 
 foreign import parseHex :: String -> Int
 
--- | Parse a hexadecimal RGB code of the form `#rgb` or `#rrggbb`, where the
--- | hexadecimal digits are of the format [0-9a-f] (case insensitive). Returns
--- | `Nothing` if the string is in a wrong format.
+-- | Parse a hexadecimal RGB code of the form `#rgb` or `#rrggbb`. The `#`
+-- | character is required. Each hexadecimal digit is of the form `[0-9a-fA-F]`
+-- | (case insensitive). Returns `Nothing` if the string is in a wrong format.
 fromHexString :: String -> Maybe Color
 fromHexString str = do
   groups <- match pattern str
@@ -165,11 +182,12 @@ fromHexString str = do
                 else pair <> pair <> pair
     pattern = regex ("^#(?:" <> variant <> ")$") (parseFlags "i")
 
--- | Converts an integer value to a color. 0 is black and 0xffffff is white.
--- | Values outside this range will be clamped.
--- | Example:
+-- | Converts an integer to a color (RGB representation). `0` is black and
+-- | `0xffffff` is white. Values outside this range will be clamped.
+-- |
+-- | This function is useful if you want to hard-code Hex values. For example:
 -- | ``` purs
--- | fromInt 0xff0000 == red
+-- | red = fromInt 0xff0000
 -- | ```
 fromInt :: Int -> Color
 fromInt m = rgb r g b
@@ -178,12 +196,14 @@ fromInt m = rgb r g b
         r = (n `shr` 16) .&. 0xff
         n = clamp 0 0xffffff m
 
--- | Convert a `Color` to its hue, saturation, lightness and alpha values.
+-- | Convert a `Color` to its hue, saturation, lightness and alpha values. See
+-- | `hsla` for the ranges of each channel.
 toHSLA :: Color -> { h :: Number, s :: Number, l :: Number, a :: Number }
 toHSLA (HSLA h s l a) = { h, s, l, a }
 
 -- | Convert a `Color` to its red, green, blue and alpha values. The RGB values
--- | are integers in the range from 0 to 255.
+-- | are integers in the range from 0 to 255. The alpha channel is a number
+-- | between 0.0 and 1.0.
 toRGBA :: Color -> { r :: Int, g :: Int, b :: Int, a :: Number }
 toRGBA col@(HSLA _ _ _ a) = { r, g, b, a }
   where
@@ -218,7 +238,7 @@ toHexString :: Color -> String
 toHexString color = "#" <> toHex c.r <> toHex c.g <> toHex c.b
   where c = toRGBA color
 
--- | The CSS representation of the color in the form `hsl(..)` or `hsla(...)`.
+-- | A CSS representation of the color in the form `hsl(..)` or `hsla(...)`.
 cssStringHSLA :: Color -> String
 cssStringHSLA (HSLA h s l a) =
   if a == 1.0
@@ -232,7 +252,7 @@ cssStringHSLA (HSLA h s l a) =
     alpha = show a
     toString n = show $ toNumber (round (100.0 * n)) / 100.0
 
--- | The CSS representation of the color in the form `rgb(..)` or `rgba(...)`.
+-- | A CSS representation of the color in the form `rgb(..)` or `rgba(...)`.
 cssStringRGBA :: Color -> String
 cssStringRGBA col =
   if c.a == 1.0
@@ -246,11 +266,11 @@ cssStringRGBA col =
     blue = show c.b
     alpha = show c.a
 
--- | The color black.
+-- | Pure black.
 black :: Color
 black = hsl 0.0 0.0 0.0
 
--- | The color white.
+-- | Pure white.
 white :: Color
 white = hsl 0.0 0.0 1.0
 
@@ -258,7 +278,7 @@ white = hsl 0.0 0.0 1.0
 grayscale :: Number -> Color
 grayscale l = hsl 0.0 0.0 l
 
--- | Rotate the hue of a `Color` by a certain angle.
+-- | Rotate the hue of a `Color` by a certain angle (in degrees).
 rotateHue :: Number -> Color -> Color
 rotateHue angle (HSLA h s l a) =  hsla (h + angle) s l a
 
@@ -323,6 +343,7 @@ mix RGB c1 c2 frac = rgba'
     t = toRGBA' c2
 
 -- | The percieved brightness of the color (A number between 0.0 and 1.0).
+-- |
 -- | See: https://www.w3.org/TR/AERT#color-contrast
 brightness :: Color -> Number
 brightness col = (299.0 * c.r + 587.0 * c.g + 114.0 * c.b) / 1000.0
@@ -330,6 +351,7 @@ brightness col = (299.0 * c.r + 587.0 * c.g + 114.0 * c.b) / 1000.0
 
 -- | The relative brightness of a color (normalized to 0.0 for darkest black
 -- | and 1.0 for lightest white), according to the WCAG definition.
+-- |
 -- | See: https://www.w3.org/TR/2008/REC-WCAG20-20081211/#relativeluminancedef
 luminance :: Color -> Number
 luminance col = 0.2126 * r + 0.7152 * g + 0.0722 * b
@@ -344,7 +366,10 @@ luminance col = 0.2126 * r + 0.7152 * g + 0.0722 * b
         val = toRGBA' col
 
 -- | The contrast ratio of two colors. A minimum contrast ratio of 4.5 is
--- | recommended to ensure that text is readable on a colored background.
+-- | recommended to ensure that text is readable on a colored background. The
+-- | contrast ratio is symmetric on both arguments:
+-- | `contrast c1 c2 == contrast c2 c1`.
+-- |
 -- | See http://www.w3.org/TR/2008/REC-WCAG20-20081211/#contrast-ratiodef
 contrast :: Color -> Color -> Number
 contrast c1 c2 = if l1 > l2
@@ -355,8 +380,22 @@ contrast c1 c2 = if l1 > l2
         o = 0.05
 
 -- | Determine whether a color is perceived as a light color.
+-- |
+-- | ``` purs
+-- | isLight c = brightness c > 0.5
+-- | ```
 isLight :: Color -> Boolean
 isLight c = brightness c > 0.5
+
+-- | Determine whether text of one color is readable on a background of a
+-- | different color (see `contrast`). This function is symmetric in both
+-- | arguments.
+-- |
+-- | ``` purs
+-- | isReadable c1 c2 = contrast c1 c2 > 4.5
+-- | ```
+isReadable :: Color -> Color -> Boolean
+isReadable c1 c2 = contrast c1 c2 > 4.5
 
 -- | Return a readable foreground text color (either `black` or `white`) for a
 -- | given background color.

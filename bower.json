@@ -7,7 +7,9 @@
   "ignore": [
     "**/.*",
     "bower_components",
-    "output"
+    "html",
+    "output",
+    "test"
   ],
   "dependencies": {
     "purescript-integers": "^0.2.1",
