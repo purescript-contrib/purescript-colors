@@ -55,6 +55,7 @@ newtype TBlendMode = TBlendMode BlendMode
 modeToString Multiply = "Multiply"
 modeToString Screen = "Screen"
 modeToString Overlay = "Overlay"
+
 instance flammableTBlendMode :: Flammable TBlendMode where
   spark = TBlendMode <$> select "BlendMode" Multiply [Screen, Overlay] modeToString
 
@@ -127,7 +128,7 @@ main = do
     doc "cssStringHSLA" (\(TColor c) -> cssStringHSLA c)
     doc "black" (TColor black)
     doc "white" (TColor white)
-    doc "grayscale" (\(SmallNumber s) -> TColor (grayscale s))
+    doc "graytone" (\(SmallNumber s) -> TColor (graytone s))
     doc "complementary" (\(TColor c) -> ColorList [c, complementary c])
     doc "lighten"    (\(SmallNumber a) (TColor c) -> ColorList [c, lighten a c])
     doc "darken"     (\(SmallNumber a) (TColor c) -> ColorList [c, darken a c])

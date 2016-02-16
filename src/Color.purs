@@ -34,7 +34,7 @@ module Color
   -- Basic
   , black
   , white
-  , grayscale
+  , graytone
   -- Modify
   , rotateHue
   , complementary
@@ -275,8 +275,8 @@ white :: Color
 white = hsl 0.0 0.0 1.0
 
 -- | Create a gray tone from a lightness values (0.0 is black, 1.0 is white).
-grayscale :: Number -> Color
-grayscale l = hsl 0.0 0.0 l
+graytone :: Number -> Color
+graytone l = hsl 0.0 0.0 l
 
 -- | Rotate the hue of a `Color` by a certain angle (in degrees).
 rotateHue :: Number -> Color -> Color

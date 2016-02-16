@@ -102,9 +102,9 @@ main = runTest do
   test "cssStringRGB" do
     equal "rgba(42, 103, 255, 0.3)" (cssStringRGBA (rgba 42 103 255 0.3))
 
-  test "grayscale" do
-    equal black (grayscale 0.0)
-    equal white (grayscale 1.0)
+  test "graytone" do
+    equal black (graytone 0.0)
+    equal white (graytone 1.0)
 
   test "rotateHue" do
     equal black (rotateHue 123.0 black)
@@ -120,8 +120,8 @@ main = runTest do
     equal green (darken 0.0 green)
 
   test "saturate, desaturate" do
-    equal (grayscale 0.5) (desaturate 1.0 red)
-    equal (grayscale 0.5) (desaturate 1.0 magenta)
+    equal (graytone 0.5) (desaturate 1.0 red)
+    equal (graytone 0.5) (desaturate 1.0 magenta)
 
   test "mix" do
     equal (fromInt 0x800080) (mix RGB red blue 0.5)
@@ -129,7 +129,7 @@ main = runTest do
 
   test "brightness" do
     equal 1.0 (brightness white)
-    equal 0.5 (brightness (grayscale 0.5))
+    equal 0.5 (brightness (graytone 0.5))
     equal 0.0 (brightness black)
 
   test "luminance" do
@@ -146,8 +146,8 @@ main = runTest do
     equal 6124 (round (1000.0 * contrast pink purple))
 
   test "textColor" do
-    equal black (textColor $ grayscale 0.6)
-    equal white (textColor $ grayscale 0.4)
+    equal black (textColor $ graytone 0.6)
+    equal white (textColor $ graytone 0.4)
 
   -- Color.Blending
 
