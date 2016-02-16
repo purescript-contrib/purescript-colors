@@ -40,18 +40,6 @@ var PS = { };
     };
   };
 
-  //- Bind -----------------------------------------------------------------------
-
-  exports.arrayBind = function (arr) {
-    return function (f) {
-      var result = [];
-      for (var i = 0, l = arr.length; i < l; i++) {
-        Array.prototype.push.apply(result, f(arr[i]));
-      }
-      return result;
-    };
-  };
-
   //- Monoid ---------------------------------------------------------------------
 
   exports.concatString = function (s1) {
@@ -411,22 +399,6 @@ var PS = { };
           };
       };
   };
-  var monadArray = new Monad(function () {
-      return applicativeArray;
-  }, function () {
-      return bindArray;
-  });
-  var bindArray = new Bind(function () {
-      return applyArray;
-  }, $foreign.arrayBind);
-  var applyArray = new Apply(function () {
-      return functorArray;
-  }, ap(monadArray));
-  var applicativeArray = new Applicative(function () {
-      return applyArray;
-  }, function (x) {
-      return [ x ];
-  });
   exports["LT"] = LT;
   exports["GT"] = GT;
   exports["EQ"] = EQ;
@@ -479,10 +451,6 @@ var PS = { };
   exports["categoryFn"] = categoryFn;
   exports["functorFn"] = functorFn;
   exports["functorArray"] = functorArray;
-  exports["applyArray"] = applyArray;
-  exports["applicativeArray"] = applicativeArray;
-  exports["bindArray"] = bindArray;
-  exports["monadArray"] = monadArray;
   exports["semigroupString"] = semigroupString;
   exports["semigroupArray"] = semigroupArray;
   exports["eqInt"] = eqInt;
@@ -534,24 +502,6 @@ var PS = { };
 (function(exports) {
   /* global exports */
   "use strict";
-
-  // module Data.Array
-
-  //------------------------------------------------------------------------------
-  // Array creation --------------------------------------------------------------
-  //------------------------------------------------------------------------------
-
-  exports.range = function (start) {
-    return function (end) {
-      var step = start > end ? -1 : 1;
-      var result = [];
-      for (var i = start, n = 0; i !== end; i += step) {
-        result[n++] = i;
-      }
-      result[n] = i;
-      return result;
-    };
-  };
 
   //------------------------------------------------------------------------------
   // Array size ------------------------------------------------------------------
@@ -1314,7 +1264,6 @@ var PS = { };
   var Data_Traversable = PS["Data.Traversable"];
   var Data_Tuple = PS["Data.Tuple"];
   var Data_Maybe_Unsafe = PS["Data.Maybe.Unsafe"];
-  var $dot$dot = $foreign.range;
   var $$null = function (xs) {
       return $foreign.length(xs) === 0;
   };
@@ -1323,7 +1272,7 @@ var PS = { };
   exports["index"] = index;
   exports["!!"] = $bang$bang;
   exports["null"] = $$null;
-  exports[".."] = $dot$dot;
+  exports["slice"] = $foreign.slice;
   exports["snoc"] = $foreign.snoc;
   exports["length"] = $foreign.length;;
  
@@ -1500,8 +1449,18 @@ var PS = { };
           };
       };
   };
+  var between = function (dictOrd) {
+      return function (low) {
+          return function (hi) {
+              return function (x) {
+                  return Prelude["<="](dictOrd)(low)(x) && Prelude["<="](dictOrd)(x)(hi);
+              };
+          };
+      };
+  };
   exports["max"] = max;
   exports["min"] = min;
+  exports["between"] = between;
   exports["clamp"] = clamp;
   exports["comparing"] = comparing;;
  
@@ -1952,6 +1911,13 @@ var PS = { };
           };
       };
   };
+  var rgb$prime = function (r) {
+      return function (g) {
+          return function (b) {
+              return rgba$prime(r)(g)(b)(1.0);
+          };
+      };
+  };
   var luminance = function (col) {
       var val = toRGBA$prime(col);
       var f = function (x) {
@@ -2045,7 +2011,7 @@ var PS = { };
       };
   };
   var white = hsl(0.0)(0.0)(1.0);
-  var grayscale = function (l) {
+  var graytone = function (l) {
       return hsl(0.0)(0.0)(l);
   };
   var fromHexString = function (str) {
@@ -2153,7 +2119,7 @@ var PS = { };
   exports["lighten"] = lighten;
   exports["complementary"] = complementary;
   exports["rotateHue"] = rotateHue;
-  exports["grayscale"] = grayscale;
+  exports["graytone"] = graytone;
   exports["white"] = white;
   exports["black"] = black;
   exports["cssStringHSLA"] = cssStringHSLA;
@@ -2164,6 +2130,7 @@ var PS = { };
   exports["fromHexString"] = fromHexString;
   exports["hsl"] = hsl;
   exports["hsla"] = hsla;
+  exports["rgb'"] = rgb$prime;
   exports["rgba'"] = rgba$prime;
   exports["rgb"] = rgb;
   exports["rgba"] = rgba;;
@@ -2236,29 +2203,937 @@ var PS = { };
  
 })(PS["Color.Blending"] = PS["Color.Blending"] || {});
 (function(exports) {
+  /* global exports */
+  "use strict";
+
+  // module Data.Array.ST
+
+  exports.runSTArray = function (f) {
+    return f;
+  };
+
+  exports.emptySTArray = function () {
+    return [];
+  };
+
+  exports.pushAllSTArray = function (xs) {
+    return function (as) {
+      return function () {
+        return xs.push.apply(xs, as);
+      };
+    };
+  };
+ 
+})(PS["Data.Array.ST"] = PS["Data.Array.ST"] || {});
+(function(exports) {
+  /* global exports */
+  "use strict";
+
+  // module Control.Monad.Eff
+
+  exports.returnE = function (a) {
+    return function () {
+      return a;
+    };
+  };
+
+  exports.bindE = function (a) {
+    return function (f) {
+      return function () {
+        return f(a())();
+      };
+    };
+  };
+
+  exports.runPure = function (f) {
+    return f();
+  };
+ 
+})(PS["Control.Monad.Eff"] = PS["Control.Monad.Eff"] || {});
+(function(exports) {
+  // Generated by psc version 0.8.0.0
+  "use strict";
+  var $foreign = PS["Control.Monad.Eff"];
+  var Prelude = PS["Prelude"];     
+  var monadEff = new Prelude.Monad(function () {
+      return applicativeEff;
+  }, function () {
+      return bindEff;
+  });
+  var bindEff = new Prelude.Bind(function () {
+      return applyEff;
+  }, $foreign.bindE);
+  var applyEff = new Prelude.Apply(function () {
+      return functorEff;
+  }, Prelude.ap(monadEff));
+  var applicativeEff = new Prelude.Applicative(function () {
+      return applyEff;
+  }, $foreign.returnE);
+  var functorEff = new Prelude.Functor(Prelude.liftA1(applicativeEff));
+  exports["functorEff"] = functorEff;
+  exports["applyEff"] = applyEff;
+  exports["applicativeEff"] = applicativeEff;
+  exports["bindEff"] = bindEff;
+  exports["monadEff"] = monadEff;
+  exports["runPure"] = $foreign.runPure;;
+ 
+})(PS["Control.Monad.Eff"] = PS["Control.Monad.Eff"] || {});
+(function(exports) {
+  /* global exports */
+  "use strict";
+
+  // module Control.Monad.ST
+
+  exports.newSTRef = function (val) {
+    return function () {
+      return { value: val };
+    };
+  };
+
+  exports.readSTRef = function (ref) {
+    return function () {
+      return ref.value;
+    };
+  };
+
+  exports.writeSTRef = function (ref) {
+    return function (a) {
+      return function () {
+        /* jshint boss: true */
+        return ref.value = a;
+      };
+    };
+  };
+ 
+})(PS["Control.Monad.ST"] = PS["Control.Monad.ST"] || {});
+(function(exports) {
+  // Generated by psc version 0.8.0.0
+  "use strict";
+  var $foreign = PS["Control.Monad.ST"];
+  var Prelude = PS["Prelude"];
+  var Control_Monad_Eff = PS["Control.Monad.Eff"];
+  exports["writeSTRef"] = $foreign.writeSTRef;
+  exports["readSTRef"] = $foreign.readSTRef;
+  exports["newSTRef"] = $foreign.newSTRef;;
+ 
+})(PS["Control.Monad.ST"] = PS["Control.Monad.ST"] || {});
+(function(exports) {
+  // Generated by psc version 0.8.0.0
+  "use strict";
+  var $foreign = PS["Data.Array.ST"];
+  var Prelude = PS["Prelude"];
+  var Control_Monad_Eff = PS["Control.Monad.Eff"];
+  var Control_Monad_ST = PS["Control.Monad.ST"];
+  var Data_Maybe = PS["Data.Maybe"];
+  var pushSTArray = function (arr) {
+      return function (a) {
+          return $foreign.pushAllSTArray(arr)([ a ]);
+      };
+  };
+  exports["pushSTArray"] = pushSTArray;
+  exports["emptySTArray"] = $foreign.emptySTArray;
+  exports["runSTArray"] = $foreign.runSTArray;;
+ 
+})(PS["Data.Array.ST"] = PS["Data.Array.ST"] || {});
+(function(exports) {
   // Generated by psc version 0.8.0.0
   "use strict";
   var Prelude = PS["Prelude"];
-  var Data_Array = PS["Data.Array"];
+  var Data_Maybe = PS["Data.Maybe"];
+  var Data_Tuple = PS["Data.Tuple"];
+  var Data_Array_ST = PS["Data.Array.ST"];
+  var Data_Traversable = PS["Data.Traversable"];
+  var Control_Monad_Eff = PS["Control.Monad.Eff"];
+  var Control_Monad_ST = PS["Control.Monad.ST"];     
+  var Unfoldable = function (unfoldr) {
+      this.unfoldr = unfoldr;
+  };
+  var unfoldr = function (dict) {
+      return dict.unfoldr;
+  };
+  var unfoldableArray = new Unfoldable(function (f) {
+      return function (b) {
+          return Control_Monad_Eff.runPure(Data_Array_ST.runSTArray(function __do() {
+              var v = Data_Array_ST.emptySTArray();
+              var v1 = Control_Monad_ST.newSTRef(b)();
+              (function () {
+                  while (!(function __do() {
+                      var v2 = Control_Monad_ST.readSTRef(v1)();
+                      var $12 = f(v2);
+                      if ($12 instanceof Data_Maybe.Nothing) {
+                          return true;
+                      };
+                      if ($12 instanceof Data_Maybe.Just) {
+                          Data_Array_ST.pushSTArray(v)($12.value0.value0)();
+                          Control_Monad_ST.writeSTRef(v1)($12.value0.value1)();
+                          return false;
+                      };
+                      throw new Error("Failed pattern match at Data.Unfoldable line 29, column 1 - line 49, column 1: " + [ $12.constructor.name ]);
+                  })()) {
+
+                  };
+                  return {};
+              })();
+              return v;
+          }));
+      };
+  });
+  exports["Unfoldable"] = Unfoldable;
+  exports["unfoldr"] = unfoldr;
+  exports["unfoldableArray"] = unfoldableArray;;
+ 
+})(PS["Data.Unfoldable"] = PS["Data.Unfoldable"] || {});
+(function(exports) {
+  // Generated by psc version 0.8.0.0
+  "use strict";
+  var Prelude = PS["Prelude"];
+  var Control_Alt = PS["Control.Alt"];
+  var Control_Alternative = PS["Control.Alternative"];
+  var Control_Lazy = PS["Control.Lazy"];
+  var Control_MonadPlus = PS["Control.MonadPlus"];
+  var Control_Plus = PS["Control.Plus"];
+  var Data_Foldable = PS["Data.Foldable"];
+  var Data_Maybe = PS["Data.Maybe"];
+  var Data_Monoid = PS["Data.Monoid"];
+  var Data_Traversable = PS["Data.Traversable"];
+  var Data_Tuple = PS["Data.Tuple"];
+  var Data_Unfoldable = PS["Data.Unfoldable"];     
+  var Nil = (function () {
+      function Nil() {
+
+      };
+      Nil.value = new Nil();
+      return Nil;
+  })();
+  var Cons = (function () {
+      function Cons(value0, value1) {
+          this.value0 = value0;
+          this.value1 = value1;
+      };
+      Cons.create = function (value0) {
+          return function (value1) {
+              return new Cons(value0, value1);
+          };
+      };
+      return Cons;
+  })();
+  var $colon = Cons.create;
+  var uncons = function (v) {
+      if (v instanceof Nil) {
+          return Data_Maybe.Nothing.value;
+      };
+      if (v instanceof Cons) {
+          return new Data_Maybe.Just({
+              head: v.value0, 
+              tail: v.value1
+          });
+      };
+      throw new Error("Failed pattern match at Data.List line 270, column 1 - line 271, column 1: " + [ v.constructor.name ]);
+  };
+  var toUnfoldable = function (dictUnfoldable) {
+      return Data_Unfoldable.unfoldr(dictUnfoldable)(function (xs) {
+          return Prelude["<$>"](Data_Maybe.functorMaybe)(function (rec) {
+              return new Data_Tuple.Tuple(rec.head, rec.tail);
+          })(uncons(xs));
+      });
+  };
+  var tail = function (v) {
+      if (v instanceof Nil) {
+          return Data_Maybe.Nothing.value;
+      };
+      if (v instanceof Cons) {
+          return new Data_Maybe.Just(v.value1);
+      };
+      throw new Error("Failed pattern match at Data.List line 251, column 1 - line 252, column 1: " + [ v.constructor.name ]);
+  };
+  var span = function (v) {
+      return function (v1) {
+          if (v1 instanceof Cons && v(v1.value0)) {
+              var $132 = span(v)(v1.value1);
+              return {
+                  init: new Cons(v1.value0, $132.init), 
+                  rest: $132.rest
+              };
+          };
+          return {
+              init: Nil.value, 
+              rest: v1
+          };
+      };
+  };
+  var singleton = function (a) {
+      return new Cons(a, Nil.value);
+  };
+  var semigroupList = new Prelude.Semigroup(function (v) {
+      return function (ys) {
+          if (v instanceof Nil) {
+              return ys;
+          };
+          if (v instanceof Cons) {
+              return new Cons(v.value0, Prelude["<>"](semigroupList)(v.value1)(ys));
+          };
+          throw new Error("Failed pattern match: " + [ v.constructor.name, ys.constructor.name ]);
+      };
+  });
+  var reverse = (function () {
+      var go = function (__copy_acc) {
+          return function (__copy_v) {
+              var acc = __copy_acc;
+              var v = __copy_v;
+              tco: while (true) {
+                  if (v instanceof Nil) {
+                      return acc;
+                  };
+                  if (v instanceof Cons) {
+                      var __tco_acc = new Cons(v.value0, acc);
+                      var __tco_v = v.value1;
+                      acc = __tco_acc;
+                      v = __tco_v;
+                      continue tco;
+                  };
+                  throw new Error("Failed pattern match at Data.List line 368, column 1 - line 369, column 1: " + [ acc.constructor.name, v.constructor.name ]);
+              };
+          };
+      };
+      return go(Nil.value);
+  })();
+  var snoc = function (xs) {
+      return function (x) {
+          return reverse(new Cons(x, reverse(xs)));
+      };
+  };
+  var take = (function () {
+      var go = function (__copy_acc) {
+          return function (__copy_v) {
+              return function (__copy_v1) {
+                  var acc = __copy_acc;
+                  var v = __copy_v;
+                  var v1 = __copy_v1;
+                  tco: while (true) {
+                      if (v === 0) {
+                          return reverse(acc);
+                      };
+                      if (v1 instanceof Nil) {
+                          return reverse(acc);
+                      };
+                      if (v1 instanceof Cons) {
+                          var __tco_acc = new Cons(v1.value0, acc);
+                          var __tco_v = v - 1;
+                          var __tco_v1 = v1.value1;
+                          acc = __tco_acc;
+                          v = __tco_v;
+                          v1 = __tco_v1;
+                          continue tco;
+                      };
+                      throw new Error("Failed pattern match at Data.List line 490, column 1 - line 491, column 1: " + [ acc.constructor.name, v.constructor.name, v1.constructor.name ]);
+                  };
+              };
+          };
+      };
+      return go(Nil.value);
+  })();
+  var zipWith = function (f) {
+      return function (xs) {
+          return function (ys) {
+              var go = function (__copy_v) {
+                  return function (__copy_v1) {
+                      return function (__copy_acc) {
+                          var v = __copy_v;
+                          var v1 = __copy_v1;
+                          var acc = __copy_acc;
+                          tco: while (true) {
+                              if (v instanceof Nil) {
+                                  return acc;
+                              };
+                              if (v1 instanceof Nil) {
+                                  return acc;
+                              };
+                              if (v instanceof Cons && v1 instanceof Cons) {
+                                  var __tco_v = v.value1;
+                                  var __tco_v1 = v1.value1;
+                                  var __tco_acc = new Cons(f(v.value0)(v1.value0), acc);
+                                  v = __tco_v;
+                                  v1 = __tco_v1;
+                                  acc = __tco_acc;
+                                  continue tco;
+                              };
+                              throw new Error("Failed pattern match at Data.List line 654, column 1 - line 655, column 1: " + [ v.constructor.name, v1.constructor.name, acc.constructor.name ]);
+                          };
+                      };
+                  };
+              };
+              return reverse(go(xs)(ys)(Nil.value));
+          };
+      };
+  };
+  var range = function (start) {
+      return function (end) {
+          if (start === end) {
+              return singleton(start);
+          };
+          if (Prelude.otherwise) {
+              var go = function (__copy_s) {
+                  return function (__copy_e) {
+                      return function (__copy_step) {
+                          return function (__copy_rest) {
+                              var s = __copy_s;
+                              var e = __copy_e;
+                              var step = __copy_step;
+                              var rest = __copy_rest;
+                              tco: while (true) {
+                                  if (s === e) {
+                                      return new Cons(s, rest);
+                                  };
+                                  if (Prelude.otherwise) {
+                                      var __tco_s = s + step | 0;
+                                      var __tco_e = e;
+                                      var __tco_step = step;
+                                      var __tco_rest = new Cons(s, rest);
+                                      s = __tco_s;
+                                      e = __tco_e;
+                                      step = __tco_step;
+                                      rest = __tco_rest;
+                                      continue tco;
+                                  };
+                                  throw new Error("Failed pattern match at Data.List line 140, column 1 - line 141, column 1: " + [ s.constructor.name, e.constructor.name, step.constructor.name, rest.constructor.name ]);
+                              };
+                          };
+                      };
+                  };
+              };
+              return go(end)(start)((function () {
+                  var $209 = start > end;
+                  if ($209) {
+                      return 1;
+                  };
+                  if (!$209) {
+                      return -1;
+                  };
+                  throw new Error("Failed pattern match at Data.List line 140, column 1 - line 141, column 1: " + [ $209.constructor.name ]);
+              })())(Nil.value);
+          };
+          throw new Error("Failed pattern match at Data.List line 140, column 1 - line 141, column 1: " + [ start.constructor.name, end.constructor.name ]);
+      };
+  };
+  var $dot$dot = range;
+  var monoidList = new Data_Monoid.Monoid(function () {
+      return semigroupList;
+  }, Nil.value);
+  var some = function (dictAlternative) {
+      return function (dictLazy) {
+          return function (v) {
+              return Prelude["<*>"]((dictAlternative["__superclass_Prelude.Applicative_0"]())["__superclass_Prelude.Apply_0"]())(Prelude["<$>"](((dictAlternative["__superclass_Control.Plus.Plus_1"]())["__superclass_Control.Alt.Alt_0"]())["__superclass_Prelude.Functor_0"]())(Cons.create)(v))(Control_Lazy.defer(dictLazy)(function (v1) {
+                  return many(dictAlternative)(dictLazy)(v);
+              }));
+          };
+      };
+  };
+  var many = function (dictAlternative) {
+      return function (dictLazy) {
+          return function (v) {
+              return Control_Alt["<|>"]((dictAlternative["__superclass_Control.Plus.Plus_1"]())["__superclass_Control.Alt.Alt_0"]())(some(dictAlternative)(dictLazy)(v))(Prelude.pure(dictAlternative["__superclass_Prelude.Applicative_0"]())(Nil.value));
+          };
+      };
+  };
+  var last = function (__copy_v) {
+      var v = __copy_v;
+      tco: while (true) {
+          if (v instanceof Cons && v.value1 instanceof Nil) {
+              return new Data_Maybe.Just(v.value0);
+          };
+          if (v instanceof Cons) {
+              var __tco_v = v.value1;
+              v = __tco_v;
+              continue tco;
+          };
+          return Data_Maybe.Nothing.value;
+      };
+  };
+  var insertBy = function (v) {
+      return function (x) {
+          return function (v1) {
+              if (v1 instanceof Nil) {
+                  return new Cons(x, Nil.value);
+              };
+              if (v1 instanceof Cons) {
+                  var $226 = v(x)(v1.value0);
+                  if ($226 instanceof Prelude.GT) {
+                      return new Cons(v1.value0, insertBy(v)(x)(v1.value1));
+                  };
+                  return new Cons(x, v1);
+              };
+              throw new Error("Failed pattern match: " + [ v.constructor.name, x.constructor.name, v1.constructor.name ]);
+          };
+      };
+  };
+  var init = function (v) {
+      if (v instanceof Nil) {
+          return Data_Maybe.Nothing.value;
+      };
+      var go = function (__copy_v1) {
+          return function (__copy_acc) {
+              var v1 = __copy_v1;
+              var acc = __copy_acc;
+              tco: while (true) {
+                  if (v1 instanceof Cons && v1.value1 instanceof Nil) {
+                      return acc;
+                  };
+                  if (v1 instanceof Cons) {
+                      var __tco_v1 = v1.value1;
+                      var __tco_acc = new Cons(v1.value0, acc);
+                      v1 = __tco_v1;
+                      acc = __tco_acc;
+                      continue tco;
+                  };
+                  return acc;
+              };
+          };
+      };
+      return Data_Maybe.Just.create(reverse(go(v)(Nil.value)));
+  };                     
+  var head = function (v) {
+      if (v instanceof Nil) {
+          return Data_Maybe.Nothing.value;
+      };
+      if (v instanceof Cons) {
+          return new Data_Maybe.Just(v.value0);
+      };
+      throw new Error("Failed pattern match at Data.List line 236, column 1 - line 237, column 1: " + [ v.constructor.name ]);
+  };
+  var functorList = new Prelude.Functor(function (f) {
+      return function (lst) {
+          var go = function (__copy_v) {
+              return function (__copy_acc) {
+                  var v = __copy_v;
+                  var acc = __copy_acc;
+                  tco: while (true) {
+                      if (v instanceof Nil) {
+                          return acc;
+                      };
+                      if (v instanceof Cons) {
+                          var __tco_v = v.value1;
+                          var __tco_acc = new Cons(f(v.value0), acc);
+                          v = __tco_v;
+                          acc = __tco_acc;
+                          continue tco;
+                      };
+                      throw new Error("Failed pattern match at Data.List line 731, column 1 - line 738, column 1: " + [ v.constructor.name, acc.constructor.name ]);
+                  };
+              };
+          };
+          return reverse(go(lst)(Nil.value));
+      };
+  });
+  var fromList = function (dictUnfoldable) {
+      return toUnfoldable(dictUnfoldable);
+  };
+  var fromFoldable = function (dictFoldable) {
+      return Data_Foldable.foldr(dictFoldable)(Cons.create)(Nil.value);
+  };
+  var toList = function (dictFoldable) {
+      return fromFoldable(dictFoldable);
+  };
+  var foldableList = new Data_Foldable.Foldable(function (dictMonoid) {
+      return function (f) {
+          return Data_Foldable.foldl(foldableList)(function (acc) {
+              return function ($365) {
+                  return Prelude.append(dictMonoid["__superclass_Prelude.Semigroup_0"]())(acc)(f($365));
+              };
+          })(Data_Monoid.mempty(dictMonoid));
+      };
+  }, (function () {
+      var go = function (__copy_v) {
+          return function (__copy_b) {
+              return function (__copy_v1) {
+                  var v = __copy_v;
+                  var b = __copy_b;
+                  var v1 = __copy_v1;
+                  tco: while (true) {
+                      if (v1 instanceof Nil) {
+                          return b;
+                      };
+                      if (v1 instanceof Cons) {
+                          var __tco_v = v;
+                          var __tco_b = v(b)(v1.value0);
+                          var __tco_v1 = v1.value1;
+                          v = __tco_v;
+                          b = __tco_b;
+                          v1 = __tco_v1;
+                          continue tco;
+                      };
+                      throw new Error("Failed pattern match: " + [ v.constructor.name, b.constructor.name, v1.constructor.name ]);
+                  };
+              };
+          };
+      };
+      return go;
+  })(), function (v) {
+      return function (b) {
+          return function (v1) {
+              if (v1 instanceof Nil) {
+                  return b;
+              };
+              if (v1 instanceof Cons) {
+                  return v(v1.value0)(Data_Foldable.foldr(foldableList)(v)(b)(v1.value1));
+              };
+              throw new Error("Failed pattern match: " + [ v.constructor.name, b.constructor.name, v1.constructor.name ]);
+          };
+      };
+  });
+  var length = Data_Foldable.foldl(foldableList)(function (acc) {
+      return function (v) {
+          return acc + 1 | 0;
+      };
+  })(0);
+  var drop = function (__copy_v) {
+      return function (__copy_v1) {
+          var v = __copy_v;
+          var v1 = __copy_v1;
+          tco: while (true) {
+              if (v === 0) {
+                  return v1;
+              };
+              if (v1 instanceof Nil) {
+                  return Nil.value;
+              };
+              if (v1 instanceof Cons) {
+                  var __tco_v = v - 1;
+                  var __tco_v1 = v1.value1;
+                  v = __tco_v;
+                  v1 = __tco_v1;
+                  continue tco;
+              };
+              throw new Error("Failed pattern match: " + [ v.constructor.name, v1.constructor.name ]);
+          };
+      };
+  };
+  var concatMap = function (v) {
+      return function (v1) {
+          if (v1 instanceof Nil) {
+              return Nil.value;
+          };
+          if (v1 instanceof Cons) {
+              return Prelude["<>"](semigroupList)(v(v1.value0))(concatMap(v)(v1.value1));
+          };
+          throw new Error("Failed pattern match: " + [ v.constructor.name, v1.constructor.name ]);
+      };
+  };                                                       
+  var applyList = new Prelude.Apply(function () {
+      return functorList;
+  }, function (v) {
+      return function (v1) {
+          if (v instanceof Nil) {
+              return Nil.value;
+          };
+          if (v instanceof Cons) {
+              return Prelude["<>"](semigroupList)(Prelude["<$>"](functorList)(v.value0)(v1))(Prelude["<*>"](applyList)(v.value1)(v1));
+          };
+          throw new Error("Failed pattern match: " + [ v.constructor.name, v1.constructor.name ]);
+      };
+  });
+  var bindList = new Prelude.Bind(function () {
+      return applyList;
+  }, Prelude.flip(concatMap));
+  var applicativeList = new Prelude.Applicative(function () {
+      return applyList;
+  }, function (a) {
+      return new Cons(a, Nil.value);
+  });
+  exports["Nil"] = Nil;
+  exports["Cons"] = Cons;
+  exports["fromList"] = fromList;
+  exports["toList"] = toList;
+  exports["zipWith"] = zipWith;
+  exports["span"] = span;
+  exports["drop"] = drop;
+  exports["take"] = take;
+  exports["concatMap"] = concatMap;
+  exports["reverse"] = reverse;
+  exports["uncons"] = uncons;
+  exports["init"] = init;
+  exports["tail"] = tail;
+  exports["last"] = last;
+  exports["head"] = head;
+  exports["insertBy"] = insertBy;
+  exports["snoc"] = snoc;
+  exports[":"] = $colon;
+  exports["length"] = length;
+  exports["many"] = many;
+  exports["some"] = some;
+  exports["range"] = range;
+  exports[".."] = $dot$dot;
+  exports["singleton"] = singleton;
+  exports["fromFoldable"] = fromFoldable;
+  exports["toUnfoldable"] = toUnfoldable;
+  exports["semigroupList"] = semigroupList;
+  exports["monoidList"] = monoidList;
+  exports["functorList"] = functorList;
+  exports["foldableList"] = foldableList;
+  exports["applyList"] = applyList;
+  exports["applicativeList"] = applicativeList;
+  exports["bindList"] = bindList;;
+ 
+})(PS["Data.List"] = PS["Data.List"] || {});
+(function(exports) {
+  // Generated by psc version 0.8.0.0
+  "use strict";
+  var Prelude = PS["Prelude"];
+  var Data_Foldable = PS["Data.Foldable"];
   var Data_Int = PS["Data.Int"];
+  var Data_List = PS["Data.List"];
   var Data_Ord = PS["Data.Ord"];
-  var Color = PS["Color"];     
-  var linearGradient = function (mode) {
-      return function (steps) {
-          return function (c1) {
-              return function (c2) {
-                  var steps$prime = Data_Ord.max(Prelude.ordInt)(2)(steps);
-                  return Prelude.bind(Prelude.bindArray)(Data_Array[".."](0)(steps$prime - 1))(function (v) {
-                      var frac = Data_Int.toNumber(v) / Data_Int.toNumber(steps$prime - 1);
-                      return Prelude.pure(Prelude.applicativeArray)(Color.mix(mode)(c1)(c2)(frac));
-                  });
+  var Color = PS["Color"];
+  var Data_Monoid = PS["Data.Monoid"];     
+  var ColorStop = (function () {
+      function ColorStop(value0, value1) {
+          this.value0 = value0;
+          this.value1 = value1;
+      };
+      ColorStop.create = function (value0) {
+          return function (value1) {
+              return new ColorStop(value0, value1);
+          };
+      };
+      return ColorStop;
+  })();
+  var ColorScale = (function () {
+      function ColorScale(value0, value1, value2, value3) {
+          this.value0 = value0;
+          this.value1 = value1;
+          this.value2 = value2;
+          this.value3 = value3;
+      };
+      ColorScale.create = function (value0) {
+          return function (value1) {
+              return function (value2) {
+                  return function (value3) {
+                      return new ColorScale(value0, value1, value2, value3);
+                  };
+              };
+          };
+      };
+      return ColorScale;
+  })();
+  var stopRatio = function (v) {
+      return v.value1;
+  };
+  var ratio = Data_Ord.clamp(Prelude.ordNumber)(0.0)(1.0);
+  var colorStop = function (c) {
+      return function (r) {
+          return new ColorStop(c, ratio(r));
+      };
+  };
+  var sample = function (v) {
+      return function (x) {
+          if (x < 0.0) {
+              return v.value1;
+          };
+          if (x > 1.0) {
+              return v.value3;
+          };
+          if (Prelude.otherwise) {
+              var go = function (__copy_v1) {
+                  return function (__copy_v2) {
+                      return function (__copy_v3) {
+                          var v1 = __copy_v1;
+                          var v2 = __copy_v2;
+                          var v3 = __copy_v3;
+                          tco: while (true) {
+                              if (v3 instanceof Data_List.Nil) {
+                                  return v1;
+                              };
+                              if (v3 instanceof Data_List.Cons) {
+                                  var $27 = Data_Ord.between(Prelude.ordNumber)(v2)(v3.value0.value1)(x);
+                                  if ($27) {
+                                      var $28 = v2 === v3.value0.value1;
+                                      if ($28) {
+                                          return v1;
+                                      };
+                                      if (!$28) {
+                                          return Color.mix(v.value0)(v1)(v3.value0.value0)((x - v2) / (v3.value0.value1 - v2));
+                                      };
+                                      throw new Error("Failed pattern match: " + [ $28.constructor.name ]);
+                                  };
+                                  if (!$27) {
+                                      var __tco_v1 = v3.value0.value0;
+                                      var __tco_v2 = v3.value0.value1;
+                                      var __tco_v3 = v3.value1;
+                                      v1 = __tco_v1;
+                                      v2 = __tco_v2;
+                                      v3 = __tco_v3;
+                                      continue tco;
+                                  };
+                                  throw new Error("Failed pattern match at Color.Scale line 78, column 1 - line 79, column 1: " + [ $27.constructor.name ]);
+                              };
+                              throw new Error("Failed pattern match at Color.Scale line 78, column 1 - line 79, column 1: " + [ v1.constructor.name, v2.constructor.name, v3.constructor.name ]);
+                          };
+                      };
+                  };
+              };
+              return go(v.value1)(0.0)(Data_List.snoc(v.value2)(colorStop(v.value3)(1.0)));
+          };
+          throw new Error("Failed pattern match at Color.Scale line 78, column 1 - line 79, column 1: " + [ v.constructor.name, x.constructor.name ]);
+      };
+  };
+  var colors = function (v) {
+      return function (v1) {
+          if (v1 === 0) {
+              return Data_List.Nil.value;
+          };
+          if (v1 === 1) {
+              return Data_List.singleton(v.value1);
+          };
+          return Prelude.bind(Data_List.bindList)(Data_List[".."](0)(v1 - 1))(function (v2) {
+              return Prelude.pure(Data_List.applicativeList)(sample(v)(Data_Int.toNumber(v2) / Data_Int.toNumber(v1 - 1)));
+          });
+      };
+  };
+  var colorScale = ColorScale.create;
+  var grayscale = colorScale(Color.RGB.value)(Color.black)(Data_List.Nil.value)(Color.white);
+  var spectrum = (function () {
+      var stops = Prelude.bind(Data_List.bindList)(Data_List[".."](1)(35))(function (v) {
+          var r = Data_Int.toNumber(v);
+          return Prelude["return"](Data_List.applicativeList)(colorStop(Color.hsl(10.0 * r)(1.0)(0.5))(r / 36.0));
+      });
+      var end = Color.hsl(0.0)(1.0)(0.5);
+      return colorScale(Color.HSL.value)(end)(stops)(end);
+  })();
+  var uniformScale = function (dictFoldable) {
+      return function (mode) {
+          return function (b) {
+              return function (middle) {
+                  return function (e) {
+                      var cs = Data_List.fromFoldable(dictFoldable)(middle);
+                      var len = Data_List.length(cs);
+                      var n = 2 + len | 0;
+                      var makeStop = function (i) {
+                          return function (col) {
+                              return colorStop(col)(Data_Int.toNumber(i) / Data_Int.toNumber(n));
+                          };
+                      };
+                      var stops = Data_List.zipWith(makeStop)(Data_List[".."](1)(1 + len | 0))(cs);
+                      return colorScale(mode)(b)(stops)(e);
+                  };
               };
           };
       };
   };
-  exports["linearGradient"] = linearGradient;;
+  var addStop = function (v) {
+      return function (c) {
+          return function (r) {
+              var stop = colorStop(c)(r);
+              return new ColorScale(v.value0, v.value1, Data_List.insertBy(Data_Ord.comparing(Prelude.ordNumber)(stopRatio))(stop)(v.value2), v.value3);
+          };
+      };
+  };
+  var cssColorStops = function (__copy_v) {
+      var v = __copy_v;
+      tco: while (true) {
+          if (v.value0 instanceof Color.RGB && v.value2 instanceof Data_List.Nil) {
+              return Color.cssStringHSLA(v.value1) + (", " + Color.cssStringHSLA(v.value3));
+          };
+          if (v.value0 instanceof Color.RGB) {
+              var percentage = function (r) {
+                  return Prelude.show(Prelude.showNumber)(r * 100.0) + "%";
+              };
+              var toString = function (v1) {
+                  return Color.cssStringHSLA(v1.value0) + (" " + percentage(v1.value1));
+              };
+              return Color.cssStringHSLA(v.value1) + (", " + (Data_Foldable.intercalate(Data_List.foldableList)(Data_Monoid.monoidString)(", ")(Prelude["<$>"](Data_List.functorList)(toString)(v.value2)) + (", " + Color.cssStringHSLA(v.value3))));
+          };
+          if (v.value0 instanceof Color.HSL) {
+              var csRGB$prime = new ColorScale(Color.RGB.value, v.value1, v.value2, v.value3);
+              var additionalStops = Prelude.bind(Data_List.bindList)(Data_List[".."](1)(9))(function (v1) {
+                  var frac = ratio(Data_Int.toNumber(v1) / 10.0);
+                  return Prelude["return"](Data_List.applicativeList)(new ColorStop(sample(v)(frac), frac));
+              });
+              var addStop$prime = function (scale1) {
+                  return function (v1) {
+                      return addStop(scale1)(v1.value0)(v1.value1);
+                  };
+              };
+              var csRGB = Data_Foldable.foldl(Data_List.foldableList)(addStop$prime)(csRGB$prime)(additionalStops);
+              v = csRGB;
+              continue tco;
+          };
+          throw new Error("Failed pattern match: " + [ v.constructor.name ]);
+      };
+  };
+  exports["cssColorStops"] = cssColorStops;
+  exports["spectrum"] = spectrum;
+  exports["grayscale"] = grayscale;
+  exports["colors"] = colors;
+  exports["sample"] = sample;
+  exports["addStop"] = addStop;
+  exports["uniformScale"] = uniformScale;
+  exports["colorScale"] = colorScale;
+  exports["colorStop"] = colorStop;;
  
-})(PS["Color.Gradient"] = PS["Color.Gradient"] || {});
+})(PS["Color.Scale"] = PS["Color.Scale"] || {});
+(function(exports) {
+  /* global exports */
+  "use strict";
+
+  // module Data.Array.Unsafe
+
+  exports.unsafeIndex = function (xs) {
+    return function (n) {
+      return xs[n];
+    };
+  };
+ 
+})(PS["Data.Array.Unsafe"] = PS["Data.Array.Unsafe"] || {});
+(function(exports) {
+  // Generated by psc version 0.8.0.0
+  "use strict";
+  var $foreign = PS["Data.Array.Unsafe"];
+  var Prelude = PS["Prelude"];
+  var Data_Array = PS["Data.Array"];
+  var last = function (xs) {
+      return $foreign.unsafeIndex(xs)(Data_Array.length(xs) - 1);
+  };
+  var head = function (xs) {
+      return $foreign.unsafeIndex(xs)(0);
+  };
+  exports["last"] = last;
+  exports["head"] = head;;
+ 
+})(PS["Data.Array.Unsafe"] = PS["Data.Array.Unsafe"] || {});
+(function(exports) {
+  // Generated by psc version 0.8.0.0
+  "use strict";
+  var Prelude = PS["Prelude"];
+  var Data_Array = PS["Data.Array"];
+  var Data_Array_Unsafe = PS["Data.Array.Unsafe"];
+  var Color = PS["Color"];
+  var Color_Scale = PS["Color.Scale"];
+  var Data_Foldable = PS["Data.Foldable"];     
+  var matplotlibScale = function (rgbs) {
+      var toColor = function (v) {
+          if (v.length === 3) {
+              return Color["rgb'"](v[0])(v[1])(v[2]);
+          };
+          return Color["rgb'"](0.0)(0.0)(0.0);
+      };
+      var stop = toColor(Data_Array_Unsafe.last(rgbs));
+      var start = toColor(Data_Array_Unsafe.head(rgbs));
+      var middle = Prelude["<$>"](Prelude.functorArray)(toColor)(Data_Array.slice(1)(255)(rgbs));
+      return Color_Scale.uniformScale(Data_Foldable.foldableArray)(Color.RGB.value)(start)(middle)(stop);
+  };
+  var _viridis_data = [ [ 0.267004, 4.873999999999999e-3, 0.329415 ], [ 0.26851, 9.604999999999999e-3, 0.33542700000000003 ], [ 0.269944, 1.4624999999999999e-2, 0.341379 ], [ 0.271305, 1.9941999999999998e-2, 0.347269 ], [ 0.272594, 2.5563000000000002e-2, 0.353093 ], [ 0.273809, 3.1497000000000004e-2, 0.358853 ], [ 0.274952, 3.7751999999999994e-2, 0.364543 ], [ 0.276022, 4.4167e-2, 0.37016400000000005 ], [ 0.277018, 5.0344e-2, 0.375715 ], [ 0.277941, 5.6324e-2, 0.381191 ], [ 0.278791, 6.2145000000000006e-2, 0.386592 ], [ 0.279566, 6.7836e-2, 0.391917 ], [ 0.280267, 7.3417e-2, 0.39716300000000004 ], [ 0.280894, 7.890699999999999e-2, 0.40232900000000005 ], [ 0.281446, 8.432e-2, 0.407414 ], [ 0.28192399999999995, 8.9666e-2, 0.41241500000000003 ], [ 0.282327, 9.4955e-2, 0.417331 ], [ 0.28265599999999996, 0.100196, 0.42216000000000004 ], [ 0.28291, 0.105393, 0.426902 ], [ 0.28309100000000004, 0.11055299999999998, 0.43155400000000005 ], [ 0.28319700000000003, 0.11568, 0.43611500000000003 ], [ 0.283229, 0.120777, 0.440584 ], [ 0.28318699999999997, 0.12584800000000002, 0.44496 ], [ 0.283072, 0.130895, 0.44924099999999995 ], [ 0.282884, 0.13591999999999999, 0.453427 ], [ 0.28262299999999996, 0.140926, 0.457517 ], [ 0.28229, 0.145912, 0.46151 ], [ 0.281887, 0.150881, 0.46540499999999996 ], [ 0.281412, 0.155834, 0.469201 ], [ 0.280868, 0.160771, 0.47289899999999996 ], [ 0.28025500000000003, 0.165693, 0.476498 ], [ 0.279574, 0.170599, 0.479997 ], [ 0.278826, 0.17549, 0.48339699999999997 ], [ 0.27801200000000004, 0.180367, 0.48669700000000005 ], [ 0.277134, 0.185228, 0.489898 ], [ 0.276194, 0.19007400000000002, 0.493001 ], [ 0.275191, 0.19490500000000002, 0.496005 ], [ 0.274128, 0.19972099999999998, 0.498911 ], [ 0.27300599999999997, 0.20451999999999998, 0.5017210000000001 ], [ 0.271828, 0.20930300000000002, 0.504434 ], [ 0.27059500000000003, 0.214069, 0.5070520000000001 ], [ 0.269308, 0.218818, 0.509577 ], [ 0.26796800000000004, 0.223549, 0.512008 ], [ 0.26658, 0.22826200000000002, 0.514349 ], [ 0.265145, 0.232956, 0.516599 ], [ 0.26366300000000004, 0.237631, 0.518762 ], [ 0.26213800000000004, 0.242286, 0.520837 ], [ 0.260571, 0.246922, 0.522828 ], [ 0.258965, 0.251537, 0.524736 ], [ 0.257322, 0.25613, 0.526563 ], [ 0.255645, 0.260703, 0.528312 ], [ 0.25393499999999997, 0.265254, 0.529983 ], [ 0.252194, 0.269783, 0.531579 ], [ 0.250425, 0.27429000000000003, 0.533103 ], [ 0.248629, 0.278775, 0.534556 ], [ 0.24681099999999997, 0.283237, 0.535941 ], [ 0.24497200000000002, 0.287675, 0.5372600000000001 ], [ 0.243113, 0.29209199999999996, 0.538516 ], [ 0.241237, 0.296485, 0.539709 ], [ 0.239346, 0.300855, 0.540844 ], [ 0.237441, 0.30520200000000003, 0.541921 ], [ 0.23552599999999999, 0.309527, 0.542944 ], [ 0.233603, 0.313828, 0.543914 ], [ 0.231674, 0.318106, 0.544834 ], [ 0.229739, 0.322361, 0.545706 ], [ 0.227802, 0.326594, 0.546532 ], [ 0.225863, 0.330805, 0.547314 ], [ 0.223925, 0.334994, 0.548053 ], [ 0.221989, 0.339161, 0.548752 ], [ 0.220057, 0.343307, 0.549413 ], [ 0.21813000000000002, 0.347432, 0.550038 ], [ 0.21621, 0.351535, 0.550627 ], [ 0.21429800000000002, 0.355619, 0.551184 ], [ 0.21239499999999997, 0.359683, 0.55171 ], [ 0.21050300000000002, 0.363727, 0.552206 ], [ 0.208623, 0.36775199999999997, 0.552675 ], [ 0.206756, 0.371758, 0.5531170000000001 ], [ 0.204903, 0.375746, 0.553533 ], [ 0.203063, 0.379716, 0.553925 ], [ 0.201239, 0.38367, 0.554294 ], [ 0.19943, 0.387607, 0.5546420000000001 ], [ 0.197636, 0.391528, 0.554969 ], [ 0.19586, 0.39543300000000003, 0.555276 ], [ 0.1941, 0.399323, 0.555565 ], [ 0.192357, 0.40319900000000003, 0.555836 ], [ 0.190631, 0.407061, 0.5560889999999999 ], [ 0.188923, 0.41091, 0.556326 ], [ 0.187231, 0.41474599999999995, 0.556547 ], [ 0.185556, 0.41857, 0.5567529999999999 ], [ 0.18389799999999998, 0.42238300000000006, 0.556944 ], [ 0.182256, 0.426184, 0.5571200000000001 ], [ 0.180629, 0.42997500000000005, 0.557282 ], [ 0.17901899999999998, 0.433756, 0.55743 ], [ 0.177423, 0.43752700000000005, 0.557565 ], [ 0.175841, 0.44128999999999996, 0.557685 ], [ 0.17427399999999998, 0.44504400000000005, 0.557792 ], [ 0.172719, 0.44879100000000005, 0.557885 ], [ 0.171176, 0.45253, 0.557965 ], [ 0.16964600000000002, 0.456262, 0.55803 ], [ 0.168126, 0.45998799999999995, 0.558082 ], [ 0.166617, 0.463708, 0.558119 ], [ 0.165117, 0.467423, 0.558141 ], [ 0.163625, 0.471133, 0.558148 ], [ 0.162142, 0.474838, 0.5581400000000001 ], [ 0.160665, 0.47854, 0.558115 ], [ 0.159194, 0.482237, 0.558073 ], [ 0.157729, 0.48593200000000003, 0.5580130000000001 ], [ 0.15627, 0.48962399999999995, 0.557936 ], [ 0.154815, 0.493313, 0.55784 ], [ 0.153364, 0.497, 0.557724 ], [ 0.151918, 0.500685, 0.557587 ], [ 0.150476, 0.504369, 0.55743 ], [ 0.149039, 0.508051, 0.55725 ], [ 0.147607, 0.511733, 0.557049 ], [ 0.14618, 0.515413, 0.556823 ], [ 0.144759, 0.519093, 0.556572 ], [ 0.143343, 0.522773, 0.556295 ], [ 0.141935, 0.526453, 0.555991 ], [ 0.140536, 0.5301319999999999, 0.555659 ], [ 0.139147, 0.533812, 0.555298 ], [ 0.13777, 0.5374920000000001, 0.554906 ], [ 0.136408, 0.541173, 0.5544830000000001 ], [ 0.135066, 0.544853, 0.554029 ], [ 0.133743, 0.548535, 0.553541 ], [ 0.132444, 0.552216, 0.553018 ], [ 0.131172, 0.5558989999999999, 0.552459 ], [ 0.129933, 0.559582, 0.5518639999999999 ], [ 0.128729, 0.563265, 0.551229 ], [ 0.127568, 0.5669489999999999, 0.550556 ], [ 0.12645299999999998, 0.5706330000000001, 0.549841 ], [ 0.125394, 0.574318, 0.549086 ], [ 0.12439499999999999, 0.578002, 0.548287 ], [ 0.12346299999999999, 0.581687, 0.547445 ], [ 0.12260599999999999, 0.5853710000000001, 0.546557 ], [ 0.121831, 0.589055, 0.545623 ], [ 0.12114799999999999, 0.592739, 0.544641 ], [ 0.120565, 0.596422, 0.5436110000000001 ], [ 0.120092, 0.600104, 0.54253 ], [ 0.11973799999999998, 0.603785, 0.5414 ], [ 0.119512, 0.607464, 0.540218 ], [ 0.11942299999999999, 0.611141, 0.5389820000000001 ], [ 0.119483, 0.6148170000000001, 0.5376920000000001 ], [ 0.119699, 0.61849, 0.536347 ], [ 0.120081, 0.622161, 0.5349459999999999 ], [ 0.120638, 0.625828, 0.533488 ], [ 0.12138, 0.629492, 0.531973 ], [ 0.122312, 0.633153, 0.530398 ], [ 0.123444, 0.6368090000000001, 0.528763 ], [ 0.12478, 0.640461, 0.527068 ], [ 0.126326, 0.644107, 0.5253110000000001 ], [ 0.128087, 0.6477489999999999, 0.523491 ], [ 0.130067, 0.651384, 0.521608 ], [ 0.132268, 0.655014, 0.5196609999999999 ], [ 0.13469199999999998, 0.658636, 0.517649 ], [ 0.13733900000000002, 0.662252, 0.515571 ], [ 0.14021, 0.665859, 0.513427 ], [ 0.143303, 0.669459, 0.511215 ], [ 0.146616, 0.67305, 0.508936 ], [ 0.150148, 0.676631, 0.506589 ], [ 0.153894, 0.680203, 0.504172 ], [ 0.15785100000000002, 0.683765, 0.5016860000000001 ], [ 0.162016, 0.687316, 0.49912900000000004 ], [ 0.166383, 0.6908559999999999, 0.496502 ], [ 0.17094800000000002, 0.694384, 0.49380300000000005 ], [ 0.175707, 0.6979, 0.491033 ], [ 0.180653, 0.7014020000000001, 0.48818900000000004 ], [ 0.185783, 0.704891, 0.485273 ], [ 0.19109, 0.708366, 0.48228400000000005 ], [ 0.196571, 0.711827, 0.479221 ], [ 0.202219, 0.715272, 0.476084 ], [ 0.20803, 0.718701, 0.472873 ], [ 0.21400000000000002, 0.722114, 0.469588 ], [ 0.220124, 0.725509, 0.466226 ], [ 0.22639700000000001, 0.728888, 0.462789 ], [ 0.232815, 0.732247, 0.459277 ], [ 0.23937400000000003, 0.735588, 0.455688 ], [ 0.24607, 0.73891, 0.45202400000000004 ], [ 0.25289900000000004, 0.742211, 0.448284 ], [ 0.259857, 0.7454919999999999, 0.44446700000000006 ], [ 0.266941, 0.748751, 0.440573 ], [ 0.274149, 0.751988, 0.436601 ], [ 0.28147700000000003, 0.7552030000000001, 0.432552 ], [ 0.288921, 0.758394, 0.428426 ], [ 0.296479, 0.761561, 0.424223 ], [ 0.304148, 0.7647039999999999, 0.41994299999999996 ], [ 0.311925, 0.767822, 0.41558599999999996 ], [ 0.319809, 0.770914, 0.41115199999999996 ], [ 0.32779600000000003, 0.77398, 0.40664 ], [ 0.335885, 0.777018, 0.402049 ], [ 0.344074, 0.7800290000000001, 0.397381 ], [ 0.35236, 0.783011, 0.392636 ], [ 0.360741, 0.785964, 0.387814 ], [ 0.36921400000000004, 0.788888, 0.382914 ], [ 0.377779, 0.7917810000000001, 0.377939 ], [ 0.38643299999999997, 0.794644, 0.372886 ], [ 0.395174, 0.797475, 0.367757 ], [ 0.40400099999999994, 0.8002750000000001, 0.362552 ], [ 0.412913, 0.803041, 0.35726899999999995 ], [ 0.421908, 0.8057740000000001, 0.35191 ], [ 0.430983, 0.808473, 0.346476 ], [ 0.440137, 0.811138, 0.340967 ], [ 0.44936800000000005, 0.8137679999999999, 0.335384 ], [ 0.45867399999999997, 0.816363, 0.329727 ], [ 0.468053, 0.8189209999999999, 0.323998 ], [ 0.477504, 0.821444, 0.318195 ], [ 0.487026, 0.823929, 0.31232099999999996 ], [ 0.496615, 0.826376, 0.306377 ], [ 0.506271, 0.828786, 0.300362 ], [ 0.515992, 0.831158, 0.294279 ], [ 0.525776, 0.8334910000000001, 0.28812699999999997 ], [ 0.535621, 0.8357849999999999, 0.281908 ], [ 0.545524, 0.838039, 0.27562600000000004 ], [ 0.5554840000000001, 0.8402540000000001, 0.269281 ], [ 0.5654980000000001, 0.84243, 0.262877 ], [ 0.575563, 0.844566, 0.25641499999999995 ], [ 0.5856779999999999, 0.8466609999999999, 0.24989699999999998 ], [ 0.595839, 0.848717, 0.243329 ], [ 0.6060450000000001, 0.850733, 0.23671199999999998 ], [ 0.616293, 0.8527089999999999, 0.230052 ], [ 0.626579, 0.854645, 0.223353 ], [ 0.636902, 0.8565419999999999, 0.21661999999999998 ], [ 0.647257, 0.8583999999999999, 0.209861 ], [ 0.657642, 0.8602190000000001, 0.20308199999999998 ], [ 0.6680539999999999, 0.861999, 0.196293 ], [ 0.678489, 0.863742, 0.189503 ], [ 0.688944, 0.865448, 0.182725 ], [ 0.699415, 0.867117, 0.17597100000000002 ], [ 0.709898, 0.8687509999999999, 0.169257 ], [ 0.720391, 0.87035, 0.162603 ], [ 0.730889, 0.871916, 0.156029 ], [ 0.7413879999999999, 0.8734489999999999, 0.149561 ], [ 0.751884, 0.874951, 0.143228 ], [ 0.762373, 0.8764240000000001, 0.137064 ], [ 0.772852, 0.877868, 0.131109 ], [ 0.783315, 0.879285, 0.125405 ], [ 0.79376, 0.880678, 0.120005 ], [ 0.804182, 0.8820460000000001, 0.11496500000000001 ], [ 0.814576, 0.8833930000000001, 0.110347 ], [ 0.82494, 0.8847200000000001, 0.106217 ], [ 0.8352700000000001, 0.886029, 0.10264599999999999 ], [ 0.845561, 0.8873219999999999, 9.9702e-2 ], [ 0.85581, 0.8886010000000001, 9.745200000000001e-2 ], [ 0.866013, 0.8898680000000001, 9.5953e-2 ], [ 0.8761680000000001, 0.8911250000000001, 9.525e-2 ], [ 0.886271, 0.892374, 9.5374e-2 ], [ 0.89632, 0.893616, 9.633499999999999e-2 ], [ 0.906311, 0.8948550000000001, 9.812499999999999e-2 ], [ 0.9162420000000001, 0.896091, 0.10071699999999999 ], [ 0.9261060000000001, 0.89733, 0.104071 ], [ 0.9359040000000001, 0.89857, 0.108131 ], [ 0.945636, 0.899815, 0.112838 ], [ 0.9553, 0.901065, 0.11812800000000001 ], [ 0.9648939999999999, 0.902323, 0.123941 ], [ 0.9744170000000001, 0.90359, 0.13021500000000003 ], [ 0.983868, 0.904867, 0.136897 ], [ 0.993248, 0.906157, 0.143936 ] ];
+  var viridis = matplotlibScale(_viridis_data);
+  var _plasma_data = [ [ 5.0383e-2, 2.9803000000000003e-2, 0.527975 ], [ 6.353600000000001e-2, 2.8426e-2, 0.533124 ], [ 7.5353e-2, 2.7206e-2, 0.538007 ], [ 8.6222e-2, 2.6125e-2, 0.542658 ], [ 9.6379e-2, 2.5165e-2, 0.547103 ], [ 0.10598, 2.4308999999999997e-2, 0.551368 ], [ 0.115124, 2.3556e-2, 0.5554680000000001 ], [ 0.12390300000000001, 2.2878e-2, 0.559423 ], [ 0.132381, 2.2258e-2, 0.56325 ], [ 0.14060299999999998, 2.1686999999999998e-2, 0.566959 ], [ 0.148607, 2.1154e-2, 0.570562 ], [ 0.156421, 2.0651000000000003e-2, 0.574065 ], [ 0.16407, 2.0171e-2, 0.5774779999999999 ], [ 0.171574, 1.9705999999999998e-2, 0.580806 ], [ 0.17895, 1.9252e-2, 0.584054 ], [ 0.18621300000000002, 1.8803e-2, 0.587228 ], [ 0.193374, 1.8354e-2, 0.59033 ], [ 0.20044499999999998, 1.7902e-2, 0.593364 ], [ 0.20743499999999998, 1.7442e-2, 0.596333 ], [ 0.21434999999999998, 1.6973e-2, 0.5992390000000001 ], [ 0.221197, 1.6497e-2, 0.602083 ], [ 0.227983, 1.6007e-2, 0.604867 ], [ 0.234715, 1.5501999999999998e-2, 0.607592 ], [ 0.241396, 1.4979000000000001e-2, 0.610259 ], [ 0.24803199999999997, 1.4438999999999999e-2, 0.612868 ], [ 0.254627, 1.3882e-2, 0.6154189999999999 ], [ 0.261183, 1.3308e-2, 0.617911 ], [ 0.267703, 1.2716e-2, 0.620346 ], [ 0.27419099999999996, 1.2109e-2, 0.622722 ], [ 0.280648, 1.1488000000000002e-2, 0.625038 ], [ 0.287076, 1.0855e-2, 0.6272949999999999 ], [ 0.293478, 1.0213000000000002e-2, 0.62949 ], [ 0.299855, 9.561e-3, 0.631624 ], [ 0.30621, 8.901999999999998e-3, 0.633694 ], [ 0.312543, 8.239e-3, 0.6357 ], [ 0.318856, 7.575999999999999e-3, 0.63764 ], [ 0.32515, 6.915e-3, 0.6395120000000001 ], [ 0.331426, 6.261e-3, 0.641316 ], [ 0.337683, 5.618000000000001e-3, 0.643049 ], [ 0.343925, 4.991e-3, 0.64471 ], [ 0.35015, 4.382e-3, 0.646298 ], [ 0.356359, 3.798e-3, 0.64781 ], [ 0.362553, 3.2430000000000002e-3, 0.649245 ], [ 0.36873300000000003, 2.7240000000000003e-3, 0.650601 ], [ 0.374897, 2.245e-3, 0.651876 ], [ 0.381047, 1.814e-3, 0.653068 ], [ 0.387183, 1.434e-3, 0.654177 ], [ 0.393304, 1.114e-3, 0.655199 ], [ 0.399411, 8.590000000000001e-4, 0.656133 ], [ 0.40550300000000006, 6.78e-4, 0.656977 ], [ 0.41158, 5.769999999999999e-4, 0.65773 ], [ 0.417642, 5.639999999999999e-4, 0.65839 ], [ 0.423689, 6.460000000000001e-4, 0.658956 ], [ 0.42971899999999996, 8.310000000000001e-4, 0.6594249999999999 ], [ 0.43573399999999995, 1.127e-3, 0.659797 ], [ 0.441732, 1.5400000000000001e-3, 0.660069 ], [ 0.44771400000000006, 2.0800000000000003e-3, 0.66024 ], [ 0.453677, 2.7549999999999996e-3, 0.66031 ], [ 0.459623, 3.574e-3, 0.660277 ], [ 0.46555, 4.545e-3, 0.660139 ], [ 0.471457, 5.678e-3, 0.659897 ], [ 0.477344, 6.98e-3, 0.6595489999999999 ], [ 0.48321, 8.46e-3, 0.659095 ], [ 0.489055, 1.0127e-2, 0.6585340000000001 ], [ 0.49487699999999996, 1.199e-2, 0.6578649999999999 ], [ 0.500678, 1.4055000000000002e-2, 0.657088 ], [ 0.506454, 1.6333e-2, 0.6562020000000001 ], [ 0.512206, 1.8833e-2, 0.6552089999999999 ], [ 0.517933, 2.1563e-2, 0.6541089999999999 ], [ 0.523633, 2.4531999999999998e-2, 0.652901 ], [ 0.5293059999999999, 2.7747e-2, 0.651586 ], [ 0.534952, 3.1217e-2, 0.650165 ], [ 0.54057, 3.495e-2, 0.64864 ], [ 0.546157, 3.8954e-2, 0.6470100000000001 ], [ 0.551715, 4.3136e-2, 0.645277 ], [ 0.5572429999999999, 4.7331e-2, 0.643443 ], [ 0.562738, 5.1544999999999994e-2, 0.641509 ], [ 0.568201, 5.5777999999999994e-2, 0.6394770000000001 ], [ 0.573632, 6.002799999999999e-2, 0.637349 ], [ 0.579029, 6.429599999999999e-2, 0.635126 ], [ 0.584391, 6.8579e-2, 0.632812 ], [ 0.589719, 7.2878e-2, 0.630408 ], [ 0.595011, 7.719000000000001e-2, 0.627917 ], [ 0.600266, 8.1516e-2, 0.6253420000000001 ], [ 0.605485, 8.5854e-2, 0.6226860000000001 ], [ 0.6106670000000001, 9.0204e-2, 0.619951 ], [ 0.615812, 9.456400000000001e-2, 0.61714 ], [ 0.620919, 9.8934e-2, 0.614257 ], [ 0.6259870000000001, 0.103312, 0.611305 ], [ 0.631017, 0.10769899999999999, 0.608287 ], [ 0.636008, 0.112092, 0.605205 ], [ 0.640959, 0.116492, 0.602065 ], [ 0.645872, 0.12089799999999999, 0.598867 ], [ 0.650746, 0.125309, 0.5956170000000001 ], [ 0.6555799999999999, 0.129725, 0.592317 ], [ 0.660374, 0.13414399999999999, 0.588971 ], [ 0.6651290000000001, 0.13856600000000002, 0.5855819999999999 ], [ 0.669845, 0.142992, 0.582154 ], [ 0.674522, 0.14741900000000002, 0.578688 ], [ 0.67916, 0.151848, 0.5751890000000001 ], [ 0.683758, 0.156278, 0.57166 ], [ 0.688318, 0.160709, 0.568103 ], [ 0.69284, 0.165141, 0.564522 ], [ 0.6973239999999999, 0.169573, 0.560919 ], [ 0.701769, 0.17400500000000002, 0.557296 ], [ 0.706178, 0.178437, 0.5536570000000001 ], [ 0.710549, 0.18286799999999998, 0.550004 ], [ 0.714883, 0.18729900000000002, 0.546338 ], [ 0.7191810000000001, 0.19172899999999998, 0.542663 ], [ 0.723444, 0.196158, 0.5389809999999999 ], [ 0.72767, 0.20058600000000001, 0.535293 ], [ 0.731862, 0.20501299999999997, 0.531601 ], [ 0.736019, 0.20943900000000001, 0.527908 ], [ 0.740143, 0.213864, 0.524216 ], [ 0.744232, 0.21828799999999998, 0.520524 ], [ 0.748289, 0.22271100000000002, 0.516834 ], [ 0.7523120000000001, 0.22713299999999997, 0.5131490000000001 ], [ 0.756304, 0.231555, 0.509468 ], [ 0.760264, 0.23597600000000002, 0.5057940000000001 ], [ 0.764193, 0.240396, 0.502126 ], [ 0.76809, 0.244817, 0.49846500000000005 ], [ 0.7719579999999999, 0.24923700000000001, 0.494813 ], [ 0.7757959999999999, 0.253658, 0.491171 ], [ 0.779604, 0.258078, 0.48753900000000006 ], [ 0.7833829999999999, 0.2625, 0.48391799999999996 ], [ 0.7871330000000001, 0.266922, 0.480307 ], [ 0.790855, 0.271345, 0.47670599999999996 ], [ 0.7945490000000001, 0.27576999999999996, 0.47311699999999995 ], [ 0.798216, 0.280197, 0.469538 ], [ 0.801855, 0.284626, 0.465971 ], [ 0.8054669999999999, 0.289057, 0.462415 ], [ 0.809052, 0.293491, 0.45887 ], [ 0.812612, 0.297928, 0.45533799999999996 ], [ 0.8161440000000001, 0.302368, 0.451816 ], [ 0.819651, 0.306812, 0.448306 ], [ 0.823132, 0.311261, 0.444806 ], [ 0.8265879999999999, 0.315714, 0.44131599999999993 ], [ 0.8300179999999999, 0.320172, 0.437836 ], [ 0.833422, 0.324635, 0.434366 ], [ 0.836801, 0.329105, 0.430905 ], [ 0.840155, 0.33358, 0.427455 ], [ 0.8434839999999999, 0.338062, 0.424013 ], [ 0.8467879999999999, 0.342551, 0.42057900000000004 ], [ 0.850066, 0.34704799999999997, 0.417153 ], [ 0.8533189999999999, 0.351553, 0.413734 ], [ 0.856547, 0.356066, 0.410322 ], [ 0.85975, 0.360588, 0.406917 ], [ 0.862927, 0.36511899999999997, 0.403519 ], [ 0.8660780000000001, 0.36966, 0.40012600000000004 ], [ 0.8692030000000001, 0.374212, 0.396738 ], [ 0.8723029999999999, 0.378774, 0.393355 ], [ 0.8753759999999999, 0.383347, 0.389976 ], [ 0.8784230000000001, 0.387932, 0.3866 ], [ 0.881443, 0.392529, 0.383229 ], [ 0.884436, 0.397139, 0.37986 ], [ 0.887402, 0.401762, 0.376494 ], [ 0.8903399999999999, 0.406398, 0.37313 ], [ 0.8932499999999999, 0.41104799999999997, 0.369768 ], [ 0.8961309999999999, 0.41571199999999997, 0.366407 ], [ 0.8989840000000001, 0.420392, 0.363047 ], [ 0.901807, 0.425087, 0.359688 ], [ 0.9046010000000001, 0.42979700000000004, 0.356329 ], [ 0.9073650000000001, 0.434524, 0.35297 ], [ 0.910098, 0.43926800000000005, 0.34961000000000003 ], [ 0.9128000000000001, 0.444029, 0.346251 ], [ 0.9154709999999999, 0.44880700000000007, 0.34289000000000003 ], [ 0.918109, 0.45360300000000003, 0.339529 ], [ 0.920714, 0.458417, 0.336166 ], [ 0.923287, 0.46325099999999997, 0.332801 ], [ 0.925825, 0.468103, 0.32943500000000003 ], [ 0.928329, 0.47297500000000003, 0.326067 ], [ 0.930798, 0.477867, 0.322697 ], [ 0.933232, 0.48278, 0.31932499999999997 ], [ 0.93563, 0.487712, 0.315952 ], [ 0.9379899999999999, 0.49266699999999997, 0.312575 ], [ 0.9403130000000001, 0.49764200000000003, 0.309197 ], [ 0.9425979999999999, 0.5026390000000001, 0.305816 ], [ 0.944844, 0.5076579999999999, 0.302433 ], [ 0.9470510000000001, 0.512699, 0.299049 ], [ 0.949217, 0.517763, 0.295662 ], [ 0.951344, 0.52285, 0.29227499999999995 ], [ 0.953428, 0.52796, 0.288883 ], [ 0.95547, 0.533093, 0.28548999999999997 ], [ 0.957469, 0.53825, 0.282096 ], [ 0.9594239999999999, 0.543431, 0.278701 ], [ 0.961336, 0.548636, 0.275305 ], [ 0.963203, 0.5538649999999999, 0.271909 ], [ 0.965024, 0.559118, 0.268513 ], [ 0.966798, 0.564396, 0.265118 ], [ 0.968526, 0.5697, 0.261721 ], [ 0.970205, 0.575028, 0.258325 ], [ 0.9718350000000001, 0.580382, 0.254931 ], [ 0.973416, 0.585761, 0.25154 ], [ 0.974947, 0.5911649999999999, 0.248151 ], [ 0.976428, 0.596595, 0.244767 ], [ 0.9778560000000001, 0.602051, 0.24138700000000002 ], [ 0.979233, 0.607532, 0.23801299999999997 ], [ 0.980556, 0.613039, 0.234646 ], [ 0.9818260000000001, 0.618572, 0.23128700000000002 ], [ 0.983041, 0.624131, 0.227937 ], [ 0.9841989999999999, 0.629718, 0.22459500000000002 ], [ 0.985301, 0.63533, 0.221265 ], [ 0.986345, 0.640969, 0.21794799999999998 ], [ 0.987332, 0.646633, 0.214648 ], [ 0.98826, 0.652325, 0.21136400000000002 ], [ 0.989128, 0.6580429999999999, 0.2081 ], [ 0.989935, 0.663787, 0.20485899999999999 ], [ 0.990681, 0.669558, 0.20164200000000002 ], [ 0.991365, 0.6753549999999999, 0.198453 ], [ 0.991985, 0.681179, 0.195295 ], [ 0.9925409999999999, 0.68703, 0.19217 ], [ 0.993032, 0.692907, 0.189084 ], [ 0.9934559999999999, 0.69881, 0.186041 ], [ 0.9938140000000001, 0.7047410000000001, 0.183043 ], [ 0.994103, 0.710698, 0.180097 ], [ 0.994324, 0.716681, 0.17720799999999998 ], [ 0.994474, 0.722691, 0.174381 ], [ 0.994553, 0.728728, 0.171622 ], [ 0.994561, 0.734791, 0.16893799999999998 ], [ 0.994495, 0.74088, 0.16633499999999998 ], [ 0.994355, 0.746995, 0.163821 ], [ 0.9941409999999999, 0.753137, 0.161404 ], [ 0.993851, 0.759304, 0.159092 ], [ 0.993482, 0.7654989999999999, 0.156891 ], [ 0.9930329999999999, 0.77172, 0.154808 ], [ 0.9925050000000001, 0.7779670000000001, 0.15285500000000002 ], [ 0.991897, 0.784239, 0.15104199999999998 ], [ 0.9912089999999999, 0.7905369999999999, 0.149377 ], [ 0.990439, 0.796859, 0.14787 ], [ 0.989587, 0.803205, 0.146529 ], [ 0.9886480000000001, 0.8095789999999999, 0.14535700000000001 ], [ 0.9876210000000001, 0.815978, 0.144363 ], [ 0.9865090000000001, 0.8224009999999999, 0.143557 ], [ 0.985314, 0.8288460000000001, 0.14294500000000002 ], [ 0.9840310000000001, 0.8353149999999999, 0.142528 ], [ 0.982653, 0.841812, 0.142303 ], [ 0.98119, 0.848329, 0.142279 ], [ 0.9796440000000001, 0.854866, 0.142453 ], [ 0.977995, 0.861432, 0.142808 ], [ 0.976265, 0.8680160000000001, 0.143351 ], [ 0.974443, 0.8746219999999999, 0.144061 ], [ 0.9725300000000001, 0.88125, 0.144923 ], [ 0.970533, 0.8878959999999999, 0.145919 ], [ 0.968443, 0.8945640000000001, 0.147014 ], [ 0.9662710000000001, 0.901249, 0.14818 ], [ 0.964021, 0.9079499999999999, 0.14937 ], [ 0.9616809999999999, 0.914672, 0.15052 ], [ 0.959276, 0.921407, 0.151566 ], [ 0.956808, 0.9281520000000001, 0.152409 ], [ 0.9542870000000001, 0.9349080000000001, 0.152921 ], [ 0.9517260000000001, 0.941671, 0.152925 ], [ 0.949151, 0.9484349999999999, 0.152178 ], [ 0.946602, 0.95519, 0.150328 ], [ 0.9441520000000001, 0.9619160000000001, 0.146861 ], [ 0.9418960000000001, 0.9685900000000001, 0.140956 ], [ 0.940015, 0.9751580000000001, 0.131326 ] ];
+  var plasma = matplotlibScale(_plasma_data);
+  var _magma_data = [ [ 1.462e-3, 4.66e-4, 1.3866e-2 ], [ 2.258e-3, 1.295e-3, 1.8331e-2 ], [ 3.279e-3, 2.305e-3, 2.3708e-2 ], [ 4.512e-3, 3.49e-3, 2.9965000000000002e-2 ], [ 5.9499999999999996e-3, 4.843e-3, 3.713e-2 ], [ 7.588e-3, 6.355999999999999e-3, 4.4973e-2 ], [ 9.426e-3, 8.022e-3, 5.2844e-2 ], [ 1.1465e-2, 9.828e-3, 6.0750000000000005e-2 ], [ 1.3708000000000001e-2, 1.1771e-2, 6.8667e-2 ], [ 1.6155999999999997e-2, 1.384e-2, 7.6603e-2 ], [ 1.8815e-2, 1.6026000000000002e-2, 8.458399999999999e-2 ], [ 2.1692e-2, 1.832e-2, 9.261e-2 ], [ 2.4792e-2, 2.0715e-2, 0.10067600000000002 ], [ 2.8123e-2, 2.3201e-2, 0.10878700000000001 ], [ 3.1696e-2, 2.5765000000000003e-2, 0.11696500000000001 ], [ 3.552e-2, 2.8397e-2, 0.125209 ], [ 3.9608e-2, 3.109e-2, 0.133515 ], [ 4.383e-2, 3.383e-2, 0.141886 ], [ 4.8061999999999994e-2, 3.6607e-2, 0.15032700000000002 ], [ 5.232e-2, 3.9407000000000005e-2, 0.158841 ], [ 5.6615000000000006e-2, 4.216e-2, 0.167446 ], [ 6.0948999999999996e-2, 4.4794e-2, 0.176129 ], [ 6.533e-2, 4.7318e-2, 0.184892 ], [ 6.9764e-2, 4.9726e-2, 0.193735 ], [ 7.425699999999999e-2, 5.2017e-2, 0.20266 ], [ 7.8815e-2, 5.4183999999999996e-2, 0.211667 ], [ 8.344599999999999e-2, 5.622499999999999e-2, 0.22075499999999998 ], [ 8.815500000000001e-2, 5.8133000000000004e-2, 0.22992200000000002 ], [ 9.2949e-2, 5.9904e-2, 0.239164 ], [ 9.7833e-2, 6.1531e-2, 0.248477 ], [ 0.10281499999999999, 6.301e-2, 0.257854 ], [ 0.10789900000000001, 6.4335e-2, 0.267289 ], [ 0.113094, 6.5492e-2, 0.27678400000000003 ], [ 0.11840500000000001, 6.6479e-2, 0.286321 ], [ 0.123833, 6.7295e-2, 0.295879 ], [ 0.12938, 6.7935e-2, 0.305443 ], [ 0.135053, 6.839100000000001e-2, 0.315 ], [ 0.14085799999999998, 6.8654e-2, 0.324538 ], [ 0.146785, 6.8738e-2, 0.334011 ], [ 0.152839, 6.863699999999999e-2, 0.343404 ], [ 0.159018, 6.8354e-2, 0.352688 ], [ 0.165308, 6.7911e-2, 0.361816 ], [ 0.171713, 6.7305e-2, 0.370771 ], [ 0.17821199999999998, 6.6576e-2, 0.37949700000000003 ], [ 0.184801, 6.5732e-2, 0.387973 ], [ 0.19146000000000002, 6.4818e-2, 0.396152 ], [ 0.198177, 6.3862e-2, 0.404009 ], [ 0.204935, 6.2907e-2, 0.41151400000000005 ], [ 0.211718, 6.1992000000000005e-2, 0.418647 ], [ 0.21851199999999998, 6.1158000000000004e-2, 0.425392 ], [ 0.22530199999999997, 6.0445000000000006e-2, 0.431742 ], [ 0.232077, 5.9889000000000005e-2, 0.437695 ], [ 0.23882599999999998, 5.9517e-2, 0.443256 ], [ 0.24554299999999998, 5.9352e-2, 0.44843599999999995 ], [ 0.25222, 5.9414999999999996e-2, 0.453248 ], [ 0.258857, 5.9706e-2, 0.45770999999999995 ], [ 0.265447, 6.0237e-2, 0.46184000000000003 ], [ 0.271994, 6.099400000000001e-2, 0.46566 ], [ 0.278493, 6.1978e-2, 0.46919000000000005 ], [ 0.284951, 6.3168e-2, 0.47245100000000007 ], [ 0.291366, 6.4553e-2, 0.475462 ], [ 0.29774, 6.611700000000001e-2, 0.478243 ], [ 0.304081, 6.7835e-2, 0.48081199999999996 ], [ 0.310382, 6.9702e-2, 0.483186 ], [ 0.316654, 7.169e-2, 0.48538 ], [ 0.322899, 7.378199999999999e-2, 0.487408 ], [ 0.329114, 7.5972e-2, 0.489287 ], [ 0.335308, 7.8236e-2, 0.491024 ], [ 0.341482, 8.0564e-2, 0.492631 ], [ 0.347636, 8.2946e-2, 0.494121 ], [ 0.353773, 8.5373e-2, 0.49550099999999997 ], [ 0.359898, 8.783099999999999e-2, 0.49677800000000005 ], [ 0.366012, 9.031399999999999e-2, 0.49795999999999996 ], [ 0.372116, 9.281599999999998e-2, 0.49905299999999997 ], [ 0.378211, 9.5332e-2, 0.500067 ], [ 0.384299, 9.7855e-2, 0.501002 ], [ 0.39038399999999995, 0.100379, 0.5018640000000001 ], [ 0.396467, 0.10290200000000001, 0.502658 ], [ 0.402548, 0.10542, 0.503386 ], [ 0.408629, 0.10793, 0.504052 ], [ 0.41470900000000005, 0.11043099999999999, 0.5046619999999999 ], [ 0.420791, 0.11291999999999999, 0.505215 ], [ 0.426877, 0.115395, 0.505714 ], [ 0.432967, 0.117855, 0.50616 ], [ 0.439062, 0.12029799999999999, 0.506555 ], [ 0.445163, 0.12272400000000001, 0.5069009999999999 ], [ 0.45127100000000003, 0.125132, 0.507198 ], [ 0.45738599999999996, 0.127522, 0.507448 ], [ 0.46350800000000003, 0.12989299999999998, 0.507652 ], [ 0.46963999999999995, 0.132245, 0.5078090000000001 ], [ 0.47578, 0.134577, 0.507921 ], [ 0.48192899999999994, 0.136891, 0.507989 ], [ 0.488088, 0.13918599999999998, 0.508011 ], [ 0.49425800000000003, 0.141462, 0.507988 ], [ 0.500438, 0.14371899999999999, 0.50792 ], [ 0.506629, 0.14595799999999998, 0.507806 ], [ 0.512831, 0.148179, 0.507648 ], [ 0.519045, 0.150383, 0.507443 ], [ 0.52527, 0.152569, 0.5071920000000001 ], [ 0.5315070000000001, 0.15473900000000002, 0.506895 ], [ 0.537755, 0.156894, 0.506551 ], [ 0.544015, 0.159033, 0.506159 ], [ 0.550287, 0.161158, 0.505719 ], [ 0.556571, 0.163269, 0.50523 ], [ 0.562866, 0.16536800000000001, 0.504692 ], [ 0.569172, 0.167454, 0.504105 ], [ 0.5754900000000001, 0.16953000000000001, 0.503466 ], [ 0.5818190000000001, 0.171596, 0.502777 ], [ 0.588158, 0.173652, 0.502035 ], [ 0.594508, 0.175701, 0.501241 ], [ 0.600868, 0.177743, 0.500394 ], [ 0.6072379999999999, 0.179779, 0.49949199999999994 ], [ 0.613617, 0.181811, 0.498536 ], [ 0.620005, 0.18384, 0.497524 ], [ 0.626401, 0.185867, 0.49645599999999995 ], [ 0.6328050000000001, 0.187893, 0.495332 ], [ 0.639216, 0.189921, 0.49415 ], [ 0.645633, 0.19195199999999998, 0.49291 ], [ 0.652056, 0.193986, 0.49161099999999996 ], [ 0.658483, 0.196027, 0.49025299999999994 ], [ 0.6649149999999999, 0.198075, 0.48883599999999994 ], [ 0.671349, 0.20013299999999998, 0.48735799999999996 ], [ 0.677786, 0.202203, 0.48581899999999995 ], [ 0.684224, 0.20428600000000002, 0.48421900000000007 ], [ 0.690661, 0.20638399999999998, 0.48255800000000004 ], [ 0.697098, 0.208501, 0.480835 ], [ 0.7035319999999999, 0.21063800000000002, 0.479049 ], [ 0.709962, 0.212797, 0.477201 ], [ 0.716387, 0.214982, 0.47529000000000005 ], [ 0.7228049999999999, 0.21719400000000003, 0.47331599999999996 ], [ 0.729216, 0.21943700000000002, 0.471279 ], [ 0.735616, 0.221713, 0.46918 ], [ 0.742004, 0.224025, 0.46701800000000004 ], [ 0.748378, 0.226377, 0.46479400000000004 ], [ 0.754737, 0.22877200000000003, 0.462509 ], [ 0.761077, 0.23121399999999998, 0.46016200000000007 ], [ 0.767398, 0.233705, 0.457755 ], [ 0.773695, 0.23624900000000001, 0.45528899999999994 ], [ 0.779968, 0.238851, 0.45276500000000003 ], [ 0.786212, 0.241514, 0.450184 ], [ 0.792427, 0.244242, 0.447543 ], [ 0.798608, 0.24704, 0.444848 ], [ 0.804752, 0.249911, 0.44210200000000005 ], [ 0.8108549999999999, 0.252861, 0.43930499999999995 ], [ 0.816914, 0.25589500000000004, 0.436461 ], [ 0.822926, 0.259016, 0.433573 ], [ 0.828886, 0.262229, 0.430644 ], [ 0.8347910000000001, 0.26554, 0.42767099999999997 ], [ 0.8406359999999999, 0.268953, 0.42466600000000004 ], [ 0.846416, 0.272473, 0.421631 ], [ 0.8521259999999999, 0.276106, 0.41857300000000003 ], [ 0.8577629999999999, 0.27985699999999997, 0.415496 ], [ 0.8633200000000001, 0.283729, 0.412403 ], [ 0.8687929999999999, 0.287728, 0.409303 ], [ 0.874176, 0.291859, 0.40620500000000004 ], [ 0.8794639999999999, 0.296125, 0.403118 ], [ 0.8846510000000001, 0.30053, 0.400047 ], [ 0.889731, 0.305079, 0.39700199999999997 ], [ 0.8946999999999999, 0.30977299999999997, 0.393995 ], [ 0.8995519999999999, 0.314616, 0.39103699999999997 ], [ 0.9042809999999999, 0.31961, 0.388137 ], [ 0.9088839999999999, 0.324755, 0.385308 ], [ 0.913354, 0.330052, 0.382563 ], [ 0.917689, 0.3355, 0.379915 ], [ 0.921884, 0.341098, 0.37737600000000004 ], [ 0.925937, 0.34684400000000004, 0.374959 ], [ 0.929845, 0.352734, 0.37267700000000004 ], [ 0.9336059999999999, 0.35876399999999997, 0.370541 ], [ 0.9372210000000001, 0.36492899999999995, 0.368567 ], [ 0.9406869999999999, 0.371224, 0.366762 ], [ 0.9440060000000001, 0.377643, 0.365136 ], [ 0.94718, 0.384178, 0.363701 ], [ 0.95021, 0.39082, 0.362468 ], [ 0.9530989999999999, 0.397563, 0.361438 ], [ 0.9558490000000001, 0.4044, 0.36061899999999997 ], [ 0.958464, 0.411324, 0.360014 ], [ 0.9609489999999999, 0.418323, 0.35963 ], [ 0.9633100000000001, 0.42539, 0.359469 ], [ 0.965549, 0.432519, 0.359529 ], [ 0.967671, 0.439703, 0.35981 ], [ 0.96968, 0.446936, 0.360311 ], [ 0.9715820000000001, 0.45420999999999995, 0.36103 ], [ 0.973381, 0.46152, 0.361965 ], [ 0.9750820000000001, 0.46886099999999997, 0.363111 ], [ 0.97669, 0.47622600000000004, 0.364466 ], [ 0.97821, 0.48361200000000004, 0.366025 ], [ 0.979645, 0.491014, 0.367783 ], [ 0.9810000000000001, 0.498428, 0.369734 ], [ 0.9822789999999999, 0.505851, 0.371874 ], [ 0.9834849999999999, 0.51328, 0.374198 ], [ 0.9846220000000001, 0.520713, 0.37669800000000003 ], [ 0.985693, 0.5281480000000001, 0.379371 ], [ 0.9867000000000001, 0.535582, 0.38221 ], [ 0.987646, 0.543015, 0.38521 ], [ 0.988533, 0.550446, 0.388365 ], [ 0.989363, 0.5578730000000001, 0.391671 ], [ 0.990138, 0.565296, 0.39512200000000003 ], [ 0.990871, 0.5727059999999999, 0.398714 ], [ 0.991558, 0.580107, 0.40244099999999994 ], [ 0.9921960000000001, 0.587502, 0.406299 ], [ 0.9927849999999999, 0.594891, 0.410283 ], [ 0.993326, 0.602275, 0.41439000000000004 ], [ 0.993834, 0.6096440000000001, 0.418613 ], [ 0.994309, 0.6169990000000001, 0.42295 ], [ 0.9947380000000001, 0.62435, 0.427397 ], [ 0.995122, 0.631696, 0.43195100000000003 ], [ 0.99548, 0.639027, 0.43660699999999997 ], [ 0.99581, 0.646344, 0.441361 ], [ 0.996096, 0.653659, 0.446213 ], [ 0.9963409999999999, 0.6609689999999999, 0.45115999999999995 ], [ 0.99658, 0.668256, 0.456192 ], [ 0.9967750000000001, 0.6755410000000001, 0.46131399999999995 ], [ 0.9969250000000001, 0.682828, 0.466526 ], [ 0.997077, 0.690088, 0.47181100000000004 ], [ 0.9971859999999999, 0.697349, 0.477182 ], [ 0.9972540000000001, 0.704611, 0.482635 ], [ 0.997325, 0.711848, 0.48815400000000003 ], [ 0.9973509999999999, 0.719089, 0.493755 ], [ 0.9973509999999999, 0.726324, 0.499428 ], [ 0.9973409999999999, 0.733545, 0.5051669999999999 ], [ 0.997285, 0.740772, 0.510983 ], [ 0.997228, 0.747981, 0.516859 ], [ 0.997138, 0.75519, 0.522806 ], [ 0.9970190000000001, 0.7623979999999999, 0.528821 ], [ 0.9968980000000001, 0.7695909999999999, 0.5348919999999999 ], [ 0.9967269999999999, 0.776795, 0.5410389999999999 ], [ 0.996571, 0.7839769999999999, 0.5472330000000001 ], [ 0.996369, 0.791167, 0.553499 ], [ 0.996162, 0.7983480000000001, 0.55982 ], [ 0.995932, 0.805527, 0.566202 ], [ 0.9956799999999999, 0.812706, 0.572645 ], [ 0.9954240000000001, 0.819875, 0.57914 ], [ 0.995131, 0.8270519999999999, 0.585701 ], [ 0.994851, 0.8342129999999999, 0.592307 ], [ 0.994524, 0.8413869999999999, 0.598983 ], [ 0.994222, 0.8485400000000001, 0.605696 ], [ 0.993866, 0.855711, 0.612482 ], [ 0.9935449999999999, 0.8628589999999999, 0.619299 ], [ 0.9931699999999999, 0.8700240000000001, 0.626189 ], [ 0.992831, 0.877168, 0.6331089999999999 ], [ 0.99244, 0.88433, 0.640099 ], [ 0.992089, 0.89147, 0.647116 ], [ 0.9916879999999999, 0.898627, 0.654202 ], [ 0.9913320000000001, 0.905763, 0.6613089999999999 ], [ 0.99093, 0.9129149999999999, 0.668481 ], [ 0.99057, 0.920049, 0.675675 ], [ 0.990175, 0.927196, 0.6829259999999999 ], [ 0.9898149999999999, 0.934329, 0.690198 ], [ 0.9894339999999999, 0.94147, 0.697519 ], [ 0.989077, 0.9486039999999999, 0.704863 ], [ 0.988717, 0.9557420000000001, 0.712242 ], [ 0.988367, 0.9628780000000001, 0.719649 ], [ 0.988033, 0.970012, 0.727077 ], [ 0.9876910000000001, 0.977154, 0.7345360000000001 ], [ 0.987387, 0.984288, 0.742002 ], [ 0.9870530000000001, 0.9914379999999999, 0.7495040000000001 ] ];
+  var magma = matplotlibScale(_magma_data);
+  var _inferno_data = [ [ 1.462e-3, 4.66e-4, 1.3866e-2 ], [ 2.267e-3, 1.2699999999999999e-3, 1.857e-2 ], [ 3.299e-3, 2.249e-3, 2.4239000000000004e-2 ], [ 4.547e-3, 3.392e-3, 3.0909e-2 ], [ 6.006e-3, 4.692e-3, 3.8557999999999995e-2 ], [ 7.6760000000000005e-3, 6.136000000000001e-3, 4.6836e-2 ], [ 9.561e-3, 7.713e-3, 5.514300000000001e-2 ], [ 1.1663000000000001e-2, 9.417e-3, 6.346e-2 ], [ 1.3994999999999999e-2, 1.1225e-2, 7.186200000000001e-2 ], [ 1.6561e-2, 1.3136e-2, 8.028199999999999e-2 ], [ 1.9373e-2, 1.5133000000000002e-2, 8.8767e-2 ], [ 2.2447e-2, 1.7199e-2, 9.7327e-2 ], [ 2.5793e-2, 1.9331e-2, 0.10593 ], [ 2.9432000000000003e-2, 2.1503e-2, 0.114621 ], [ 3.3385e-2, 2.3702e-2, 0.123397 ], [ 3.7668e-2, 2.5921000000000007e-2, 0.132232 ], [ 4.2253e-2, 2.8138999999999997e-2, 0.14114100000000002 ], [ 4.6915e-2, 3.0324e-2, 0.15016400000000002 ], [ 5.1644e-2, 3.2473999999999996e-2, 0.159254 ], [ 5.644899999999999e-2, 3.4569e-2, 0.168414 ], [ 6.1340000000000006e-2, 3.659e-2, 0.177642 ], [ 6.6331e-2, 3.8504e-2, 0.186962 ], [ 7.142899999999999e-2, 4.0293999999999996e-2, 0.196354 ], [ 7.6637e-2, 4.1905000000000005e-2, 0.205799 ], [ 8.1962e-2, 4.3328e-2, 0.215289 ], [ 8.741099999999999e-2, 4.4556000000000005e-2, 0.224813 ], [ 9.298999999999999e-2, 4.5583e-2, 0.234358 ], [ 9.8702e-2, 4.6402e-2, 0.24390399999999998 ], [ 0.10455099999999999, 4.7008e-2, 0.25343 ], [ 0.11053600000000001, 4.7399000000000004e-2, 0.262912 ], [ 0.11665600000000001, 4.757399999999999e-2, 0.272321 ], [ 0.12290799999999999, 4.7535999999999995e-2, 0.281624 ], [ 0.129285, 4.7293e-2, 0.290788 ], [ 0.135778, 4.6855999999999995e-2, 0.299776 ], [ 0.142378, 4.6242e-2, 0.30855299999999997 ], [ 0.149073, 4.5468e-2, 0.317085 ], [ 0.15585, 4.4559e-2, 0.325338 ], [ 0.162689, 4.3554e-2, 0.333277 ], [ 0.16957499999999998, 4.2489e-2, 0.340874 ], [ 0.176493, 4.1402e-2, 0.348111 ], [ 0.183429, 4.0329e-2, 0.35497100000000004 ], [ 0.190367, 3.9309e-2, 0.36144699999999996 ], [ 0.197297, 3.8400000000000004e-2, 0.367535 ], [ 0.204209, 3.7632e-2, 0.373238 ], [ 0.21109499999999998, 3.703e-2, 0.37856300000000004 ], [ 0.217949, 3.6615e-2, 0.38352200000000003 ], [ 0.224763, 3.640500000000001e-2, 0.388129 ], [ 0.23153800000000002, 3.640500000000001e-2, 0.39239999999999997 ], [ 0.238273, 3.6621e-2, 0.396353 ], [ 0.244967, 3.7055e-2, 0.400007 ], [ 0.25162, 3.7705e-2, 0.403378 ], [ 0.258234, 3.8571e-2, 0.406485 ], [ 0.26481, 3.9647e-2, 0.40934499999999996 ], [ 0.271347, 4.0922e-2, 0.411976 ], [ 0.27785000000000004, 4.2352999999999995e-2, 0.414392 ], [ 0.284321, 4.3933e-2, 0.416608 ], [ 0.290763, 4.5644000000000004e-2, 0.41863700000000004 ], [ 0.297178, 4.747e-2, 0.420491 ], [ 0.303568, 4.939600000000001e-2, 0.422182 ], [ 0.30993499999999996, 5.1407e-2, 0.423721 ], [ 0.316282, 5.349e-2, 0.42511599999999994 ], [ 0.32261, 5.5633999999999996e-2, 0.426377 ], [ 0.328921, 5.7827e-2, 0.427511 ], [ 0.335217, 6.006e-2, 0.428524 ], [ 0.3415, 6.2325e-2, 0.429425 ], [ 0.347771, 6.461599999999999e-2, 0.430217 ], [ 0.354032, 6.6925e-2, 0.43090599999999996 ], [ 0.360284, 6.924699999999999e-2, 0.43149699999999996 ], [ 0.366529, 7.157899999999999e-2, 0.431994 ], [ 0.372768, 7.3915e-2, 0.4324 ], [ 0.37900100000000003, 7.6253e-2, 0.43271899999999996 ], [ 0.385228, 7.8591e-2, 0.43295500000000003 ], [ 0.391453, 8.0927e-2, 0.43310899999999997 ], [ 0.39767399999999997, 8.3257e-2, 0.433183 ], [ 0.40389400000000003, 8.558e-2, 0.433179 ], [ 0.41011300000000006, 8.7896e-2, 0.43309800000000004 ], [ 0.416331, 9.0203e-2, 0.432943 ], [ 0.42254899999999995, 9.2501e-2, 0.432714 ], [ 0.428768, 9.479e-2, 0.43241199999999996 ], [ 0.434987, 9.706899999999999e-2, 0.43203899999999995 ], [ 0.441207, 9.9338e-2, 0.43159400000000003 ], [ 0.44742800000000005, 0.101597, 0.43108 ], [ 0.45365099999999997, 0.10384800000000001, 0.43049799999999994 ], [ 0.459875, 0.10608900000000002, 0.42984600000000006 ], [ 0.46609999999999996, 0.108322, 0.429125 ], [ 0.47232799999999997, 0.11054699999999999, 0.428334 ], [ 0.47855800000000004, 0.112764, 0.427475 ], [ 0.48478899999999997, 0.11497399999999999, 0.42654800000000004 ], [ 0.49102199999999996, 0.117179, 0.425552 ], [ 0.497257, 0.11937899999999999, 0.42448800000000003 ], [ 0.503493, 0.12157500000000002, 0.42335599999999995 ], [ 0.50973, 0.12376899999999999, 0.42215600000000003 ], [ 0.5159670000000001, 0.12596000000000002, 0.420887 ], [ 0.522206, 0.12815, 0.41954900000000006 ], [ 0.528444, 0.13034099999999998, 0.418142 ], [ 0.534683, 0.13253399999999999, 0.416667 ], [ 0.5409200000000001, 0.13472900000000002, 0.415123 ], [ 0.547157, 0.136929, 0.413511 ], [ 0.553392, 0.139134, 0.411829 ], [ 0.559624, 0.141346, 0.41007800000000005 ], [ 0.5658540000000001, 0.143567, 0.408258 ], [ 0.5720810000000001, 0.145797, 0.40636900000000004 ], [ 0.5783039999999999, 0.14803899999999998, 0.40441099999999996 ], [ 0.584521, 0.15029399999999998, 0.40238500000000005 ], [ 0.590734, 0.152563, 0.40029000000000003 ], [ 0.59694, 0.154848, 0.398125 ], [ 0.603139, 0.15715099999999999, 0.395891 ], [ 0.60933, 0.159474, 0.393589 ], [ 0.615513, 0.16181700000000002, 0.391219 ], [ 0.621685, 0.164184, 0.388781 ], [ 0.627847, 0.166575, 0.38627599999999995 ], [ 0.633998, 0.168992, 0.383704 ], [ 0.640135, 0.171438, 0.381065 ], [ 0.6462600000000001, 0.17391399999999999, 0.378359 ], [ 0.652369, 0.176421, 0.37558600000000003 ], [ 0.658463, 0.178962, 0.37274799999999997 ], [ 0.66454, 0.181539, 0.369846 ], [ 0.670599, 0.184153, 0.366879 ], [ 0.676638, 0.186807, 0.363849 ], [ 0.6826559999999999, 0.18950099999999998, 0.360757 ], [ 0.688653, 0.192239, 0.357603 ], [ 0.694627, 0.195021, 0.354388 ], [ 0.7005760000000001, 0.197851, 0.351113 ], [ 0.7065, 0.20072800000000002, 0.347777 ], [ 0.712396, 0.203656, 0.344383 ], [ 0.718264, 0.206636, 0.340931 ], [ 0.724103, 0.20966999999999997, 0.337424 ], [ 0.7299089999999999, 0.212759, 0.333861 ], [ 0.7356830000000001, 0.21590600000000001, 0.330245 ], [ 0.7414229999999999, 0.21911200000000003, 0.32657600000000003 ], [ 0.747127, 0.22237800000000002, 0.322856 ], [ 0.752794, 0.22570600000000002, 0.319085 ], [ 0.758422, 0.22909700000000002, 0.315266 ], [ 0.7640100000000001, 0.232554, 0.311399 ], [ 0.769556, 0.236077, 0.307485 ], [ 0.7750589999999999, 0.239667, 0.303526 ], [ 0.780517, 0.243327, 0.299523 ], [ 0.785929, 0.247056, 0.295477 ], [ 0.791293, 0.250856, 0.29139 ], [ 0.7966070000000001, 0.25472799999999995, 0.287264 ], [ 0.801871, 0.25867399999999996, 0.283099 ], [ 0.807082, 0.26269200000000004, 0.278898 ], [ 0.8122389999999999, 0.266786, 0.274661 ], [ 0.8173410000000001, 0.27095400000000003, 0.27039 ], [ 0.8223860000000001, 0.275197, 0.266085 ], [ 0.8273720000000001, 0.27951699999999996, 0.26175 ], [ 0.8322990000000001, 0.28391299999999997, 0.25738300000000003 ], [ 0.837165, 0.288385, 0.252988 ], [ 0.841969, 0.292933, 0.248564 ], [ 0.846709, 0.297559, 0.24411299999999997 ], [ 0.851384, 0.30226000000000003, 0.23963600000000002 ], [ 0.855992, 0.30703800000000003, 0.23513299999999998 ], [ 0.860533, 0.311892, 0.230606 ], [ 0.8650059999999999, 0.316822, 0.22605499999999998 ], [ 0.8694089999999999, 0.321827, 0.221482 ], [ 0.8737410000000001, 0.32690600000000003, 0.216886 ], [ 0.878001, 0.33205999999999997, 0.21226799999999998 ], [ 0.882188, 0.337287, 0.207628 ], [ 0.886302, 0.342586, 0.20296799999999998 ], [ 0.890341, 0.34795699999999996, 0.19828600000000002 ], [ 0.8943049999999999, 0.353399, 0.193584 ], [ 0.8981920000000001, 0.358911, 0.18885999999999997 ], [ 0.902003, 0.364492, 0.184116 ], [ 0.905735, 0.37014, 0.17934999999999998 ], [ 0.9093899999999999, 0.375856, 0.174563 ], [ 0.9129659999999999, 0.381636, 0.16975500000000002 ], [ 0.9164619999999999, 0.387481, 0.16492400000000002 ], [ 0.9198790000000001, 0.393389, 0.16007 ], [ 0.9232150000000001, 0.399359, 0.155193 ], [ 0.9264699999999999, 0.405389, 0.150292 ], [ 0.929644, 0.41147900000000004, 0.145367 ], [ 0.932737, 0.41762699999999997, 0.140417 ], [ 0.9357469999999999, 0.423831, 0.13544 ], [ 0.9386749999999999, 0.430091, 0.130438 ], [ 0.941521, 0.436405, 0.125409 ], [ 0.944285, 0.442772, 0.120354 ], [ 0.946965, 0.449191, 0.115272 ], [ 0.949562, 0.45565999999999995, 0.110164 ], [ 0.952075, 0.46217800000000003, 0.10503100000000001 ], [ 0.954506, 0.46874399999999994, 9.9874e-2 ], [ 0.9568519999999999, 0.475356, 9.4695e-2 ], [ 0.9591139999999999, 0.48201400000000005, 8.9499e-2 ], [ 0.9612930000000001, 0.488716, 8.4289e-2 ], [ 0.963387, 0.495462, 7.9073e-2 ], [ 0.965397, 0.5022490000000001, 7.385900000000001e-2 ], [ 0.967322, 0.5090779999999999, 6.8659e-2 ], [ 0.969163, 0.515946, 6.3488e-2 ], [ 0.970919, 0.522853, 5.8367e-2 ], [ 0.97259, 0.529798, 5.3323999999999996e-2 ], [ 0.9741759999999999, 0.53678, 4.8392000000000004e-2 ], [ 0.9756769999999999, 0.543798, 4.3618e-2 ], [ 0.9770920000000001, 0.55085, 3.905e-2 ], [ 0.9784219999999999, 0.557937, 3.4931000000000004e-2 ], [ 0.9796659999999999, 0.565057, 3.1409e-2 ], [ 0.9808239999999999, 0.572209, 2.8508e-2 ], [ 0.9818950000000001, 0.579392, 2.6250000000000002e-2 ], [ 0.9828810000000001, 0.586606, 2.4661e-2 ], [ 0.983779, 0.593849, 2.3769999999999996e-2 ], [ 0.984591, 0.6011219999999999, 2.3606e-2 ], [ 0.9853149999999999, 0.608422, 2.4201999999999998e-2 ], [ 0.9859519999999999, 0.61575, 2.5591999999999997e-2 ], [ 0.986502, 0.623105, 2.7814e-2 ], [ 0.9869640000000001, 0.630485, 3.0908e-2 ], [ 0.9873369999999999, 0.63789, 3.4916e-2 ], [ 0.987622, 0.64532, 3.9886e-2 ], [ 0.987819, 0.652773, 4.5580999999999997e-2 ], [ 0.9879260000000001, 0.66025, 5.175e-2 ], [ 0.9879450000000001, 0.667748, 5.8329000000000006e-2 ], [ 0.987874, 0.6752670000000001, 6.5257e-2 ], [ 0.9877140000000001, 0.682807, 7.2489e-2 ], [ 0.9874639999999999, 0.690366, 7.998999999999999e-2 ], [ 0.987124, 0.697944, 8.773099999999999e-2 ], [ 0.986694, 0.70554, 9.5694e-2 ], [ 0.986175, 0.7131529999999999, 0.103863 ], [ 0.985566, 0.720782, 0.112229 ], [ 0.9848649999999999, 0.728427, 0.120785 ], [ 0.984075, 0.736087, 0.129527 ], [ 0.9831960000000001, 0.7437579999999999, 0.138453 ], [ 0.9822279999999999, 0.751442, 0.147565 ], [ 0.9811730000000001, 0.759135, 0.156863 ], [ 0.9800319999999999, 0.766837, 0.166353 ], [ 0.978806, 0.774545, 0.176037 ], [ 0.977497, 0.782258, 0.185923 ], [ 0.976108, 0.7899740000000001, 0.196018 ], [ 0.974638, 0.797692, 0.20633200000000002 ], [ 0.973088, 0.805409, 0.216877 ], [ 0.971468, 0.8131220000000001, 0.227658 ], [ 0.969783, 0.8208249999999999, 0.238686 ], [ 0.968041, 0.828515, 0.249972 ], [ 0.9662430000000001, 0.836191, 0.261534 ], [ 0.9643940000000001, 0.843848, 0.273391 ], [ 0.9625170000000001, 0.8514760000000001, 0.28554599999999997 ], [ 0.9606260000000001, 0.8590690000000001, 0.29801 ], [ 0.9587199999999999, 0.8666240000000001, 0.31082 ], [ 0.956834, 0.8741289999999999, 0.323974 ], [ 0.954997, 0.881569, 0.337475 ], [ 0.9532149999999999, 0.8889419999999999, 0.351369 ], [ 0.9515460000000001, 0.8962260000000001, 0.36562700000000004 ], [ 0.950018, 0.9034090000000001, 0.380271 ], [ 0.9486829999999999, 0.910473, 0.395289 ], [ 0.9475939999999999, 0.917399, 0.410665 ], [ 0.946809, 0.9241680000000001, 0.426373 ], [ 0.946392, 0.9307610000000001, 0.44236699999999995 ], [ 0.9464029999999999, 0.937159, 0.458592 ], [ 0.946903, 0.943348, 0.47497 ], [ 0.9479369999999999, 0.9493180000000001, 0.491426 ], [ 0.949545, 0.955063, 0.50786 ], [ 0.95174, 0.960587, 0.524203 ], [ 0.954529, 0.9658960000000001, 0.5403610000000001 ], [ 0.9578960000000001, 0.971003, 0.5562750000000001 ], [ 0.9618119999999999, 0.975924, 0.571925 ], [ 0.966249, 0.9806779999999999, 0.587206 ], [ 0.971162, 0.985282, 0.602154 ], [ 0.976511, 0.989753, 0.61676 ], [ 0.982257, 0.9941089999999999, 0.631017 ], [ 0.9883620000000001, 0.9983639999999999, 0.6449239999999999 ] ];
+  var inferno = matplotlibScale(_inferno_data);
+  exports["viridis"] = viridis;
+  exports["plasma"] = plasma;
+  exports["inferno"] = inferno;
+  exports["magma"] = magma;;
+ 
+})(PS["Color.Scale.Perceptual"] = PS["Color.Scale.Perceptual"] || {});
 (function(exports) {
   // Generated by psc version 0.8.0.0
   "use strict";
@@ -2753,59 +3628,6 @@ var PS = { };
  
 })(PS["Control.Monad.Aff"] = PS["Control.Monad.Aff"] || {});
 (function(exports) {
-  /* global exports */
-  "use strict";
-
-  // module Control.Monad.Eff
-
-  exports.returnE = function (a) {
-    return function () {
-      return a;
-    };
-  };
-
-  exports.bindE = function (a) {
-    return function (f) {
-      return function () {
-        return f(a())();
-      };
-    };
-  };
-
-  exports.runPure = function (f) {
-    return f();
-  };
- 
-})(PS["Control.Monad.Eff"] = PS["Control.Monad.Eff"] || {});
-(function(exports) {
-  // Generated by psc version 0.8.0.0
-  "use strict";
-  var $foreign = PS["Control.Monad.Eff"];
-  var Prelude = PS["Prelude"];     
-  var monadEff = new Prelude.Monad(function () {
-      return applicativeEff;
-  }, function () {
-      return bindEff;
-  });
-  var bindEff = new Prelude.Bind(function () {
-      return applyEff;
-  }, $foreign.bindE);
-  var applyEff = new Prelude.Apply(function () {
-      return functorEff;
-  }, Prelude.ap(monadEff));
-  var applicativeEff = new Prelude.Applicative(function () {
-      return applyEff;
-  }, $foreign.returnE);
-  var functorEff = new Prelude.Functor(Prelude.liftA1(applicativeEff));
-  exports["functorEff"] = functorEff;
-  exports["applyEff"] = applyEff;
-  exports["applicativeEff"] = applicativeEff;
-  exports["bindEff"] = bindEff;
-  exports["monadEff"] = monadEff;
-  exports["runPure"] = $foreign.runPure;;
- 
-})(PS["Control.Monad.Eff"] = PS["Control.Monad.Eff"] || {});
-(function(exports) {
   // Generated by psc version 0.8.0.0
   "use strict";
   var Prelude = PS["Prelude"];
@@ -3061,45 +3883,6 @@ var PS = { };
  
 })(PS["Control.Monad.Eff.Console"] = PS["Control.Monad.Eff.Console"] || {});
 (function(exports) {
-  /* global exports */
-  "use strict";
-
-  // module Control.Monad.ST
-
-  exports.newSTRef = function (val) {
-    return function () {
-      return { value: val };
-    };
-  };
-
-  exports.readSTRef = function (ref) {
-    return function () {
-      return ref.value;
-    };
-  };
-
-  exports.writeSTRef = function (ref) {
-    return function (a) {
-      return function () {
-        /* jshint boss: true */
-        return ref.value = a;
-      };
-    };
-  };
- 
-})(PS["Control.Monad.ST"] = PS["Control.Monad.ST"] || {});
-(function(exports) {
-  // Generated by psc version 0.8.0.0
-  "use strict";
-  var $foreign = PS["Control.Monad.ST"];
-  var Prelude = PS["Prelude"];
-  var Control_Monad_Eff = PS["Control.Monad.Eff"];
-  exports["writeSTRef"] = $foreign.writeSTRef;
-  exports["readSTRef"] = $foreign.readSTRef;
-  exports["newSTRef"] = $foreign.newSTRef;;
- 
-})(PS["Control.Monad.ST"] = PS["Control.Monad.ST"] || {});
-(function(exports) {
   // module Data.Argonaut.Core
 
   function id(x) {
@@ -3229,453 +4012,6 @@ var PS = { };
   }  
  
 })(PS["Data.StrMap"] = PS["Data.StrMap"] || {});
-(function(exports) {
-  /* global exports */
-  "use strict";
-
-  // module Data.Array.ST
-
-  exports.runSTArray = function (f) {
-    return f;
-  };
-
-  exports.emptySTArray = function () {
-    return [];
-  };
-
-  exports.pushAllSTArray = function (xs) {
-    return function (as) {
-      return function () {
-        return xs.push.apply(xs, as);
-      };
-    };
-  };
- 
-})(PS["Data.Array.ST"] = PS["Data.Array.ST"] || {});
-(function(exports) {
-  // Generated by psc version 0.8.0.0
-  "use strict";
-  var $foreign = PS["Data.Array.ST"];
-  var Prelude = PS["Prelude"];
-  var Control_Monad_Eff = PS["Control.Monad.Eff"];
-  var Control_Monad_ST = PS["Control.Monad.ST"];
-  var Data_Maybe = PS["Data.Maybe"];
-  var pushSTArray = function (arr) {
-      return function (a) {
-          return $foreign.pushAllSTArray(arr)([ a ]);
-      };
-  };
-  exports["pushSTArray"] = pushSTArray;
-  exports["emptySTArray"] = $foreign.emptySTArray;
-  exports["runSTArray"] = $foreign.runSTArray;;
- 
-})(PS["Data.Array.ST"] = PS["Data.Array.ST"] || {});
-(function(exports) {
-  // Generated by psc version 0.8.0.0
-  "use strict";
-  var Prelude = PS["Prelude"];
-  var Data_Maybe = PS["Data.Maybe"];
-  var Data_Tuple = PS["Data.Tuple"];
-  var Data_Array_ST = PS["Data.Array.ST"];
-  var Data_Traversable = PS["Data.Traversable"];
-  var Control_Monad_Eff = PS["Control.Monad.Eff"];
-  var Control_Monad_ST = PS["Control.Monad.ST"];     
-  var Unfoldable = function (unfoldr) {
-      this.unfoldr = unfoldr;
-  };
-  var unfoldr = function (dict) {
-      return dict.unfoldr;
-  };
-  var unfoldableArray = new Unfoldable(function (f) {
-      return function (b) {
-          return Control_Monad_Eff.runPure(Data_Array_ST.runSTArray(function __do() {
-              var v = Data_Array_ST.emptySTArray();
-              var v1 = Control_Monad_ST.newSTRef(b)();
-              (function () {
-                  while (!(function __do() {
-                      var v2 = Control_Monad_ST.readSTRef(v1)();
-                      var $12 = f(v2);
-                      if ($12 instanceof Data_Maybe.Nothing) {
-                          return true;
-                      };
-                      if ($12 instanceof Data_Maybe.Just) {
-                          Data_Array_ST.pushSTArray(v)($12.value0.value0)();
-                          Control_Monad_ST.writeSTRef(v1)($12.value0.value1)();
-                          return false;
-                      };
-                      throw new Error("Failed pattern match at Data.Unfoldable line 29, column 1 - line 49, column 1: " + [ $12.constructor.name ]);
-                  })()) {
-
-                  };
-                  return {};
-              })();
-              return v;
-          }));
-      };
-  });
-  exports["Unfoldable"] = Unfoldable;
-  exports["unfoldr"] = unfoldr;
-  exports["unfoldableArray"] = unfoldableArray;;
- 
-})(PS["Data.Unfoldable"] = PS["Data.Unfoldable"] || {});
-(function(exports) {
-  // Generated by psc version 0.8.0.0
-  "use strict";
-  var Prelude = PS["Prelude"];
-  var Control_Alt = PS["Control.Alt"];
-  var Control_Alternative = PS["Control.Alternative"];
-  var Control_Lazy = PS["Control.Lazy"];
-  var Control_MonadPlus = PS["Control.MonadPlus"];
-  var Control_Plus = PS["Control.Plus"];
-  var Data_Foldable = PS["Data.Foldable"];
-  var Data_Maybe = PS["Data.Maybe"];
-  var Data_Monoid = PS["Data.Monoid"];
-  var Data_Traversable = PS["Data.Traversable"];
-  var Data_Tuple = PS["Data.Tuple"];
-  var Data_Unfoldable = PS["Data.Unfoldable"];     
-  var Nil = (function () {
-      function Nil() {
-
-      };
-      Nil.value = new Nil();
-      return Nil;
-  })();
-  var Cons = (function () {
-      function Cons(value0, value1) {
-          this.value0 = value0;
-          this.value1 = value1;
-      };
-      Cons.create = function (value0) {
-          return function (value1) {
-              return new Cons(value0, value1);
-          };
-      };
-      return Cons;
-  })();
-  var $colon = Cons.create;
-  var uncons = function (v) {
-      if (v instanceof Nil) {
-          return Data_Maybe.Nothing.value;
-      };
-      if (v instanceof Cons) {
-          return new Data_Maybe.Just({
-              head: v.value0, 
-              tail: v.value1
-          });
-      };
-      throw new Error("Failed pattern match at Data.List line 270, column 1 - line 271, column 1: " + [ v.constructor.name ]);
-  };
-  var toUnfoldable = function (dictUnfoldable) {
-      return Data_Unfoldable.unfoldr(dictUnfoldable)(function (xs) {
-          return Prelude["<$>"](Data_Maybe.functorMaybe)(function (rec) {
-              return new Data_Tuple.Tuple(rec.head, rec.tail);
-          })(uncons(xs));
-      });
-  };
-  var tail = function (v) {
-      if (v instanceof Nil) {
-          return Data_Maybe.Nothing.value;
-      };
-      if (v instanceof Cons) {
-          return new Data_Maybe.Just(v.value1);
-      };
-      throw new Error("Failed pattern match at Data.List line 251, column 1 - line 252, column 1: " + [ v.constructor.name ]);
-  };
-  var span = function (v) {
-      return function (v1) {
-          if (v1 instanceof Cons && v(v1.value0)) {
-              var $132 = span(v)(v1.value1);
-              return {
-                  init: new Cons(v1.value0, $132.init), 
-                  rest: $132.rest
-              };
-          };
-          return {
-              init: Nil.value, 
-              rest: v1
-          };
-      };
-  };
-  var singleton = function (a) {
-      return new Cons(a, Nil.value);
-  };
-  var semigroupList = new Prelude.Semigroup(function (v) {
-      return function (ys) {
-          if (v instanceof Nil) {
-              return ys;
-          };
-          if (v instanceof Cons) {
-              return new Cons(v.value0, Prelude["<>"](semigroupList)(v.value1)(ys));
-          };
-          throw new Error("Failed pattern match: " + [ v.constructor.name, ys.constructor.name ]);
-      };
-  });
-  var reverse = (function () {
-      var go = function (__copy_acc) {
-          return function (__copy_v) {
-              var acc = __copy_acc;
-              var v = __copy_v;
-              tco: while (true) {
-                  if (v instanceof Nil) {
-                      return acc;
-                  };
-                  if (v instanceof Cons) {
-                      var __tco_acc = new Cons(v.value0, acc);
-                      var __tco_v = v.value1;
-                      acc = __tco_acc;
-                      v = __tco_v;
-                      continue tco;
-                  };
-                  throw new Error("Failed pattern match at Data.List line 368, column 1 - line 369, column 1: " + [ acc.constructor.name, v.constructor.name ]);
-              };
-          };
-      };
-      return go(Nil.value);
-  })();
-  var take = (function () {
-      var go = function (__copy_acc) {
-          return function (__copy_v) {
-              return function (__copy_v1) {
-                  var acc = __copy_acc;
-                  var v = __copy_v;
-                  var v1 = __copy_v1;
-                  tco: while (true) {
-                      if (v === 0) {
-                          return reverse(acc);
-                      };
-                      if (v1 instanceof Nil) {
-                          return reverse(acc);
-                      };
-                      if (v1 instanceof Cons) {
-                          var __tco_acc = new Cons(v1.value0, acc);
-                          var __tco_v = v - 1;
-                          var __tco_v1 = v1.value1;
-                          acc = __tco_acc;
-                          v = __tco_v;
-                          v1 = __tco_v1;
-                          continue tco;
-                      };
-                      throw new Error("Failed pattern match at Data.List line 490, column 1 - line 491, column 1: " + [ acc.constructor.name, v.constructor.name, v1.constructor.name ]);
-                  };
-              };
-          };
-      };
-      return go(Nil.value);
-  })();
-  var monoidList = new Data_Monoid.Monoid(function () {
-      return semigroupList;
-  }, Nil.value);
-  var some = function (dictAlternative) {
-      return function (dictLazy) {
-          return function (v) {
-              return Prelude["<*>"]((dictAlternative["__superclass_Prelude.Applicative_0"]())["__superclass_Prelude.Apply_0"]())(Prelude["<$>"](((dictAlternative["__superclass_Control.Plus.Plus_1"]())["__superclass_Control.Alt.Alt_0"]())["__superclass_Prelude.Functor_0"]())(Cons.create)(v))(Control_Lazy.defer(dictLazy)(function (v1) {
-                  return many(dictAlternative)(dictLazy)(v);
-              }));
-          };
-      };
-  };
-  var many = function (dictAlternative) {
-      return function (dictLazy) {
-          return function (v) {
-              return Control_Alt["<|>"]((dictAlternative["__superclass_Control.Plus.Plus_1"]())["__superclass_Control.Alt.Alt_0"]())(some(dictAlternative)(dictLazy)(v))(Prelude.pure(dictAlternative["__superclass_Prelude.Applicative_0"]())(Nil.value));
-          };
-      };
-  };
-  var last = function (__copy_v) {
-      var v = __copy_v;
-      tco: while (true) {
-          if (v instanceof Cons && v.value1 instanceof Nil) {
-              return new Data_Maybe.Just(v.value0);
-          };
-          if (v instanceof Cons) {
-              var __tco_v = v.value1;
-              v = __tco_v;
-              continue tco;
-          };
-          return Data_Maybe.Nothing.value;
-      };
-  };
-  var init = function (v) {
-      if (v instanceof Nil) {
-          return Data_Maybe.Nothing.value;
-      };
-      var go = function (__copy_v1) {
-          return function (__copy_acc) {
-              var v1 = __copy_v1;
-              var acc = __copy_acc;
-              tco: while (true) {
-                  if (v1 instanceof Cons && v1.value1 instanceof Nil) {
-                      return acc;
-                  };
-                  if (v1 instanceof Cons) {
-                      var __tco_v1 = v1.value1;
-                      var __tco_acc = new Cons(v1.value0, acc);
-                      v1 = __tco_v1;
-                      acc = __tco_acc;
-                      continue tco;
-                  };
-                  return acc;
-              };
-          };
-      };
-      return Data_Maybe.Just.create(reverse(go(v)(Nil.value)));
-  };                     
-  var head = function (v) {
-      if (v instanceof Nil) {
-          return Data_Maybe.Nothing.value;
-      };
-      if (v instanceof Cons) {
-          return new Data_Maybe.Just(v.value0);
-      };
-      throw new Error("Failed pattern match at Data.List line 236, column 1 - line 237, column 1: " + [ v.constructor.name ]);
-  };
-  var functorList = new Prelude.Functor(function (f) {
-      return function (lst) {
-          var go = function (__copy_v) {
-              return function (__copy_acc) {
-                  var v = __copy_v;
-                  var acc = __copy_acc;
-                  tco: while (true) {
-                      if (v instanceof Nil) {
-                          return acc;
-                      };
-                      if (v instanceof Cons) {
-                          var __tco_v = v.value1;
-                          var __tco_acc = new Cons(f(v.value0), acc);
-                          v = __tco_v;
-                          acc = __tco_acc;
-                          continue tco;
-                      };
-                      throw new Error("Failed pattern match at Data.List line 731, column 1 - line 738, column 1: " + [ v.constructor.name, acc.constructor.name ]);
-                  };
-              };
-          };
-          return reverse(go(lst)(Nil.value));
-      };
-  });
-  var fromList = function (dictUnfoldable) {
-      return toUnfoldable(dictUnfoldable);
-  };
-  var fromFoldable = function (dictFoldable) {
-      return Data_Foldable.foldr(dictFoldable)(Cons.create)(Nil.value);
-  };
-  var toList = function (dictFoldable) {
-      return fromFoldable(dictFoldable);
-  };
-  var foldableList = new Data_Foldable.Foldable(function (dictMonoid) {
-      return function (f) {
-          return Data_Foldable.foldl(foldableList)(function (acc) {
-              return function ($365) {
-                  return Prelude.append(dictMonoid["__superclass_Prelude.Semigroup_0"]())(acc)(f($365));
-              };
-          })(Data_Monoid.mempty(dictMonoid));
-      };
-  }, (function () {
-      var go = function (__copy_v) {
-          return function (__copy_b) {
-              return function (__copy_v1) {
-                  var v = __copy_v;
-                  var b = __copy_b;
-                  var v1 = __copy_v1;
-                  tco: while (true) {
-                      if (v1 instanceof Nil) {
-                          return b;
-                      };
-                      if (v1 instanceof Cons) {
-                          var __tco_v = v;
-                          var __tco_b = v(b)(v1.value0);
-                          var __tco_v1 = v1.value1;
-                          v = __tco_v;
-                          b = __tco_b;
-                          v1 = __tco_v1;
-                          continue tco;
-                      };
-                      throw new Error("Failed pattern match: " + [ v.constructor.name, b.constructor.name, v1.constructor.name ]);
-                  };
-              };
-          };
-      };
-      return go;
-  })(), function (v) {
-      return function (b) {
-          return function (v1) {
-              if (v1 instanceof Nil) {
-                  return b;
-              };
-              if (v1 instanceof Cons) {
-                  return v(v1.value0)(Data_Foldable.foldr(foldableList)(v)(b)(v1.value1));
-              };
-              throw new Error("Failed pattern match: " + [ v.constructor.name, b.constructor.name, v1.constructor.name ]);
-          };
-      };
-  });
-  var drop = function (__copy_v) {
-      return function (__copy_v1) {
-          var v = __copy_v;
-          var v1 = __copy_v1;
-          tco: while (true) {
-              if (v === 0) {
-                  return v1;
-              };
-              if (v1 instanceof Nil) {
-                  return Nil.value;
-              };
-              if (v1 instanceof Cons) {
-                  var __tco_v = v - 1;
-                  var __tco_v1 = v1.value1;
-                  v = __tco_v;
-                  v1 = __tco_v1;
-                  continue tco;
-              };
-              throw new Error("Failed pattern match: " + [ v.constructor.name, v1.constructor.name ]);
-          };
-      };
-  };                                                       
-  var applyList = new Prelude.Apply(function () {
-      return functorList;
-  }, function (v) {
-      return function (v1) {
-          if (v instanceof Nil) {
-              return Nil.value;
-          };
-          if (v instanceof Cons) {
-              return Prelude["<>"](semigroupList)(Prelude["<$>"](functorList)(v.value0)(v1))(Prelude["<*>"](applyList)(v.value1)(v1));
-          };
-          throw new Error("Failed pattern match: " + [ v.constructor.name, v1.constructor.name ]);
-      };
-  });
-  var applicativeList = new Prelude.Applicative(function () {
-      return applyList;
-  }, function (a) {
-      return new Cons(a, Nil.value);
-  });
-  exports["Nil"] = Nil;
-  exports["Cons"] = Cons;
-  exports["fromList"] = fromList;
-  exports["toList"] = toList;
-  exports["span"] = span;
-  exports["drop"] = drop;
-  exports["take"] = take;
-  exports["reverse"] = reverse;
-  exports["uncons"] = uncons;
-  exports["init"] = init;
-  exports["tail"] = tail;
-  exports["last"] = last;
-  exports["head"] = head;
-  exports[":"] = $colon;
-  exports["many"] = many;
-  exports["some"] = some;
-  exports["singleton"] = singleton;
-  exports["fromFoldable"] = fromFoldable;
-  exports["toUnfoldable"] = toUnfoldable;
-  exports["semigroupList"] = semigroupList;
-  exports["monoidList"] = monoidList;
-  exports["functorList"] = functorList;
-  exports["foldableList"] = foldableList;
-  exports["applyList"] = applyList;
-  exports["applicativeList"] = applicativeList;;
- 
-})(PS["Data.List"] = PS["Data.List"] || {});
 (function(exports) {
   /* global exports */
   "use strict";
@@ -4506,31 +4842,6 @@ var PS = { };
   exports["?>>="] = $qmark$greater$greater$eq;;
  
 })(PS["Data.Argonaut.Combinators"] = PS["Data.Argonaut.Combinators"] || {});
-(function(exports) {
-  /* global exports */
-  "use strict";
-
-  // module Data.Array.Unsafe
-
-  exports.unsafeIndex = function (xs) {
-    return function (n) {
-      return xs[n];
-    };
-  };
- 
-})(PS["Data.Array.Unsafe"] = PS["Data.Array.Unsafe"] || {});
-(function(exports) {
-  // Generated by psc version 0.8.0.0
-  "use strict";
-  var $foreign = PS["Data.Array.Unsafe"];
-  var Prelude = PS["Prelude"];
-  var Data_Array = PS["Data.Array"];
-  var last = function (xs) {
-      return $foreign.unsafeIndex(xs)(Data_Array.length(xs) - 1);
-  };
-  exports["last"] = last;;
- 
-})(PS["Data.Array.Unsafe"] = PS["Data.Array.Unsafe"] || {});
 (function(exports) {
   /* global exports */
   "use strict";
@@ -8504,6 +8815,7 @@ var PS = { };
   "use strict";
   var Prelude = PS["Prelude"];
   var Data_Foldable = PS["Data.Foldable"];
+  var Data_List = PS["Data.List"];
   var Text_Smolder_Markup = PS["Text.Smolder.Markup"];
   var Text_Smolder_HTML = PS["Text.Smolder.HTML"];
   var Text_Smolder_HTML_Attributes = PS["Text.Smolder.HTML.Attributes"];
@@ -8512,13 +8824,18 @@ var PS = { };
   var Test_FlareDoc = PS["Test.FlareDoc"];
   var Color = PS["Color"];
   var Color_Blending = PS["Color.Blending"];
-  var Color_Gradient = PS["Color.Gradient"];
+  var Color_Scale = PS["Color.Scale"];
+  var Color_Scale_Perceptual = PS["Color.Scale.Perceptual"];
   var Color_Scheme_Harmonic = PS["Color.Scheme.Harmonic"];
   var Color_Scheme_MaterialDesign = PS["Color.Scheme.MaterialDesign"];
   var Color_Scheme_X11 = PS["Color.Scheme.X11"];
   var Test_FlareCheck = PS["Test.FlareCheck"];
-  var Control_Monad_Eff = PS["Control.Monad.Eff"];     
+  var Control_Monad_Eff = PS["Control.Monad.Eff"];
+  var Data_Unfoldable = PS["Data.Unfoldable"];     
   var TColorSpace = function (x) {
+      return x;
+  };
+  var TColorScale = function (x) {
       return x;
   };
   var TColor = function (x) {
@@ -8539,6 +8856,48 @@ var PS = { };
       };
       return ColorList;
   })();
+  var Grayscale = (function () {
+      function Grayscale() {
+
+      };
+      Grayscale.value = new Grayscale();
+      return Grayscale;
+  })();
+  var Spectrum = (function () {
+      function Spectrum() {
+
+      };
+      Spectrum.value = new Spectrum();
+      return Spectrum;
+  })();
+  var Magma = (function () {
+      function Magma() {
+
+      };
+      Magma.value = new Magma();
+      return Magma;
+  })();
+  var Inferno = (function () {
+      function Inferno() {
+
+      };
+      Inferno.value = new Inferno();
+      return Inferno;
+  })();
+  var Plasma = (function () {
+      function Plasma() {
+
+      };
+      Plasma.value = new Plasma();
+      return Plasma;
+  })();
+  var Viridis = (function () {
+      function Viridis() {
+
+      };
+      Viridis.value = new Viridis();
+      return Viridis;
+  })();
   var textReadable = function (bgColor) {
       return function (textColor) {
           var ratio = Color.contrast(bgColor)(textColor);
@@ -8552,7 +8911,7 @@ var PS = { };
               if (!isRead) {
                   return Color_Scheme_X11.red;
               };
-              throw new Error("Failed pattern match at Test.Interactive line 73, column 1 - line 92, column 1: " + [ isRead.constructor.name ]);
+              throw new Error("Failed pattern match at Test.Interactive line 106, column 1 - line 125, column 1: " + [ isRead.constructor.name ]);
           })());
           var barBg = Color.cssStringHSLA(Color.black);
           var answ = (function () {
@@ -8562,7 +8921,7 @@ var PS = { };
               if (!isRead) {
                   return "no";
               };
-              throw new Error("Failed pattern match at Test.Interactive line 73, column 1 - line 92, column 1: " + [ isRead.constructor.name ]);
+              throw new Error("Failed pattern match at Test.Interactive line 106, column 1 - line 125, column 1: " + [ isRead.constructor.name ]);
           })();
           return Prelude.bind(Text_Smolder_Markup.bindMarkupM)(Text_Smolder_Markup["!"](Text_Smolder_Markup.attributableMarkupMF)(Text_Smolder_HTML.div)(Text_Smolder_HTML_Attributes.style(css))(Text_Smolder_Markup.text("Is this text well readable?")))(function () {
               return Prelude.bind(Text_Smolder_Markup.bindMarkupM)(Text_Smolder_HTML.p(Prelude["<>"](Text_Smolder_Markup.semigroupMarkupM)(Text_Smolder_Markup.text("WCAG says: "))(Text_Smolder_HTML.b(Text_Smolder_Markup.text(answ)))))(function () {
@@ -8584,8 +8943,19 @@ var PS = { };
       if (v instanceof Color_Blending.Overlay) {
           return "Overlay";
       };
-      throw new Error("Failed pattern match at Test.Interactive line 55, column 1 - line 56, column 1: " + [ v.constructor.name ]);
+      throw new Error("Failed pattern match at Test.Interactive line 57, column 1 - line 58, column 1: " + [ v.constructor.name ]);
   };
+  var interactiveTColorScale = new Test_FlareCheck.Interactive(function (ui) {
+      var css = function (scale) {
+          return "background: linear-gradient(to right, " + (Color_Scale.cssColorStops(scale) + (");" + "width: 100%; height: 30px;"));
+      };
+      var pretty = function (v) {
+          return Text_Smolder_Markup["!"](Text_Smolder_Markup.attributableMarkupMF)(Text_Smolder_HTML.div)(Text_Smolder_HTML_Attributes.style(css(v)))(Text_Smolder_Markup.text(""));
+      };
+      return Prelude["<$>"](Flare.functorUI)(function ($110) {
+          return Test_FlareCheck.SetHTML.create(pretty($110));
+      })(ui);
+  });
   var flare1 = Prelude["<*>"](Flare.applyUI)(Prelude["<$>"](Flare.functorUI)(textReadable)(Flare.color("Background")(Color_Scheme_X11.mediumvioletred)))(Flare.color("Text")(Color.black));
   var flammableTColorSpace = new Test_FlareCheck.Flammable((function () {
       var toString = function (v) {
@@ -8595,9 +8965,56 @@ var PS = { };
           if (v instanceof Color.RGB) {
               return "RGB";
           };
-          throw new Error("Failed pattern match at Test.Interactive line 66, column 7 - line 67, column 7: " + [ v.constructor.name ]);
+          throw new Error("Failed pattern match at Test.Interactive line 69, column 7 - line 70, column 7: " + [ v.constructor.name ]);
       };
       return Prelude["<$>"](Flare.functorUI)(TColorSpace)(Flare.select("ColorSpace")(Color.HSL.value)([ Color.RGB.value ])(toString));
+  })());
+  var flammableTColorScale = new Test_FlareCheck.Flammable((function () {
+      var toString = function (v) {
+          if (v instanceof Grayscale) {
+              return "grayscale";
+          };
+          if (v instanceof Spectrum) {
+              return "spectrum";
+          };
+          if (v instanceof Magma) {
+              return "magma";
+          };
+          if (v instanceof Inferno) {
+              return "inferno";
+          };
+          if (v instanceof Plasma) {
+              return "plasma";
+          };
+          if (v instanceof Viridis) {
+              return "viridis";
+          };
+          throw new Error("Failed pattern match at Test.Interactive line 92, column 7 - line 93, column 7: " + [ v.constructor.name ]);
+      };
+      var toColorScale = function (v) {
+          if (v instanceof Grayscale) {
+              return Color_Scale.grayscale;
+          };
+          if (v instanceof Spectrum) {
+              return Color_Scale.spectrum;
+          };
+          if (v instanceof Magma) {
+              return Color_Scale_Perceptual.magma;
+          };
+          if (v instanceof Inferno) {
+              return Color_Scale_Perceptual.inferno;
+          };
+          if (v instanceof Plasma) {
+              return Color_Scale_Perceptual.plasma;
+          };
+          if (v instanceof Viridis) {
+              return Color_Scale_Perceptual.viridis;
+          };
+          throw new Error("Failed pattern match at Test.Interactive line 80, column 1 - line 99, column 1: " + [ v.constructor.name ]);
+      };
+      return Prelude["<$>"](Flare.functorUI)(function ($111) {
+          return TColorScale(toColorScale($111));
+      })(Flare.fieldset("ColorScale")(Flare.select("Choose")(Grayscale.value)([ Spectrum.value, Magma.value, Inferno.value, Plasma.value, Viridis.value ])(toString)));
   })());
   var flammableTColor = new Test_FlareCheck.Flammable(Prelude["<$>"](Flare.functorUI)(TColor)(Flare.fieldset("Color")(Prelude["<*>"](Flare.applyUI)(Prelude["<*>"](Flare.applyUI)(Prelude["<$>"](Flare.functorUI)(Color.hsl)(Flare.numberSlider("Hue")(0.0)(360.0)(0.1)(231.0)))(Flare.numberSlider("Saturation")(0.0)(1.0)(1.0e-3)(0.48)))(Flare.numberSlider("Lightness")(0.0)(1.0)(1.0e-3)(0.48)))));
   var flammableTBlendMode = new Test_FlareCheck.Flammable(Prelude["<$>"](Flare.functorUI)(TBlendMode)(Flare.select("BlendMode")(Color_Blending.Multiply.value)([ Color_Blending.Screen.value, Color_Blending.Overlay.value ])(modeToString)));
@@ -8611,13 +9028,13 @@ var PS = { };
       var pretty = function (v) {
           return Data_Foldable.foldMap(Data_Foldable.foldableArray)(Text_Smolder_Markup.monoidMarkup)(colorBox)(v.value0);
       };
-      return Prelude["<$>"](Flare.functorUI)(function ($86) {
-          return Test_FlareCheck.SetHTML.create(pretty($86));
+      return Prelude["<$>"](Flare.functorUI)(function ($112) {
+          return Test_FlareCheck.SetHTML.create(pretty($112));
       })(ui);
   });
   var interactiveTColor = new Test_FlareCheck.Interactive(function (ui) {
-      return Prelude["<$>"](Flare.functorUI)(function ($87) {
-          return Test_FlareCheck.SetHTML.create(colorBox(runTColor($87)));
+      return Prelude["<$>"](Flare.functorUI)(function ($113) {
+          return Test_FlareCheck.SetHTML.create(colorBox(runTColor($113)));
       })(ui);
   });
   var blendUI = function (c1) {
@@ -8659,8 +9076,8 @@ var PS = { };
               })();
               doc(interactiveTColor)("black")(Color.black)();
               doc(interactiveTColor)("white")(Color.white)();
-              doc(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallNumber)(interactiveTColor))("grayscale")(function (v) {
-                  return Color.grayscale(v);
+              doc(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallNumber)(interactiveTColor))("graytone")(function (v) {
+                  return Color.graytone(v);
               })();
               doc(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList))("complementary")(function (v) {
                   return new ColorList([ v, Color.complementary(v) ]);
@@ -8713,21 +9130,49 @@ var PS = { };
                       };
                   };
               })();
-              var docmd = function (dictInteractive) {
-                  return Test_FlareDoc["flareDoc'"](dictInteractive)("doc-scheme-md")(dict)("Color.Scheme.MaterialDesign");
+              var docscale = function (dictInteractive) {
+                  return Test_FlareDoc["flareDoc'"](dictInteractive)("doc-scale")(dict)("Color.Scale");
               };
-              var docgrad = function (dictInteractive) {
-                  return Test_FlareDoc["flareDoc'"](dictInteractive)("doc-gradient")(dict)("Color.Gradient");
-              };
-              docgrad(Test_FlareCheck.interactiveFunction(flammableTColorSpace)(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallInt)(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList)))))("linearGradient")(function (v) {
+              docscale(Test_FlareCheck.interactiveFunction(flammableTColorSpace)(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveTColorScale))))("colorScale")(function (v) {
                   return function (v1) {
                       return function (v2) {
-                          return function (v3) {
-                              return new ColorList(Color_Gradient.linearGradient(v)(v1)(v2)(v3));
-                          };
+                          return TColorScale(Color_Scale.colorScale(v)(v1)(Data_List.Nil.value)(v2));
                       };
                   };
               })();
+              docscale(Test_FlareCheck.interactiveFunction(flammableTColorScale)(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallNumber)(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveTColorScale))))("addStop")(function (v) {
+                  return function (v1) {
+                      return function (v2) {
+                          return TColorScale(Color_Scale.addStop(v)(v2)(v1));
+                      };
+                  };
+              })();
+              docscale(Test_FlareCheck.interactiveFunction(flammableTColorScale)(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallNumber)(interactiveTColor)))("sample")(function (v) {
+                  return function (v1) {
+                      return Color_Scale.sample(v)(v1);
+                  };
+              })();
+              docscale(Test_FlareCheck.interactiveFunction(flammableTColorScale)(Test_FlareCheck.interactiveFunction(Test_FlareCheck.flammableSmallInt)(interactiveColorList)))("colors")(function (v) {
+                  return function (v1) {
+                      return new ColorList(Data_List.fromList(Data_Unfoldable.unfoldableArray)(Color_Scale.colors(v)(v1)));
+                  };
+              })();
+              docscale(interactiveTColorScale)("grayscale")(Color_Scale.grayscale)();
+              docscale(interactiveTColorScale)("spectrum")(Color_Scale.spectrum)();
+              docscale(Test_FlareCheck.interactiveFunction(flammableTColorSpace)(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveFunction(flammableTColor)(Test_FlareCheck.interactiveString))))("cssColorStops")(function (v) {
+                  return function (v1) {
+                      return function (v2) {
+                          return Color_Scale.cssColorStops(Color_Scale.colorScale(v)(v1)(Data_List.Nil.value)(v2));
+                      };
+                  };
+              })();
+              var docscaleperc = function (dictInteractive) {
+                  return Test_FlareDoc["flareDoc'"](dictInteractive)("doc-scale-perc")(dict)("Color.Scale.Perceptual");
+              };
+              docscaleperc(interactiveTColorScale)("magma")(Color_Scale_Perceptual.magma)();
+              docscaleperc(interactiveTColorScale)("inferno")(Color_Scale_Perceptual.inferno)();
+              docscaleperc(interactiveTColorScale)("plasma")(Color_Scale_Perceptual.plasma)();
+              docscaleperc(interactiveTColorScale)("viridis")(Color_Scale_Perceptual.viridis)();
               var docharm = function (dictInteractive) {
                   return Test_FlareDoc["flareDoc'"](dictInteractive)("doc-scheme-harm")(dict)("Color.Scheme.Harmonic");
               };
@@ -8746,28 +9191,28 @@ var PS = { };
               docharm(Test_FlareCheck.interactiveFunction(flammableTColor)(interactiveColorList))("tetrad")(function (v) {
                   return ColorList.create(Color_Scheme_Harmonic.tetrad(v));
               })();
-              var docmd1 = function (dictInteractive) {
+              var docmd = function (dictInteractive) {
                   return Test_FlareDoc["flareDoc'"](dictInteractive)("doc-scheme-md")(dict)("Color.Scheme.MaterialDesign");
               };
-              docmd1(interactiveTColor)("red")(Color_Scheme_MaterialDesign.red)();
-              docmd1(interactiveTColor)("pink")(Color_Scheme_MaterialDesign.pink)();
-              docmd1(interactiveTColor)("purple")(Color_Scheme_MaterialDesign.purple)();
-              docmd1(interactiveTColor)("deepPurple")(Color_Scheme_MaterialDesign.deepPurple)();
-              docmd1(interactiveTColor)("indigo")(Color_Scheme_MaterialDesign.indigo)();
-              docmd1(interactiveTColor)("blue")(Color_Scheme_MaterialDesign.blue)();
-              docmd1(interactiveTColor)("lightBlue")(Color_Scheme_MaterialDesign.lightBlue)();
-              docmd1(interactiveTColor)("cyan")(Color_Scheme_MaterialDesign.cyan)();
-              docmd1(interactiveTColor)("teal")(Color_Scheme_MaterialDesign.teal)();
-              docmd1(interactiveTColor)("green")(Color_Scheme_MaterialDesign.green)();
-              docmd1(interactiveTColor)("lightGreen")(Color_Scheme_MaterialDesign.lightGreen)();
-              docmd1(interactiveTColor)("lime")(Color_Scheme_MaterialDesign.lime)();
-              docmd1(interactiveTColor)("yellow")(Color_Scheme_MaterialDesign.yellow)();
-              docmd1(interactiveTColor)("amber")(Color_Scheme_MaterialDesign.amber)();
-              docmd1(interactiveTColor)("orange")(Color_Scheme_MaterialDesign.orange)();
-              docmd1(interactiveTColor)("deepOrange")(Color_Scheme_MaterialDesign.deepOrange)();
-              docmd1(interactiveTColor)("brown")(Color_Scheme_MaterialDesign.brown)();
-              docmd1(interactiveTColor)("grey")(Color_Scheme_MaterialDesign.grey)();
-              docmd1(interactiveTColor)("blueGrey")(Color_Scheme_MaterialDesign.blueGrey)();
+              docmd(interactiveTColor)("red")(Color_Scheme_MaterialDesign.red)();
+              docmd(interactiveTColor)("pink")(Color_Scheme_MaterialDesign.pink)();
+              docmd(interactiveTColor)("purple")(Color_Scheme_MaterialDesign.purple)();
+              docmd(interactiveTColor)("deepPurple")(Color_Scheme_MaterialDesign.deepPurple)();
+              docmd(interactiveTColor)("indigo")(Color_Scheme_MaterialDesign.indigo)();
+              docmd(interactiveTColor)("blue")(Color_Scheme_MaterialDesign.blue)();
+              docmd(interactiveTColor)("lightBlue")(Color_Scheme_MaterialDesign.lightBlue)();
+              docmd(interactiveTColor)("cyan")(Color_Scheme_MaterialDesign.cyan)();
+              docmd(interactiveTColor)("teal")(Color_Scheme_MaterialDesign.teal)();
+              docmd(interactiveTColor)("green")(Color_Scheme_MaterialDesign.green)();
+              docmd(interactiveTColor)("lightGreen")(Color_Scheme_MaterialDesign.lightGreen)();
+              docmd(interactiveTColor)("lime")(Color_Scheme_MaterialDesign.lime)();
+              docmd(interactiveTColor)("yellow")(Color_Scheme_MaterialDesign.yellow)();
+              docmd(interactiveTColor)("amber")(Color_Scheme_MaterialDesign.amber)();
+              docmd(interactiveTColor)("orange")(Color_Scheme_MaterialDesign.orange)();
+              docmd(interactiveTColor)("deepOrange")(Color_Scheme_MaterialDesign.deepOrange)();
+              docmd(interactiveTColor)("brown")(Color_Scheme_MaterialDesign.brown)();
+              docmd(interactiveTColor)("grey")(Color_Scheme_MaterialDesign.grey)();
+              docmd(interactiveTColor)("blueGrey")(Color_Scheme_MaterialDesign.blueGrey)();
               var docx11 = function (dictInteractive) {
                   return Test_FlareDoc["flareDoc'"](dictInteractive)("doc-scheme-x11")(dict)("Color.Scheme.X11");
               };
