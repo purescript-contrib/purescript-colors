@@ -3,6 +3,7 @@ module Test.Interactive (main) where
 import Prelude
 
 import Data.Foldable (foldMap)
+import Data.List (List(..), fromList)
 
 import Text.Smolder.Markup as H
 import Text.Smolder.Markup ((!))
@@ -15,7 +16,8 @@ import Test.FlareDoc
 
 import Color
 import Color.Blending
-import Color.Gradient
+import Color.Scale
+import Color.Scale.Perceptual
 import Color.Scheme.Harmonic
 import Color.Scheme.MaterialDesign as MD
 import Color.Scheme.X11
@@ -70,6 +72,36 @@ instance flammableTColorSpace :: Flammable TColorSpace where
 newtype Int255 = Int255 Int
 instance flammableInt255 :: Flammable Int255 where
   spark = Int255 <$> intSlider "Int" 0 255 100
+
+newtype TColorScale = TColorScale ColorScale
+
+data CSTypes = Grayscale | Spectrum | Magma | Inferno | Plasma | Viridis
+
+instance flammableTColorScale :: Flammable TColorScale where
+  spark = (TColorScale <<< toColorScale) <$> (fieldset "ColorScale" $
+            select "Choose" Grayscale [Spectrum, Magma, Inferno, Plasma, Viridis] toString
+          )
+    where
+      toString Grayscale = "grayscale"
+      toString Spectrum  = "spectrum"
+      toString Magma     = "magma"
+      toString Inferno   = "inferno"
+      toString Plasma    = "plasma"
+      toString Viridis   = "viridis"
+
+      toColorScale Grayscale = grayscale
+      toColorScale Spectrum  = spectrum
+      toColorScale Magma     = magma
+      toColorScale Inferno   = inferno
+      toColorScale Plasma    = plasma
+      toColorScale Viridis   = viridis
+
+instance interactiveTColorScale :: Interactive TColorScale where
+  interactive ui = (SetHTML <<< pretty) <$> ui
+    where
+      pretty (TColorScale scale) = H.div ! HA.style (css scale) $ H.text ""
+      css scale = "background: linear-gradient(to right, " <> cssColorStops scale <> ");" <>
+                  "width: 100%; height: 30px;"
 
 textReadable bgColor textColor = do
   H.div ! HA.style css $ H.text "Is this text well readable?"
@@ -144,13 +176,24 @@ main = do
 
     docblend "blend" (\(TBlendMode m) (TColor b) (TColor f) -> ColorList [b, f, blend m b f])
 
-    let docmd :: forall t. Interactive t => String -> t -> _
-        docmd = flareDoc' "doc-scheme-md" dict "Color.Scheme.MaterialDesign"
+    let docscale :: forall t. Interactive t => String -> t -> _
+        docscale = flareDoc' "doc-scale" dict "Color.Scale"
 
-    let docgrad :: forall t. Interactive t => String -> t -> _
-        docgrad = flareDoc' "doc-gradient" dict "Color.Gradient"
+    docscale "colorScale" $ \(TColorSpace mode) (TColor b) (TColor e) -> TColorScale $ colorScale mode b Nil e
+    docscale "addStop" $ \(TColorScale sc) (SmallNumber r) (TColor c) -> TColorScale $ addStop sc c r
+    docscale "sample" $ \(TColorScale sc) (SmallNumber r) -> TColor (sample sc r)
+    docscale "colors" $ \(TColorScale sc) (SmallInt n) -> ColorList (fromList $ colors sc n)
+    docscale "grayscale" (TColorScale grayscale)
+    docscale "spectrum" (TColorScale spectrum)
+    docscale "cssColorStops" $ \(TColorSpace mode) (TColor b) (TColor e) -> cssColorStops (colorScale mode b Nil e)
 
-    docgrad "linearGradient" (\(TColorSpace m) (SmallInt n) (TColor f) (TColor t) -> ColorList (linearGradient m n f t))
+    let docscaleperc :: forall t. Interactive t => String -> t -> _
+        docscaleperc = flareDoc' "doc-scale-perc" dict "Color.Scale.Perceptual"
+
+    docscaleperc "magma" $ TColorScale magma
+    docscaleperc "inferno" $ TColorScale inferno
+    docscaleperc "plasma" $ TColorScale plasma
+    docscaleperc "viridis" $ TColorScale viridis
 
     let docharm :: forall t. Interactive t => String -> t -> _
         docharm = flareDoc' "doc-scheme-harm" dict "Color.Scheme.Harmonic"

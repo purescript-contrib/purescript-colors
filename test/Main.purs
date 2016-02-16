@@ -4,6 +4,7 @@ import Prelude
 
 import Data.Array ((..))
 import Data.Foldable (sequence_)
+import Data.List (List(..), (:))
 import Data.Int (toNumber, round)
 import Data.Maybe (Maybe(..))
 
@@ -12,7 +13,7 @@ import Test.Unit.Assert (assertFalse, equal)
 
 import Color
 import Color.Blending
-import Color.Gradient
+import Color.Scale
 import Color.Scheme.X11
 
 main = runTest do
@@ -158,39 +159,34 @@ main = runTest do
     equal (rgb 255 133 51) (blend Screen b f)
     equal (rgb 255 41 0) (blend Overlay b f)
 
-  -- Color.Gradient
+  -- Color.Scale
 
-  test "linearGradient HSL" do
-    let hslGradient = linearGradient HSL
+  let scale = colorScale HSL red (colorStop blue 0.3 : Nil) yellow
 
-    equal [black, white] (hslGradient 0 black white)
-    equal [black, grayscale 0.5, white] (hslGradient 3 black white)
-    equal [white, grayscale 0.5, black] (hslGradient 3 white black)
+  test "colorScale, sample" do
+    equal red    (sample scale (-10.0))
+    equal red    (sample scale 0.0)
+    equal red    (sample scale 0.0001)
+    equal blue   (sample scale 0.2999)
+    equal blue   (sample scale 0.3)
+    equal blue   (sample scale 0.3001)
+    equal yellow (sample scale 0.9999)
+    equal yellow (sample scale 1.0)
+    equal yellow (sample scale 10.0)
 
-    let c1 = hsl 40.0 0.3 0.6
-        c2 = hsl 60.0 0.4 0.7
-        c3 = hsl 80.0 0.5 0.8
-    equal [c1, c2, c3] (hslGradient 3 c1 c3)
-    equal [c3, c2, c1] (hslGradient 3 c3 c1)
+    equal (mix HSL red blue 0.5)    (sample scale 0.15)
+    equal (mix HSL blue yellow 0.5) (sample scale 0.65)
 
-    let c4 = hsl  20.0 0.3 0.6
-        c5 = hsl   0.0 0.4 0.7
-        c6 = hsl 340.0 0.5 0.8
-    equal [c4, c5, c6] (hslGradient 3 c4 c6)
-    equal [c6, c5, c4] (hslGradient 3 c6 c4)
+  test "colors" do
+    equal (Nil)                (colors scale 0)
+    equal (red : Nil)          (colors scale 1)
+    equal (red : yellow : Nil) (colors scale 2)
+    equal (black : graytone 0.25 : graytone 0.5 : graytone 0.75 : white : Nil)
+          (colors grayscale 5)
 
-  test "linearGradient RGB" do
-    let rgbGradient = linearGradient RGB
-
-    equal [black, white] (rgbGradient 0 black white)
-    equal [black, grayscale 0.5, white] (rgbGradient 3 black white)
-    equal [white, grayscale 0.5, black] (rgbGradient 3 white black)
-
-    let c7 = rgba' 0.0 0.2 0.4 1.0
-        c8 = rgba' 0.1 0.1 0.6 1.0
-        c9 = rgba' 0.2 0.0 0.8 1.0
-    equal [c7, c8, c9] (rgbGradient 3 c7 c9)
-    equal [c9, c8, c7] (rgbGradient 3 c9 c7)
+  test "grayscale" do
+    equal black (sample grayscale 0.0)
+    equal white (sample grayscale 1.0)
 
   test "Misc" do
     equal "#36e985" (seagreen # lighten 0.2 # saturate 0.3 # toHexString)
