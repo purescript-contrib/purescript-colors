@@ -143,7 +143,7 @@ cssColorStops (ColorScale RGB b middle e) =
     toString (ColorStop c r) = cssStringHSLA c <> " " <> percentage r
     percentage r = show (r * 100.0) <> "%"
 
-cssColorStops scale@(ColorScale HSL b middle e) = cssColorStops csRGB
+cssColorStops scale@(ColorScale _ b middle e) = cssColorStops csRGB
   where
     csRGB' = ColorScale RGB b middle e
 

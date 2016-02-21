@@ -22,12 +22,18 @@ module Color
   , rgb'
   , hsla
   , hsl
+  , xyz
+  , lab
+  , lch
   , fromHexString
   , fromInt
   -- Convert
   , toHSLA
   , toRGBA
   , toRGBA'
+  , toXYZ
+  , toLab
+  , toLCh
   , toHexString
   , cssStringHSLA
   , cssStringRGBA
@@ -64,7 +70,7 @@ import Data.Maybe.Unsafe (fromJust)
 import Data.Ord (min, max, clamp, comparing)
 import Data.String (length)
 import Data.String.Regex (regex, parseFlags, match)
-import Math (abs, (%), pow)
+import Math (abs, (%), pow, cos, sin, pi, sqrt, atan2)
 
 -- | The representation of a color.
 -- |
@@ -77,13 +83,16 @@ data Color = HSLA Number Number Number Number
 -- |
 -- | * `RGB`: red, green, blue
 -- | * `HSL`: hue, saturation, lightness
-data ColorSpace = RGB | HSL
+-- | * `LCh`: Lightness, chroma, hue
+-- | * `Lab`: Lightness, a, b
+data ColorSpace = RGB | HSL | LCh | Lab
 
 instance showColor :: Show Color where
-  show (HSLA h s l a) = "hsla " <> show h <> " "
-                                <> show s <> " "
-                                <> show l <> " "
-                                <> show a
+  show c = "rgba " <> show col.r <> " "
+                   <> show col.g <> " "
+                   <> show col.b <> " "
+                   <> show col.a
+    where col = toRGBA c
 
 instance eqColor :: Eq Color where
   eq c1 c2 = rgb1.r == rgb2.r && rgb1.g == rgb2.g &&
@@ -99,10 +108,14 @@ modPos x y = (x % y + y) % y
 -- | Create a `Color` from integer RGB values between 0 and 255 and a floating
 -- | point alpha value between 0.0 and 1.0.
 rgba :: Int -> Int -> Int -> Number -> Color
-rgba red green blue alpha = HSLA hue saturation lightness alpha
+rgba red' green' blue' alpha = HSLA hue saturation lightness alpha
   where
     -- RGB to HSL conversion algorithm adapted from
     -- https://en.wikipedia.org/wiki/HSL_and_HSV
+    red = clamp 0 255 red'
+    blue = clamp 0 255 blue'
+    green = clamp 0 255 green'
+
     r = toNumber red   / 255.0
     g = toNumber green / 255.0
     b = toNumber blue  / 255.0
@@ -155,6 +168,56 @@ hsla h s l a = HSLA h' s' l' a'
 -- | lightness are numbers between 0.0 and 1.0.
 hsl :: Number -> Number -> Number -> Color
 hsl h s l = hsla h s l 1.0
+
+-- | Create a `Color` from XYZ coordinates in the CIE 1931 color space.
+-- |
+-- | See:
+-- | - https://en.wikipedia.org/wiki/CIE_1931_color_space
+-- | - https://en.wikipedia.org/wiki/SRGB
+xyz :: Number -> Number -> Number -> Color
+xyz x y z = rgb' r g b
+  where
+    r = f ( 3.2406 * x - 1.5372 * y - 0.4986 * z)
+    g = f (-0.9689 * x + 1.8758 * y + 0.0415 * z)
+    b = f ( 0.0557 * x - 0.2040 * y + 1.0570 * z)
+
+    f c | c <= 0.0031308 = 12.92 * c
+        | otherwise      = 1.055 * (c `pow` (1.0 / 2.4)) - 0.055
+
+-- Illuminant D65 constants used for Lab color space conversions.
+d65 :: { xn :: Number, yn :: Number, zn :: Number }
+d65 =
+  { xn: 0.950470
+  , yn: 1.0
+  , zn: 1.088830
+}
+
+-- | Create a `Color` from L, a and b coordinates coordinates in the Lab color
+-- | space.
+-- |
+-- | See: https://en.wikipedia.org/wiki/Lab_color_space
+lab :: Number -> Number -> Number -> Color
+lab l a b = xyz x y z
+  where
+    l' = (l + 16.0) / 116.0
+    x = d65.xn * finv (l' + a / 500.0)
+    y = d65.yn * finv l'
+    z = d65.zn * finv (l' - b / 200.0)
+
+    delta = 6.0 / 29.0
+    finv t | t > delta   = t `pow` 3.0
+           | otherwise = 3.0 * delta * delta * (t - 4.0 / 29.0)
+
+-- | Create a `Color` from lightness, chroma and hue coordinates in the CIE LCh
+-- | color space. This is a cylindrical transform of the Lab color space.
+-- |
+-- | See: https://en.wikipedia.org/wiki/Lab_color_space
+lch :: Number -> Number -> Number -> Color
+lch l c h = lab l a b
+  where
+    deg2rad = pi / 180.0
+    a = c * cos (h * deg2rad)
+    b = c * sin (h * deg2rad)
 
 foreign import parseHex :: String -> Int
 
@@ -227,6 +290,61 @@ toRGBA' (HSLA h s l a) = { r: col.r + m, g: col.g + m, b: col.b + m, a }
         | 3.0 <= h' && h' < 4.0 = { r: 0.0, g: x  , b: chr }
         | 4.0 <= h' && h' < 5.0 = { r: x  , g: 0.0, b: chr }
         | otherwise             = { r: chr, g: 0.0, b: x   }
+
+-- | Get XYZ coordinates according to the CIE 1931 color space.
+-- |
+-- | See:
+-- | - https://en.wikipedia.org/wiki/CIE_1931_color_space
+-- | - https://en.wikipedia.org/wiki/SRGB
+toXYZ :: Color -> { x :: Number, y :: Number, z :: Number }
+toXYZ c = { x, y, z }
+  where
+    x = 0.4124 * r + 0.3576 * g + 0.1805 * b
+    y = 0.2126 * r + 0.7152 * g + 0.0722 * b
+    z = 0.0193 * r + 0.1192 * g + 0.9505 * b
+
+    rec = toRGBA' c
+    r = finv rec.r
+    g = finv rec.g
+    b = finv rec.b
+
+    finv c | c <= 0.04045 = c / 12.92
+           | otherwise    = ((c + 0.055) / 1.055) `pow` 2.4
+
+-- | Get L, a and b coordinates according to the Lab color space.
+-- |
+-- | See: https://en.wikipedia.org/wiki/Lab_color_space
+toLab :: Color -> { l :: Number, a :: Number, b :: Number }
+toLab col = { l, a, b }
+  where
+    rec = toXYZ col
+
+    fy = f (rec.y / d65.yn)
+
+    l = 116.0 * fy - 16.0
+    a = 500.0 * (f (rec.x / d65.xn) - fy)
+    b = 200.0 * (fy - f (rec.z / d65.zn))
+
+    cut = (6.0 / 29.0) `pow` 3.0
+    f t | t > cut   = t `pow` (1.0 / 3.0)
+        | otherwise = (1.0 / 3.0) * (29.0 / 6.0) `pow` 2.0 * t + 4.0 / 29.0
+
+-- | Get L, C and h coordinates according to the CIE LCh color space.
+-- |
+-- | See: https://en.wikipedia.org/wiki/Lab_color_space
+toLCh :: Color -> { l :: Number, c :: Number, h :: Number }
+toLCh col = { l, c, h }
+  where
+    rec = toLab col
+
+    l = rec.l
+    a = rec.a
+    b = rec.b
+
+    rad2deg = 180.0 / pi
+
+    c = sqrt (a * a + b * b)
+    h = (atan2 b a * rad2deg) `modPos` 360.0
 
 foreign import toHex :: Int -> String
 
@@ -310,28 +428,34 @@ saturate f (HSLA h s l a) = hsla h (s + f) l a
 desaturate :: Number -> Color -> Color
 desaturate f = saturate (- f)
 
--- | Linearly interpolate between two values
+-- | Linearly interpolate between two values.
 interpolate :: Number -> Number -> Number -> Number
 interpolate fraction a b = a + fraction * (b - a)
+
+-- | Linearly interpolate between two angles. Always take the shortest path
+-- | along the circle.
+interpolateAngle :: Number -> Number -> Number -> Number
+interpolateAngle fraction a b = interpolate fraction shortest.from shortest.to
+  where
+    paths = [ { from: a, to: b }
+            , { from: a, to: b + 360.0 }
+            , { from: a + 360.0, to: b }
+            ]
+    distance { from, to } = abs (to - from)
+    shortest = fromJust (minimumBy (comparing distance) paths)
 
 -- | Mix two colors by linearly interpolating between them in the specified
 -- | color space. For the HSL colorspace, the shortest path is chosen along the
 -- | circle of hue values.
 mix :: ColorSpace -> Color -> Color -> Number -> Color
 mix HSL c1 c2 frac = hsla
-    (interpolate frac hue.from hue.to)
+    (interpolateAngle frac f.h t.h)
     (interpolate frac f.s t.s)
     (interpolate frac f.l t.l)
     (interpolate frac f.a t.a)
   where
     f = toHSLA c1
     t = toHSLA c2
-    paths = [ { from: f.h, to: t.h }
-            , { from: f.h, to: t.h + 360.0 }
-            , { from: f.h + 360.0, to: t.h }
-            ]
-    dist { from, to } = abs (to - from)
-    hue = fromJust (minimumBy (comparing dist) paths)
 
 mix RGB c1 c2 frac = rgba'
     (interpolate frac f.r t.r)
@@ -341,6 +465,22 @@ mix RGB c1 c2 frac = rgba'
   where
     f = toRGBA' c1
     t = toRGBA' c2
+
+mix LCh c1 c2 frac = lch
+    (interpolate frac f.l t.l)
+    (interpolate frac f.c t.c)
+    (interpolateAngle frac f.h t.h)
+  where
+    f = toLCh c1
+    t = toLCh c2
+
+mix Lab c1 c2 frac = lab
+    (interpolate frac f.l t.l)
+    (interpolate frac f.a t.a)
+    (interpolate frac f.b t.b)
+  where
+    f = toLab c1
+    t = toLab c2
 
 -- | The percieved brightness of the color (A number between 0.0 and 1.0).
 -- |

@@ -64,10 +64,12 @@ instance flammableTBlendMode :: Flammable TBlendMode where
 newtype TColorSpace = TColorSpace ColorSpace
 
 instance flammableTColorSpace :: Flammable TColorSpace where
-  spark = TColorSpace <$> select "ColorSpace" HSL [RGB] toString
+  spark = TColorSpace <$> select "ColorSpace" HSL [RGB, LCh, Lab] toString
     where
       toString HSL = "HSL"
       toString RGB = "RGB"
+      toString LCh = "LCh"
+      toString Lab = "Lab"
 
 newtype Int255 = Int255 Int
 instance flammableInt255 :: Flammable Int255 where

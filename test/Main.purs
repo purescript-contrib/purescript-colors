@@ -8,13 +8,33 @@ import Data.List (List(..), (:))
 import Data.Int (toNumber, round)
 import Data.Maybe (Maybe(..))
 
-import Test.Unit (test, runTest)
-import Test.Unit.Assert (assertFalse, equal)
+import Test.Unit (test, runTest, Assertion, success, failure)
+import Test.Unit.Assert (assert, assertFalse, equal)
 
 import Color
 import Color.Blending
 import Color.Scale
 import Color.Scheme.X11
+
+-- | Assert that two colors are 'almost' equal (differ in their RGB values by
+-- | no more than 1 part in 255).
+almostEqual :: forall e. Color -> Color -> Assertion e
+almostEqual expected actual =
+  if almostEqual' expected actual then success
+  else failure $ "\n    expected: " ++ show expected ++
+                 "\n    got:      " ++ show actual
+
+ where
+   abs n = if n < 0 then 0 - n else n
+   aE n1 n2 = abs (n1 - n2) <= 1
+   almostEqual' col1 col2 =
+     aE c1.r c2.r &&
+     aE c1.g c2.g &&
+     aE c1.b c2.b
+
+     where
+       c1 = toRGBA col1
+       c2 = toRGBA col2
 
 main = runTest do
   test "Eq instance" do
@@ -70,7 +90,7 @@ main = runTest do
           color' = case toRGBA color
             of { r, g, b, a } -> rgba r g b a
 
-  test "toRGBA (HSL -> RGB -> HSL conversion)" do
+  test "rgb / toRGB (HSL -> RGB -> HSL)" do
     roundtrip 0.0 0.0 1.0
     roundtrip 0.0 0.0 0.5
     roundtrip 0.0 0.0 0.0
@@ -83,6 +103,44 @@ main = runTest do
     sequence_ do
       degree <- 0 .. 360
       return $ roundtrip (toNumber degree) 0.5 0.8
+
+  test "xyz / toXYZ (XYZ -> HSL -> XYZ)" do
+    equal white (xyz 0.9505 1.0 1.0890)
+    equal (hsl 109.999 0.08654 0.407843) (xyz 0.13123 0.15372 0.13174)
+
+    let xyzRoundtrip h s l =
+          case toXYZ c of
+            { x, y, z } ->
+              almostEqual c (xyz x y z)
+            where c = hsl h s l
+
+    sequence_ do
+      hue <- 0 .. 360
+      return $ xyzRoundtrip (toNumber hue) 0.2 0.8
+
+  test "lab / toLab (Lab -> HSL -> Lab)" do
+    let labRoundtrip h' s' l' =
+          case toLab col of
+            { l, a, b } ->
+              almostEqual col (lab l a b)
+            where col = hsl h' s' l'
+
+    equal red (lab 53.233 80.109 67.220)
+    sequence_ do
+      hue <- 0 .. 360
+      return $ labRoundtrip (toNumber hue) 0.2 0.8
+
+  test "lch / toLCh (LCh -> HSL -> LCh)" do
+    let lchRoundtrip h' s' l' =
+          case toLCh col of
+            { l, c, h } ->
+              almostEqual col (lch l c h)
+            where col = hsl h' s' l'
+
+    equal (hsl 0.0 1.0 0.245) (lch 24.829 60.093 38.18)
+    sequence_ do
+      hue <- 0 .. 360
+      return $ lchRoundtrip (toNumber hue) 0.2 0.8
 
   test "toHexString (HSL -> Hex -> HSL conversion)" do
     let hexRoundtrip h s l = equal (Just $ hsl h s l) (fromHexString (toHexString (hsl h s l)))
