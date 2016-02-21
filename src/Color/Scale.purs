@@ -13,6 +13,8 @@ module Color.Scale
   , sample
   , colors
   , grayscale
+  , hot
+  , cool
   , spectrum
   , cssColorStops
   ) where
@@ -22,10 +24,11 @@ import Prelude
 import Data.Foldable (class Foldable, intercalate, foldl)
 import Data.Int (toNumber)
 import Data.List (List(..), insertBy, snoc, (..), fromFoldable, length,
-                  zipWith, singleton)
+                  zipWith, singleton, (:))
 import Data.Ord (comparing, clamp, between)
 
 import Color (Color, ColorSpace(..), mix, cssStringHSLA, black, white, hsl)
+import Color.Scheme.X11 (red, yellow)
 
 -- | Ensure that a number lies in the interval [0, 1].
 ratio :: Number -> Number
@@ -111,6 +114,12 @@ spectrum = colorScale HSL end stops end
       i <- 1 .. 35
       let r = toNumber i
       return $ colorStop (hsl (10.0 * r) 1.0 0.5) (r / 36.0)
+
+hot :: ColorScale
+hot = uniformScale RGB black (red : yellow : Nil) white
+
+cool :: ColorScale
+cool = colorScale RGB (hsl 180.0 1.0 0.6) Nil (hsl 300.0 1.0 0.5)
 
 -- | A CSS representation of the color scale in the form of a comma-separated
 -- | list of color stops. This list can be used in a `linear-gradient` or

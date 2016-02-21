@@ -185,6 +185,8 @@ main = do
     docscale "colors" $ \(TColorScale sc) (SmallInt n) -> ColorList (fromList $ colors sc n)
     docscale "grayscale" (TColorScale grayscale)
     docscale "spectrum" (TColorScale spectrum)
+    docscale "hot" (TColorScale hot)
+    docscale "cool" (TColorScale cool)
     docscale "cssColorStops" $ \(TColorSpace mode) (TColor b) (TColor e) -> cssColorStops (colorScale mode b Nil e)
 
     let docscaleperc :: forall t. Interactive t => String -> t -> _
