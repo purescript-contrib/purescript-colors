@@ -63,13 +63,13 @@ instance flammableTBlendMode :: Flammable TBlendMode where
 
 newtype TColorSpace = TColorSpace ColorSpace
 
+csToString RGB = "RGB"
+csToString HSL = "HSL"
+csToString LCh = "LCh"
+csToString Lab = "Lab"
+
 instance flammableTColorSpace :: Flammable TColorSpace where
-  spark = TColorSpace <$> select "ColorSpace" HSL [RGB, LCh, Lab] toString
-    where
-      toString HSL = "HSL"
-      toString RGB = "RGB"
-      toString LCh = "LCh"
-      toString Lab = "Lab"
+  spark = TColorSpace <$> select "ColorSpace" HSL [RGB, LCh, Lab] csToString
 
 newtype Int255 = Int255 Int
 instance flammableInt255 :: Flammable Int255 where
@@ -149,6 +149,18 @@ blendUI c1 c2 mode = do
 flare2 = blendUI <$> color "Background" royalblue
                  <*> color "Foreground" gold
                  <*> select "BlendMode" Multiply [Screen, Overlay] modeToString
+
+palettes c1 c2 n = H.table $ foldMap row [HSL, RGB, Lab, LCh]
+    where row mode = H.tr $ (H.td $ H.text (csToString mode))
+                            <> foldMap cell (colors (scale mode) n)
+          cell col = H.td ! HA.style (css col) $ H.text ""
+          scale mode = uniformScale mode c1 Nil c2
+          css col = "width: 50px; height: 50px; background-color: " <>
+                         cssStringHSLA col
+
+flare3 = palettes <$> color "From" (fromInt 0xf5f6de)
+                  <*> color "To"   (fromInt 0x1d052b)
+                  <*> intSlider "Number" 4 10 6
 
 main = do
   withPackage "purescript-colors.json" $ \dict -> do
@@ -382,3 +394,4 @@ main = do
 
   runFlareHTML "input1" "output1" flare1
   runFlareHTML "input2" "output2" flare2
+  runFlareHTML "input3" "output3" flare3
