@@ -115,9 +115,11 @@ spectrum = colorScale HSL end stops end
       let r = toNumber i
       return $ colorStop (hsl (10.0 * r) 1.0 0.5) (r / 36.0)
 
+-- | A color scale that represents 'hot' colors.
 hot :: ColorScale
 hot = uniformScale RGB black (red : yellow : Nil) white
 
+-- | A color scale that represents 'cool' colors.
 cool :: ColorScale
 cool = colorScale RGB (hsl 180.0 1.0 0.6) Nil (hsl 300.0 1.0 0.5)
 

@@ -38,7 +38,7 @@ colorBox c = H.div ! HA.style css $ H.code (H.text repr)
   where
     repr = cssStringHSLA c
     css = "background-color: " <> repr <> ";" <>
-          "width: 260px; height: 50px; display: inline-block;" <>
+          "width: 260px; height: 50px; display: inline-block; font-size: 13px;" <>
           "margin-top: 10px; margin-right: 10px; border: 1px solid black;" <>
           "padding: 5px; color: " <> cssStringHSLA (textColor c)
 
