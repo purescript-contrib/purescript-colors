@@ -3,7 +3,7 @@ module Test.Main where
 import Prelude
 
 import Data.Array ((..))
-import Data.Foldable (sequence_)
+import Data.Foldable (sequence_, for_)
 import Data.List (List(..), (:))
 import Data.Int (toNumber, round)
 import Data.Maybe (Maybe(..))
@@ -182,6 +182,11 @@ main = runTest do
   test "saturate, desaturate" do
     equal (graytone 0.5) (desaturate 1.0 red)
     equal (graytone 0.5) (desaturate 1.0 magenta)
+
+  test "toGray" do
+    equal (graytone 0.3) (toGray (graytone 0.3))
+    for_ [cyan, yellow, red, pink, blue, white, black] $ \col ->
+      equal (round $ 100.0 * luminance col) (round $ 100.0 * luminance (toGray col))
 
   test "mix" do
     equal (fromInt 0x800080) (mix RGB red blue 0.5)

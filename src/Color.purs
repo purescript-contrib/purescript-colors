@@ -49,6 +49,7 @@ module Color
   , darken
   , saturate
   , desaturate
+  , toGray
   -- Combine
   , mix
   -- Analyze
@@ -439,6 +440,14 @@ saturate f (HSLA h s l a) = hsla h (s + f) l a
 -- | negative, the color is saturated.
 desaturate :: Number -> Color -> Color
 desaturate f = saturate (- f)
+
+-- | Convert a color to a gray tone with the same perceived luminance (see
+-- | `luminance`).
+toGray :: Color -> Color
+toGray col = desaturate 1.0 (lch res.l 0.0 0.0)
+             -- the desaturation step is only needed to correct minor rounding
+             -- errors.
+  where res = toLCh col
 
 -- | Linearly interpolate between two values.
 interpolate :: Number -> Number -> Number -> Number
