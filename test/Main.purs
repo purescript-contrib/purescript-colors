@@ -245,6 +245,14 @@ main = runTest do
     equal (mix HSL red blue 0.5)    (sample scale 0.15)
     equal (mix HSL blue yellow 0.5) (sample scale 0.65)
 
+  test "uniformScale" do
+    let uscale = uniformScale HSL red (hotpink : yellow : magenta : Nil) blue
+    equal hotpink (sample uscale 0.25)
+    equal red     (sample uscale 0.0)
+    equal yellow  (sample uscale 0.5)
+    equal magenta (sample uscale 0.75)
+    equal blue    (sample uscale 1.0)
+
   test "colors" do
     equal (Nil)                (colors scale 0)
     equal (red : Nil)          (colors scale 1)

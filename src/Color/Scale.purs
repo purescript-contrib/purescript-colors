@@ -67,8 +67,8 @@ uniformScale mode b middle e = colorScale mode b stops e
   where
     cs = fromFoldable middle
     len = length cs
-    n = 2 + len
-    stops = zipWith makeStop (1 .. (1 + len)) cs
+    n = 1 + len
+    stops = zipWith makeStop (1 .. n) cs
     makeStop i col = colorStop col (toNumber i / toNumber n)
 
 -- | Add a stop to a color scale.
