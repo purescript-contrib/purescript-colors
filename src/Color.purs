@@ -10,7 +10,8 @@
 -- |
 -- | Implementation detail: Colors are represented by their HSL values (hue,
 -- | saturation, lightness) internally, as this provides more flexibility than
--- | storing RGB values.
+-- | storing RGB values. In particular, note that only colors within the sRGB
+-- | gamut can be represented.
 
 module Color
   ( Color()
@@ -74,9 +75,14 @@ import Math (abs, (%), pow, cos, sin, pi, sqrt, atan2)
 
 -- | The representation of a color.
 -- |
--- | Note: the `Eq` instance compares two `Color`s by comparing their (integer)
--- | RGB values. This is different from comparing the HSL values (the HSL
--- | colorspace is bigger than the RGB colorspace).
+-- | Note:
+-- | - The `Eq` instance compares two `Color`s by comparing their (integer) RGB
+-- |   values. This is different from comparing the HSL values (for example,
+-- |   HSL has many different representations of black (arbitrary hue and
+-- |   saturation values).
+-- | - Colors outside the sRGB gamut which cannot be displayed on a typical
+-- |   computer screen can not be represented by `Color`.
+-- |
 data Color = HSLA Number Number Number Number
 
 -- | Definition of a color space.
@@ -169,7 +175,11 @@ hsla h s l a = HSLA h' s' l' a'
 hsl :: Number -> Number -> Number -> Color
 hsl h s l = hsla h s l 1.0
 
--- | Create a `Color` from XYZ coordinates in the CIE 1931 color space.
+-- | Create a `Color` from XYZ coordinates in the CIE 1931 color space. Note
+-- | that a `Color` always represents a color in the sRGB gamut (colors that
+-- | can be represented on a typical computer screen) while the XYZ color space
+-- | is bigger. This function will tend to create fully saturated colors at the
+-- | edge of the sRGB gamut if the coordinates lie outside the sRGB range.
 -- |
 -- | See:
 -- | - https://en.wikipedia.org/wiki/CIE_1931_color_space
@@ -194,6 +204,7 @@ d65 =
 
 -- | Create a `Color` from L, a and b coordinates coordinates in the Lab color
 -- | space.
+-- | Note: See documentation for `xyz`. The same restrictions apply here.
 -- |
 -- | See: https://en.wikipedia.org/wiki/Lab_color_space
 lab :: Number -> Number -> Number -> Color
@@ -210,6 +221,7 @@ lab l a b = xyz x y z
 
 -- | Create a `Color` from lightness, chroma and hue coordinates in the CIE LCh
 -- | color space. This is a cylindrical transform of the Lab color space.
+-- | Note: See documentation for `xyz`. The same restrictions apply here.
 -- |
 -- | See: https://en.wikipedia.org/wiki/Lab_color_space
 lch :: Number -> Number -> Number -> Color
@@ -499,9 +511,8 @@ luminance col = 0.2126 * r + 0.7152 * g + 0.0722 * b
         g = f val.g
         b = f val.b
 
-        f x = if x <= 0.03928
-                then x / 12.92
-                else ((x + 0.055) / 1.055) `pow` 2.4
+        f c | c <= 0.03928 = c / 12.92
+            | otherwise    = ((c + 0.055) / 1.055) `pow` 2.4
 
         val = toRGBA' col
 

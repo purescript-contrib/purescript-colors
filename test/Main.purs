@@ -106,6 +106,7 @@ main = runTest do
 
   test "xyz / toXYZ (XYZ -> HSL -> XYZ)" do
     equal white (xyz 0.9505 1.0 1.0890)
+    equal red (xyz 0.4123 0.2126 0.01933)
     equal (hsl 109.999 0.08654 0.407843) (xyz 0.13123 0.15372 0.13174)
 
     let xyzRoundtrip h s l =
@@ -139,8 +140,8 @@ main = runTest do
 
     equal (hsl 0.0 1.0 0.245) (lch 24.829 60.093 38.18)
     sequence_ do
-      hue <- 0 .. 360
-      return $ lchRoundtrip (toNumber hue) 0.2 0.8
+      hue <- 0 .. 36
+      return $ lchRoundtrip (toNumber (10 * hue)) 0.2 0.8
 
   test "toHexString (HSL -> Hex -> HSL conversion)" do
     let hexRoundtrip h s l = equal (Just $ hsl h s l) (fromHexString (toHexString (hsl h s l)))
