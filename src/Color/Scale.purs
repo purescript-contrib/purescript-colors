@@ -18,6 +18,8 @@ module Color.Scale
   , cool
   , spectrum
   , spectrumLCh
+  , blueToRed
+  , yellowToRed
   , cssColorStops
   ) where
 
@@ -29,7 +31,8 @@ import Data.List (List(..), insertBy, snoc, (..), fromFoldable, length,
                   zipWith, singleton, (:))
 import Data.Ord (comparing, clamp, between)
 
-import Color (Color, ColorSpace(..), mix, cssStringHSLA, black, white, hsl, lch)
+import Color (Color, ColorSpace(..), mix, cssStringHSLA, black, white, hsl,
+              lch, fromInt)
 import Color.Scheme.X11 (red, yellow)
 
 -- | Ensure that a number lies in the interval [0, 1].
@@ -136,9 +139,27 @@ spectrumLCh = colorScale LCh end stops end
       let r = toNumber i
       return $ colorStop (lch lightness chroma (10.0 * r)) (r / 36.0)
 
+-- | A perceptually-uniform, diverging color scale from blue to red, similar to
+-- | the ColorBrewer scale *RdBu*.
+blueToRed :: ColorScale
+blueToRed = uniformScale Lab blue (gray : Nil) red
+  where
+    gray = fromInt 0xf7f7f7
+    red  = fromInt 0xb2182b
+    blue = fromInt 0x2166ac
+
+-- | A perceptually-uniform, multi-hue color scale from yellow to red, similar
+-- | to the ColorBrewer scale *YlOrRd*.
+yellowToRed :: ColorScale
+yellowToRed = uniformScale Lab yellow (orange : Nil) red
+  where
+    yellow = fromInt 0xffffcc
+    orange = fromInt 0xfd8d3c
+    red    = fromInt 0x800026
+
 -- | A color scale that represents 'hot' colors.
 hot :: ColorScale
-hot = uniformScale RGB black (red : yellow : Nil) white
+hot = colorScale RGB black (colorStop red 0.5 : colorStop yellow 0.75 : Nil) white
 
 -- | A color scale that represents 'cool' colors.
 cool :: ColorScale

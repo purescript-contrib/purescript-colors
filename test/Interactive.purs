@@ -84,6 +84,8 @@ data CSTypes
   = Grayscale
   | Spectrum
   | SpectrumLCh
+  | BlueToRed
+  | YellowToRed
   | Hot
   | Cool
   | Magma
@@ -93,12 +95,16 @@ data CSTypes
 
 instance flammableTColorScale :: Flammable TColorScale where
   spark = (TColorScale <<< toColorScale) <$> (fieldset "ColorScale" $
-            select "Choose" Grayscale [Spectrum, SpectrumLCh, Hot, Cool, Magma, Inferno, Plasma, Viridis] toString
+            select "Choose" Grayscale [Spectrum, SpectrumLCh, BlueToRed,
+                                       YellowToRed, Hot, Cool, Magma, Inferno,
+                                       Plasma, Viridis] toString
           )
     where
       toString Grayscale   = "grayscale"
       toString Spectrum    = "spectrum"
       toString SpectrumLCh = "spectrumLCh"
+      toString BlueToRed   = "blueToRed"
+      toString YellowToRed = "yellowToRed"
       toString Hot         = "hot"
       toString Cool        = "cool"
       toString Magma       = "magma"
@@ -109,6 +115,8 @@ instance flammableTColorScale :: Flammable TColorScale where
       toColorScale Grayscale   = grayscale
       toColorScale Spectrum    = spectrum
       toColorScale SpectrumLCh = spectrumLCh
+      toColorScale BlueToRed   = blueToRed
+      toColorScale YellowToRed = yellowToRed
       toColorScale Hot         = hot
       toColorScale Cool        = cool
       toColorScale Magma       = magma
@@ -382,6 +390,8 @@ main = do
     docscale "grayscale" (TColorScale grayscale)
     docscale "spectrum" (TColorScale spectrum)
     docscale "spectrumLCh" (TColorScale spectrumLCh)
+    docscale "blueToRed" (TColorScale blueToRed)
+    docscale "yellowToRed" (TColorScale yellowToRed)
     docscale "hot" (TColorScale hot)
     docscale "cool" (TColorScale cool)
     docscale "cssColorStops" $ \(TColorSpace mode) (TColor b) (TColor e) -> cssColorStops (colorScale mode b Nil e)
