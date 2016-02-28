@@ -2,8 +2,11 @@ module Test.Interactive (main) where
 
 import Prelude
 
+import Data.Array (sortBy, take)
 import Data.Foldable (foldMap)
 import Data.List (List(..), fromList)
+import Data.Ord (comparing)
+import Data.Tuple (Tuple (..))
 
 import Text.Smolder.Markup as H
 import Text.Smolder.Markup ((!))
@@ -176,6 +179,170 @@ palettes c1 c2 n = H.table $ foldMap row [HSL, RGB, Lab, LCh]
 flare3 = palettes <$> color "From" (fromInt 0xf5f6de)
                   <*> color "To"   (fromInt 0x1d052b)
                   <*> intSlider "Number" 4 10 6
+
+mapX11 =
+  [ Tuple "black" black
+  , Tuple "white" white
+  , Tuple "aliceblue" aliceblue
+  , Tuple "antiquewhite" antiquewhite
+  , Tuple "aqua" aqua
+  , Tuple "aquamarine" aquamarine
+  , Tuple "azure" azure
+  , Tuple "beige" beige
+  , Tuple "bisque" bisque
+  , Tuple "blanchedalmond" blanchedalmond
+  , Tuple "blue" blue
+  , Tuple "blueviolet" blueviolet
+  , Tuple "brown" brown
+  , Tuple "burlywood" burlywood
+  , Tuple "cadetblue" cadetblue
+  , Tuple "chartreuse" chartreuse
+  , Tuple "chocolate" chocolate
+  , Tuple "coral" coral
+  , Tuple "cornflowerblue" cornflowerblue
+  , Tuple "cornsilk" cornsilk
+  , Tuple "crimson" crimson
+  , Tuple "cyan" cyan
+  , Tuple "darkblue" darkblue
+  , Tuple "darkcyan" darkcyan
+  , Tuple "darkgoldenrod" darkgoldenrod
+  , Tuple "darkgray" darkgray
+  , Tuple "darkgreen" darkgreen
+  , Tuple "darkgrey" darkgrey
+  , Tuple "darkkhaki" darkkhaki
+  , Tuple "darkmagenta" darkmagenta
+  , Tuple "darkolivegreen" darkolivegreen
+  , Tuple "darkorange" darkorange
+  , Tuple "darkorchid" darkorchid
+  , Tuple "darkred" darkred
+  , Tuple "darksalmon" darksalmon
+  , Tuple "darkseagreen" darkseagreen
+  , Tuple "darkslateblue" darkslateblue
+  , Tuple "darkslategray" darkslategray
+  , Tuple "darkslategrey" darkslategrey
+  , Tuple "darkturquoise" darkturquoise
+  , Tuple "darkviolet" darkviolet
+  , Tuple "deeppink" deeppink
+  , Tuple "deepskyblue" deepskyblue
+  , Tuple "dimgray" dimgray
+  , Tuple "dimgrey" dimgrey
+  , Tuple "dodgerblue" dodgerblue
+  , Tuple "firebrick" firebrick
+  , Tuple "floralwhite" floralwhite
+  , Tuple "forestgreen" forestgreen
+  , Tuple "fuchsia" fuchsia
+  , Tuple "gainsboro" gainsboro
+  , Tuple "ghostwhite" ghostwhite
+  , Tuple "gold" gold
+  , Tuple "goldenrod" goldenrod
+  , Tuple "gray" gray
+  , Tuple "green" green
+  , Tuple "greenyellow" greenyellow
+  , Tuple "grey" grey
+  , Tuple "honeydew" honeydew
+  , Tuple "hotpink" hotpink
+  , Tuple "indianred" indianred
+  , Tuple "indigo" indigo
+  , Tuple "ivory" ivory
+  , Tuple "khaki" khaki
+  , Tuple "lavender" lavender
+  , Tuple "lavenderblush" lavenderblush
+  , Tuple "lawngreen" lawngreen
+  , Tuple "lemonchiffon" lemonchiffon
+  , Tuple "lightblue" lightblue
+  , Tuple "lightcoral" lightcoral
+  , Tuple "lightcyan" lightcyan
+  , Tuple "lightgoldenrodyellow" lightgoldenrodyellow
+  , Tuple "lightgray" lightgray
+  , Tuple "lightgreen" lightgreen
+  , Tuple "lightgrey" lightgrey
+  , Tuple "lightpink" lightpink
+  , Tuple "lightsalmon" lightsalmon
+  , Tuple "lightseagreen" lightseagreen
+  , Tuple "lightskyblue" lightskyblue
+  , Tuple "lightslategray" lightslategray
+  , Tuple "lightslategrey" lightslategrey
+  , Tuple "lightsteelblue" lightsteelblue
+  , Tuple "lightyellow" lightyellow
+  , Tuple "lime" lime
+  , Tuple "limegreen" limegreen
+  , Tuple "linen" linen
+  , Tuple "magenta" magenta
+  , Tuple "maroon" maroon
+  , Tuple "mediumaquamarine" mediumaquamarine
+  , Tuple "mediumblue" mediumblue
+  , Tuple "mediumorchid" mediumorchid
+  , Tuple "mediumpurple" mediumpurple
+  , Tuple "mediumseagreen" mediumseagreen
+  , Tuple "mediumslateblue" mediumslateblue
+  , Tuple "mediumspringgreen" mediumspringgreen
+  , Tuple "mediumturquoise" mediumturquoise
+  , Tuple "mediumvioletred" mediumvioletred
+  , Tuple "midnightblue" midnightblue
+  , Tuple "mintcream" mintcream
+  , Tuple "mistyrose" mistyrose
+  , Tuple "moccasin" moccasin
+  , Tuple "navajowhite" navajowhite
+  , Tuple "navy" navy
+  , Tuple "oldlace" oldlace
+  , Tuple "olive" olive
+  , Tuple "olivedrab" olivedrab
+  , Tuple "orange" orange
+  , Tuple "orangered" orangered
+  , Tuple "orchid" orchid
+  , Tuple "palegoldenrod" palegoldenrod
+  , Tuple "palegreen" palegreen
+  , Tuple "paleturquoise" paleturquoise
+  , Tuple "palevioletred" palevioletred
+  , Tuple "papayawhip" papayawhip
+  , Tuple "peachpuff" peachpuff
+  , Tuple "peru" peru
+  , Tuple "pink" pink
+  , Tuple "plum" plum
+  , Tuple "powderblue" powderblue
+  , Tuple "purple" purple
+  , Tuple "red" red
+  , Tuple "rosybrown" rosybrown
+  , Tuple "royalblue" royalblue
+  , Tuple "saddlebrown" saddlebrown
+  , Tuple "salmon" salmon
+  , Tuple "sandybrown" sandybrown
+  , Tuple "seagreen" seagreen
+  , Tuple "seashell" seashell
+  , Tuple "sienna" sienna
+  , Tuple "silver" silver
+  , Tuple "skyblue" skyblue
+  , Tuple "slateblue" slateblue
+  , Tuple "slategray" slategray
+  , Tuple "slategrey" slategrey
+  , Tuple "snow" snow
+  , Tuple "springgreen" springgreen
+  , Tuple "steelblue" steelblue
+  , Tuple "tan" tan
+  , Tuple "teal" teal
+  , Tuple "thistle" thistle
+  , Tuple "tomato" tomato
+  , Tuple "turquoise" turquoise
+  , Tuple "violet" violet
+  , Tuple "wheat" wheat
+  , Tuple "whitesmoke" whitesmoke
+  , Tuple "yellow" yellow
+  , Tuple "yellowgreen" yellowgreen
+  ]
+
+nameColor color = H.div $ foldMap toCell closest
+  where
+    distC (Tuple name col) = distance color col
+    closest = take 3 $ sortBy (comparing distC) mapX11
+
+    toCell (Tuple name c) = H.div ! HA.style css $ H.code (H.text name)
+      where
+        css = "background-color: " <> cssStringHSLA c <> ";" <>
+              "width: 260px; height: 50px; display: inline-block; font-size: 13px;" <>
+              "margin-top: 10px; margin-right: 10px; border: 1px solid black;" <>
+              "padding: 5px; color: " <> cssStringHSLA (textColor c)
+
+flare4 = nameColor <$> color "Input color" salmon
 
 main = do
   withPackage "purescript-colors.json" $ \dict -> do
@@ -412,3 +579,4 @@ main = do
   runFlareHTML "input1" "output1" flare1
   runFlareHTML "input2" "output2" flare2
   runFlareHTML "input3" "output3" flare3
+  runFlareHTML "input4" "output4" flare4
