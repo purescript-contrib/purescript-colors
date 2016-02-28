@@ -77,26 +77,41 @@ instance flammableInt255 :: Flammable Int255 where
 
 newtype TColorScale = TColorScale ColorScale
 
-data CSTypes = Grayscale | Spectrum | Magma | Inferno | Plasma | Viridis
+data CSTypes
+  = Grayscale
+  | Spectrum
+  | SpectrumLCh
+  | Hot
+  | Cool
+  | Magma
+  | Inferno
+  | Plasma
+  | Viridis
 
 instance flammableTColorScale :: Flammable TColorScale where
   spark = (TColorScale <<< toColorScale) <$> (fieldset "ColorScale" $
-            select "Choose" Grayscale [Spectrum, Magma, Inferno, Plasma, Viridis] toString
+            select "Choose" Grayscale [Spectrum, SpectrumLCh, Hot, Cool, Magma, Inferno, Plasma, Viridis] toString
           )
     where
-      toString Grayscale = "grayscale"
-      toString Spectrum  = "spectrum"
-      toString Magma     = "magma"
-      toString Inferno   = "inferno"
-      toString Plasma    = "plasma"
-      toString Viridis   = "viridis"
+      toString Grayscale   = "grayscale"
+      toString Spectrum    = "spectrum"
+      toString SpectrumLCh = "spectrumLCh"
+      toString Hot         = "hot"
+      toString Cool        = "cool"
+      toString Magma       = "magma"
+      toString Inferno     = "inferno"
+      toString Plasma      = "plasma"
+      toString Viridis     = "viridis"
 
-      toColorScale Grayscale = grayscale
-      toColorScale Spectrum  = spectrum
-      toColorScale Magma     = magma
-      toColorScale Inferno   = inferno
-      toColorScale Plasma    = plasma
-      toColorScale Viridis   = viridis
+      toColorScale Grayscale   = grayscale
+      toColorScale Spectrum    = spectrum
+      toColorScale SpectrumLCh = spectrumLCh
+      toColorScale Hot         = hot
+      toColorScale Cool        = cool
+      toColorScale Magma       = magma
+      toColorScale Inferno     = inferno
+      toColorScale Plasma      = plasma
+      toColorScale Viridis     = viridis
 
 instance interactiveTColorScale :: Interactive TColorScale where
   interactive ui = (SetHTML <<< pretty) <$> ui
@@ -199,9 +214,11 @@ main = do
     docscale "colors" $ \(TColorScale sc) (SmallInt n) -> ColorList (fromList $ colors sc n)
     docscale "grayscale" (TColorScale grayscale)
     docscale "spectrum" (TColorScale spectrum)
+    docscale "spectrumLCh" (TColorScale spectrumLCh)
     docscale "hot" (TColorScale hot)
     docscale "cool" (TColorScale cool)
     docscale "cssColorStops" $ \(TColorSpace mode) (TColor b) (TColor e) -> cssColorStops (colorScale mode b Nil e)
+    docscale "modify (here: modify (const toGray))" $ \(TColorScale sc) -> TColorScale (modify (const toGray) sc)
 
     let docscaleperc :: forall t. Interactive t => String -> t -> _
         docscaleperc = flareDoc' "doc-scale-perc" dict "Color.Scale.Perceptual"

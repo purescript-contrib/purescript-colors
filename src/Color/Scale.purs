@@ -12,10 +12,12 @@ module Color.Scale
   , addStop
   , sample
   , colors
+  , modify
   , grayscale
   , hot
   , cool
   , spectrum
+  , spectrumLCh
   , cssColorStops
   ) where
 
@@ -27,7 +29,7 @@ import Data.List (List(..), insertBy, snoc, (..), fromFoldable, length,
                   zipWith, singleton, (:))
 import Data.Ord (comparing, clamp, between)
 
-import Color (Color, ColorSpace(..), mix, cssStringHSLA, black, white, hsl)
+import Color (Color, ColorSpace(..), mix, cssStringHSLA, black, white, hsl, lch)
 import Color.Scheme.X11 (red, yellow)
 
 -- | Ensure that a number lies in the interval [0, 1].
@@ -101,11 +103,18 @@ colors scale num = do
   i <- 0 .. (num - 1)
   pure $ sample scale (toNumber i / toNumber (num - 1))
 
+-- | Modify the color scale by applying the given function to each color stop.
+-- | The first argument is the position of the color stop.
+modify :: (Number -> Color -> Color) -> ColorScale -> ColorScale
+modify f (ColorScale mode start middle end) =
+  ColorScale mode (f 0.0 start) (f' <$> middle) (f 1.0 end)
+    where f' (ColorStop col r) = ColorStop (f r col) r
+
 -- | A scale of colors from black to white.
 grayscale :: ColorScale
 grayscale = colorScale RGB black Nil white
 
--- | A spectrum of all hues (fully saturated).
+-- | A spectrum of fully saturated hues (HSL color space).
 spectrum :: ColorScale
 spectrum = colorScale HSL end stops end
   where
@@ -114,6 +123,18 @@ spectrum = colorScale HSL end stops end
       i <- 1 .. 35
       let r = toNumber i
       return $ colorStop (hsl (10.0 * r) 1.0 0.5) (r / 36.0)
+
+-- | A perceptually-uniform spectrum of all hues (LCh color space).
+spectrumLCh :: ColorScale
+spectrumLCh = colorScale LCh end stops end
+  where
+    lightness = 70.0
+    chroma = 35.0
+    end = lch lightness chroma 0.0
+    stops = do
+      i <- 1 .. 35
+      let r = toNumber i
+      return $ colorStop (lch lightness chroma (10.0 * r)) (r / 36.0)
 
 -- | A color scale that represents 'hot' colors.
 hot :: ColorScale
