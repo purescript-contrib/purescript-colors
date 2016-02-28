@@ -59,6 +59,7 @@ module Color
   , isLight
   , isReadable
   , textColor
+  , distance
   ) where
 
 import Prelude
@@ -462,8 +463,8 @@ interpolateAngle fraction a b = interpolate fraction shortest.from shortest.to
             , { from: a, to: b + 360.0 }
             , { from: a + 360.0, to: b }
             ]
-    distance { from, to } = abs (to - from)
-    shortest = fromJust (minimumBy (comparing distance) paths)
+    dist { from, to } = abs (to - from)
+    shortest = fromJust (minimumBy (comparing dist) paths)
 
 -- | Mix two colors by linearly interpolating between them in the specified
 -- | color space. For the HSL colorspace, the shortest path is chosen along the
@@ -562,3 +563,14 @@ isReadable c1 c2 = contrast c1 c2 > 4.5
 textColor :: Color -> Color
 textColor c | isLight c = black
             | otherwise = white
+
+-- | Compute the perceived 'distance' between two colors according to the CIE76
+-- | delta-E standard. A distance below ~2.3 is not noticable.
+-- |
+-- | See: https://en.wikipedia.org/wiki/Color_difference
+distance :: Color -> Color -> Number
+distance col1 col2 = sqrt (sq (c1.l - c2.l) + sq (c1.a - c2.a) + sq (c1.b - c2.b))
+  where
+    c1 = toLab col1
+    c2 = toLab col2
+    sq x = x `pow` 2.0

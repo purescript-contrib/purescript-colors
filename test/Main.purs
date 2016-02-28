@@ -214,6 +214,10 @@ main = runTest do
     equal black (textColor $ graytone 0.6)
     equal white (textColor $ graytone 0.4)
 
+  test "distance" do
+    equal 0.0 (distance red red)
+    equal 123 (round (distance (rgb 50 100 200) (rgb 200 10 0)))
+
   -- Color.Blending
 
   test "blend" do
