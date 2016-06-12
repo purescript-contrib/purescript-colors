@@ -12,7 +12,8 @@ module Color.Scale.Perceptual
 import Prelude
 
 import Data.Array (slice)
-import Data.Array.Unsafe (head, last)
+import Data.Array.Partial (head, last)
+import Partial.Unsafe (unsafePartial)
 
 import Color (ColorSpace(RGB), rgb')
 import Color.Scale (ColorScale, uniformScale)
@@ -1052,7 +1053,7 @@ _viridis_data = [[0.267004, 0.004874, 0.329415],
                  [0.983868, 0.904867, 0.136897],
                  [0.993248, 0.906157, 0.143936]]
 
-matplotlibScale :: Array (Array Number) -> ColorScale
+matplotlibScale :: Partial => Array (Array Number) -> ColorScale
 matplotlibScale rgbs = uniformScale RGB start middle stop
   where start = toColor (head rgbs)
         middle = toColor <$> slice 1 255 rgbs
@@ -1062,16 +1063,16 @@ matplotlibScale rgbs = uniformScale RGB start middle stop
 
 -- | Perceptually uniform color scale 'magma'.
 magma :: ColorScale
-magma = matplotlibScale _magma_data
+magma = unsafePartial (matplotlibScale _magma_data)
 
 -- | Perceptually uniform color scale 'inferno'.
 inferno :: ColorScale
-inferno = matplotlibScale _inferno_data
+inferno = unsafePartial (matplotlibScale _inferno_data)
 
 -- | Perceptually uniform color scale 'plasma'.
 plasma :: ColorScale
-plasma = matplotlibScale _plasma_data
+plasma = unsafePartial (matplotlibScale _plasma_data)
 
 -- | Perceptually uniform color scale 'viridis'.
 viridis :: ColorScale
-viridis = matplotlibScale _viridis_data
+viridis = unsafePartial (matplotlibScale _viridis_data)

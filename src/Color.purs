@@ -63,17 +63,16 @@ module Color
   ) where
 
 import Prelude
-import Control.Bind (join)
 import Data.Array ((!!))
+import Data.Either (either)
 import Data.Foldable (minimumBy)
 import Data.Int (toNumber, round)
 import Data.Int.Bits ((.&.), shr)
-import Data.Maybe (Maybe)
-import Data.Maybe.Unsafe (fromJust)
-import Data.Ord (min, max, clamp, comparing)
+import Data.Maybe (Maybe(..), fromJust)
 import Data.String (length)
 import Data.String.Regex (regex, parseFlags, match)
 import Math (abs, (%), pow, cos, sin, pi, sqrt, atan2)
+import Partial.Unsafe (unsafePartial)
 
 -- | The representation of a color.
 -- |
@@ -240,6 +239,7 @@ foreign import parseHex :: String -> Int
 -- | (case insensitive). Returns `Nothing` if the string is in a wrong format.
 fromHexString :: String -> Maybe Color
 fromHexString str = do
+  pattern <- hush mPattern
   groups <- match pattern str
   r <- parseHex <$> join (groups !! 1)
   g <- parseHex <$> join (groups !! 2)
@@ -257,7 +257,8 @@ fromHexString str = do
     variant = if isShort
                 then single <> single <> single
                 else pair <> pair <> pair
-    pattern = regex ("^#(?:" <> variant <> ")$") (parseFlags "i")
+    mPattern = regex ("^#(?:" <> variant <> ")$") (parseFlags "i")
+    hush = either (const Nothing) Just
 
 -- | Converts an integer to a color (RGB representation). `0` is black and
 -- | `0xffffff` is white. Values outside this range will be clamped.
@@ -464,7 +465,7 @@ interpolateAngle fraction a b = interpolate fraction shortest.from shortest.to
             , { from: a + 360.0, to: b }
             ]
     dist { from, to } = abs (to - from)
-    shortest = fromJust (minimumBy (comparing dist) paths)
+    shortest = unsafePartial (fromJust (minimumBy (comparing dist) paths))
 
 -- | Mix two colors by linearly interpolating between them in the specified
 -- | color space. For the HSL colorspace, the shortest path is chosen along the

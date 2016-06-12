@@ -29,7 +29,6 @@ import Data.Foldable (class Foldable, intercalate, foldl)
 import Data.Int (toNumber)
 import Data.List (List(..), insertBy, snoc, (..), fromFoldable, length,
                   zipWith, singleton, (:))
-import Data.Ord (comparing, clamp, between)
 
 import Color (Color, ColorSpace(..), mix, cssStringHSLA, black, white, hsl,
               lch, fromInt)
@@ -125,7 +124,7 @@ spectrum = colorScale HSL end stops end
     stops = do
       i <- 1 .. 35
       let r = toNumber i
-      return $ colorStop (hsl (10.0 * r) 1.0 0.5) (r / 36.0)
+      pure $ colorStop (hsl (10.0 * r) 1.0 0.5) (r / 36.0)
 
 -- | A perceptually-uniform spectrum of all hues (LCh color space).
 spectrumLCh :: ColorScale
@@ -137,7 +136,7 @@ spectrumLCh = colorScale LCh end stops end
     stops = do
       i <- 1 .. 35
       let r = toNumber i
-      return $ colorStop (lch lightness chroma (10.0 * r)) (r / 36.0)
+      pure $ colorStop (lch lightness chroma (10.0 * r)) (r / 36.0)
 
 -- | A perceptually-uniform, diverging color scale from blue to red, similar to
 -- | the ColorBrewer scale *RdBu*.
@@ -197,4 +196,4 @@ cssColorStops scale@(ColorScale _ b middle e) = cssColorStops csRGB
     additionalStops = do
       step <- 1 .. 9
       let frac = ratio (toNumber step / 10.0)
-      return $ ColorStop (sample scale frac) frac
+      pure $ ColorStop (sample scale frac) frac

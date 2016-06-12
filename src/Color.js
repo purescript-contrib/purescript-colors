@@ -1,4 +1,3 @@
-// module Color
 // jshint node: true
 
 "use strict";
