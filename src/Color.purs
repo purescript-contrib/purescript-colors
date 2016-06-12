@@ -66,9 +66,9 @@ import Prelude
 import Data.Array ((!!))
 import Data.Either (either)
 import Data.Foldable (minimumBy)
-import Data.Int (toNumber, round)
+import Data.Int (toNumber, round, fromStringAs, toStringAs, hexadecimal)
 import Data.Int.Bits ((.&.), shr)
-import Data.Maybe (Maybe(..), fromJust)
+import Data.Maybe (Maybe(..), fromJust, fromMaybe)
 import Data.String (length)
 import Data.String.Regex (regex, parseFlags, match)
 import Math (abs, (%), pow, cos, sin, pi, sqrt, atan2)
@@ -232,8 +232,6 @@ lch l c h = lab l a b
     a = c * cos (h * deg2rad)
     b = c * sin (h * deg2rad)
 
-foreign import parseHex :: String -> Int
-
 -- | Parse a hexadecimal RGB code of the form `#rgb` or `#rrggbb`. The `#`
 -- | character is required. Each hexadecimal digit is of the form `[0-9a-fA-F]`
 -- | (case insensitive). Returns `Nothing` if the string is in a wrong format.
@@ -259,6 +257,7 @@ fromHexString str = do
                 else pair <> pair <> pair
     mPattern = regex ("^#(?:" <> variant <> ")$") (parseFlags "i")
     hush = either (const Nothing) Just
+    parseHex = fromMaybe 0 <<< fromStringAs hexadecimal
 
 -- | Converts an integer to a color (RGB representation). `0` is black and
 -- | `0xffffff` is white. Values outside this range will be clamped.
@@ -361,8 +360,6 @@ toLCh col = { l, c, h }
     c = sqrt (a * a + b * b)
     h = (atan2 b a * rad2deg) `modPos` 360.0
 
-foreign import toHex :: Int -> String
-
 -- | Return a hexadecimal representation of the color in the form `#rrggbb`,
 -- | where `rr`, `gg` and `bb` refer to hexadecimal digits corresponding to
 -- | the RGB channel values between `00` and `ff`. The alpha channel is not
@@ -370,6 +367,7 @@ foreign import toHex :: Int -> String
 toHexString :: Color -> String
 toHexString color = "#" <> toHex c.r <> toHex c.g <> toHex c.b
   where c = toRGBA color
+        toHex = toStringAs hexadecimal
 
 -- | A CSS representation of the color in the form `hsl(..)` or `hsla(...)`.
 cssStringHSLA :: Color -> String
