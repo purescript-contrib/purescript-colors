@@ -367,7 +367,10 @@ toLCh col = { l, c, h }
 toHexString :: Color -> String
 toHexString color = "#" <> toHex c.r <> toHex c.g <> toHex c.b
   where c = toRGBA color
-        toHex = toStringAs hexadecimal
+        toHex num = let repr = toStringAs hexadecimal num
+                    in if length repr == 1
+                         then "0" <> repr
+                         else repr
 
 -- | A CSS representation of the color in the form `hsl(..)` or `hsla(...)`.
 cssStringHSLA :: Color -> String

@@ -2,27 +2,39 @@ module Test.Main where
 
 import Prelude
 
+import Control.Monad.Aff (Aff)
+import Control.Monad.Eff (Eff)
+import Control.Monad.Eff.Console (CONSOLE)
+
 import Data.Array ((..))
 import Data.Foldable (sequence_, for_)
 import Data.List (List(..), (:))
 import Data.Int (toNumber, round)
 import Data.Maybe (Maybe(..))
 
-import Test.Unit (test, runTest, Assertion, success, failure)
-import Test.Unit.Assert (assert, assertFalse, equal)
+import Color (Color, ColorSpace(..), rgb', toHexString, toRGBA, toHSLA,
+              saturate, lighten, white, black, graytone, mix, rgb, distance,
+              textColor, contrast, luminance, brightness, fromInt, toGray,
+              desaturate, darken, complementary, rotateHue, rgba, cssStringRGBA,
+              hsla, cssStringHSLA, hsl, fromHexString, lch, toLCh, lab, toLab,
+              xyz, toXYZ)
+import Color.Blending (BlendMode(..), blend)
+import Color.Scale (grayscale, sample, colors, uniformScale, colorStop, colorScale)
+import Color.Scheme.X11 (orangered, seagreen, yellow, red, blue, magenta, hotpink,
+                         purple, pink, darkslateblue, aquamarine, cyan, green, lime)
 
-import Color
-import Color.Blending
-import Color.Scale
-import Color.Scheme.X11
+import Test.Unit (test, success, failure)
+import Test.Unit.Assert (equal, assertFalse)
+import Test.Unit.Main (runTest)
+import Test.Unit.Console (TESTOUTPUT)
 
 -- | Assert that two colors are 'almost' equal (differ in their RGB values by
 -- | no more than 1 part in 255).
-almostEqual :: forall e. Color -> Color -> Assertion e
+almostEqual :: forall e. Color -> Color -> Aff e Unit
 almostEqual expected actual =
   if almostEqual' expected actual then success
-  else failure $ "\n    expected: " ++ show expected ++
-                 "\n    got:      " ++ show actual
+  else failure $ "\n    expected: " <> show expected <>
+                 "\n    got:      " <> show actual
 
  where
    abs n = if n < 0 then 0 - n else n
@@ -36,6 +48,7 @@ almostEqual expected actual =
        c1 = toRGBA col1
        c2 = toRGBA col2
 
+main :: forall e. Eff (console :: CONSOLE, testOutput :: TESTOUTPUT | e) Unit
 main = runTest do
   test "Eq instance" do
     equal (hsl 120.0 0.3 0.5) (hsl 120.0 0.3 0.5)
@@ -102,7 +115,7 @@ main = runTest do
     roundtrip 162.4 0.779 0.447
     sequence_ do
       degree <- 0 .. 360
-      return $ roundtrip (toNumber degree) 0.5 0.8
+      pure $ roundtrip (toNumber degree) 0.5 0.8
 
   test "xyz / toXYZ (XYZ -> HSL -> XYZ)" do
     equal white (xyz 0.9505 1.0 1.0890)
@@ -117,7 +130,7 @@ main = runTest do
 
     sequence_ do
       hue <- 0 .. 360
-      return $ xyzRoundtrip (toNumber hue) 0.2 0.8
+      pure $ xyzRoundtrip (toNumber hue) 0.2 0.8
 
   test "lab / toLab (Lab -> HSL -> Lab)" do
     let labRoundtrip h' s' l' =
@@ -129,7 +142,7 @@ main = runTest do
     equal red (lab 53.233 80.109 67.220)
     sequence_ do
       hue <- 0 .. 360
-      return $ labRoundtrip (toNumber hue) 0.2 0.8
+      pure $ labRoundtrip (toNumber hue) 0.2 0.8
 
   test "lch / toLCh (LCh -> HSL -> LCh)" do
     let lchRoundtrip h' s' l' =
@@ -141,7 +154,7 @@ main = runTest do
     equal (hsl 0.0 1.0 0.245) (lch 24.829 60.093 38.18)
     sequence_ do
       hue <- 0 .. 36
-      return $ lchRoundtrip (toNumber (10 * hue)) 0.2 0.8
+      pure $ lchRoundtrip (toNumber (10 * hue)) 0.2 0.8
 
   test "toHexString (HSL -> Hex -> HSL conversion)" do
     let hexRoundtrip h s l = equal (Just $ hsl h s l) (fromHexString (toHexString (hsl h s l)))

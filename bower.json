@@ -20,7 +20,7 @@
     "purescript-strings": "^1.0.0"
   },
   "devDependencies": {
-    "purescript-test-unit": "^4.1.0",
-    "purescript-flaredoc": "^0.2.0"
+    "purescript-test-unit": "^7.0.0",
+    "purescript-psci-support": "^1.0.0"
   }
 }
