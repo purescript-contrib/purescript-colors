@@ -2,11 +2,12 @@ module Test.Interactive (main) where
 
 import Prelude
 
-import Data.Array (sortBy, take)
+import Data.Array (sortBy, take, fromFoldable)
 import Data.Foldable (foldMap)
-import Data.List (List(..), fromList)
+import Data.List (List(..))
 import Data.Ord (comparing)
 import Data.Tuple (Tuple (..))
+import Data.NonEmpty ((:|))
 
 import Text.Smolder.Markup as H
 import Text.Smolder.Markup ((!))
@@ -62,7 +63,7 @@ modeToString Screen = "Screen"
 modeToString Overlay = "Overlay"
 
 instance flammableTBlendMode :: Flammable TBlendMode where
-  spark = TBlendMode <$> select "BlendMode" Multiply [Screen, Overlay] modeToString
+  spark = TBlendMode <$> select "BlendMode" (Multiply :| [Screen, Overlay]) modeToString
 
 newtype TColorSpace = TColorSpace ColorSpace
 
@@ -72,7 +73,7 @@ csToString LCh = "LCh"
 csToString Lab = "Lab"
 
 instance flammableTColorSpace :: Flammable TColorSpace where
-  spark = TColorSpace <$> select "ColorSpace" HSL [RGB, LCh, Lab] csToString
+  spark = TColorSpace <$> select "ColorSpace" (HSL :| [RGB, LCh, Lab]) csToString
 
 newtype Int255 = Int255 Int
 instance flammableInt255 :: Flammable Int255 where
@@ -95,9 +96,9 @@ data CSTypes
 
 instance flammableTColorScale :: Flammable TColorScale where
   spark = (TColorScale <<< toColorScale) <$> (fieldset "ColorScale" $
-            select "Choose" Grayscale [Spectrum, SpectrumLCh, BlueToRed,
-                                       YellowToRed, Hot, Cool, Magma, Inferno,
-                                       Plasma, Viridis] toString
+            select "Choose" (Grayscale :| [Spectrum, SpectrumLCh, BlueToRed,
+                                           YellowToRed, Hot, Cool, Magma, Inferno,
+                                           Plasma, Viridis]) toString
           )
     where
       toString Grayscale   = "grayscale"
@@ -174,7 +175,7 @@ blendUI c1 c2 mode = do
 
 flare2 = blendUI <$> color "Background" royalblue
                  <*> color "Foreground" gold
-                 <*> select "BlendMode" Multiply [Screen, Overlay] modeToString
+                 <*> select "BlendMode" (Multiply :| [Screen, Overlay]) modeToString
 
 palettes c1 c2 n = H.table $ foldMap row [HSL, RGB, Lab, LCh]
     where row mode = H.tr $ (H.td $ H.text (csToString mode))
@@ -386,7 +387,7 @@ main = do
     docscale "colorScale" $ \(TColorSpace mode) (TColor b) (TColor e) -> TColorScale $ colorScale mode b Nil e
     docscale "addStop" $ \(TColorScale sc) (SmallNumber r) (TColor c) -> TColorScale $ addStop sc c r
     docscale "sample" $ \(TColorScale sc) (SmallNumber r) -> TColor (sample sc r)
-    docscale "colors" $ \(TColorScale sc) (SmallInt n) -> ColorList (fromList $ colors sc n)
+    docscale "colors" $ \(TColorScale sc) (SmallInt n) -> ColorList (fromFoldable $ colors sc n)
     docscale "grayscale" (TColorScale grayscale)
     docscale "spectrum" (TColorScale spectrum)
     docscale "spectrumLCh" (TColorScale spectrumLCh)
