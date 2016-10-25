@@ -1,32 +1,23 @@
 module Test.Main where
 
 import Prelude
-
-import Control.Monad.Aff (Aff)
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Console (CONSOLE)
-
-import Data.Array ((..))
-import Data.Foldable (sequence_, for_)
-import Data.List (List(..), (:))
-import Data.Int (toNumber, round)
-import Data.Maybe (Maybe(..))
-
-import Color (Color, ColorSpace(..), rgb', toHexString, toRGBA, toHSLA,
-              saturate, lighten, white, black, graytone, mix, rgb, distance,
-              textColor, contrast, luminance, brightness, fromInt, toGray,
-              desaturate, darken, complementary, rotateHue, rgba, cssStringRGBA,
-              hsla, cssStringHSLA, hsl, fromHexString, lch, toLCh, lab, toLab,
-              xyz, toXYZ)
+import Color (Color, ColorSpace(..), rgb', toHexString, toRGBA, toHSLA, saturate, lighten, white, black, graytone, mix, rgb, distance, textColor, contrast, luminance, brightness, fromInt, toGray, desaturate, darken, complementary, rotateHue, rgba, cssStringRGBA, hsla, cssStringHSLA, hsl, fromHexString, lch, toLCh, lab, toLab, xyz, toXYZ)
 import Color.Blending (BlendMode(..), blend)
 import Color.Scale (grayscale, sample, colors, uniformScale, colorStop, colorScale)
-import Color.Scheme.X11 (orangered, seagreen, yellow, red, blue, magenta, hotpink,
-                         purple, pink, darkslateblue, aquamarine, cyan, green, lime)
-
+import Color.Scheme.X11 (orangered, seagreen, yellow, red, blue, magenta, hotpink, purple, pink, darkslateblue, aquamarine, cyan, green, lime)
+import Control.Monad.Aff (Aff)
+import Control.Monad.Aff.AVar (AVAR)
+import Control.Monad.Eff (Eff)
+import Control.Monad.Eff.Console (CONSOLE)
+import Data.Array ((..))
+import Data.Foldable (sequence_, for_)
+import Data.Int (toNumber, round)
+import Data.List (List(..), (:))
+import Data.Maybe (Maybe(..))
 import Test.Unit (test, success, failure)
 import Test.Unit.Assert (equal, assertFalse)
-import Test.Unit.Main (runTest)
 import Test.Unit.Console (TESTOUTPUT)
+import Test.Unit.Main (runTest)
 
 -- | Assert that two colors are 'almost' equal (differ in their RGB values by
 -- | no more than 1 part in 255).
@@ -48,7 +39,7 @@ almostEqual expected actual =
        c1 = toRGBA col1
        c2 = toRGBA col2
 
-main :: forall e. Eff (console :: CONSOLE, testOutput :: TESTOUTPUT | e) Unit
+main :: forall e. Eff (console :: CONSOLE, testOutput :: TESTOUTPUT, avar :: AVAR | e) Unit
 main = runTest do
   test "Eq instance" do
     equal (hsl 120.0 0.3 0.5) (hsl 120.0 0.3 0.5)

@@ -4,9 +4,9 @@
 -- | in between. If a color scale is sampled between two color stops, the
 -- | specified color space is used for linear interpolation (see `mix`).
 module Color.Scale
-  ( ColorStop()
+  ( ColorStop
   , colorStop
-  , ColorScale()
+  , ColorScale
   , colorScale
   , uniformScale
   , addStop

@@ -2,7 +2,7 @@
 -- | https://www.google.com/design/spec/style/color.html
 module Color.Scheme.MaterialDesign where
 
-import Color (Color(), rgb)
+import Color (Color, rgb)
 
 red :: Color
 red = rgb 244 67 54
