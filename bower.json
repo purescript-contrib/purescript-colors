@@ -13,14 +13,13 @@
     "test"
   ],
   "dependencies": {
-    "purescript-arrays": "^1.0.0",
-    "purescript-integers": "^1.0.0",
-    "purescript-lists": "^1.0.0",
+    "purescript-arrays": "^3.0.0",
+    "purescript-integers": "^2.0.0",
+    "purescript-lists": "^3.0.0",
     "purescript-partial": "^1.0.0",
-    "purescript-strings": "^1.0.0"
+    "purescript-strings": "^2.0.0"
   },
   "devDependencies": {
-    "purescript-test-unit": "^4.1.0",
-    "purescript-flaredoc": "^0.2.0"
+    "purescript-test-unit": "^10.0.1"
   }
 }

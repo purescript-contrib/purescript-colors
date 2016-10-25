@@ -2,27 +2,26 @@ module Test.Main where
 
 import Prelude
 
-import Data.Array ((..))
-import Data.Foldable (sequence_, for_)
-import Data.List (List(..), (:))
-import Data.Int (toNumber, round)
-import Data.Maybe (Maybe(..))
-
-import Test.Unit (test, runTest, Assertion, success, failure)
-import Test.Unit.Assert (assert, assertFalse, equal)
-
 import Color
-import Color.Blending
+import Color.Blending (BlendMode(..), blend)
 import Color.Scale
 import Color.Scheme.X11
+import Data.Array ((..))
+import Data.Foldable (sequence_, for_)
+import Data.Int (toNumber, round)
+import Data.List (List(..), (:))
+import Data.Maybe (Maybe(..))
+import Test.Unit (test, Test, success, failure)
+import Test.Unit.Assert (assertFalse, equal)
+import Test.Unit.Main (runTest)
 
 -- | Assert that two colors are 'almost' equal (differ in their RGB values by
 -- | no more than 1 part in 255).
-almostEqual :: forall e. Color -> Color -> Assertion e
+almostEqual :: forall e. Color -> Color -> Test e
 almostEqual expected actual =
   if almostEqual' expected actual then success
-  else failure $ "\n    expected: " ++ show expected ++
-                 "\n    got:      " ++ show actual
+  else failure $ "\n    expected: " <> show expected <>
+                 "\n    got:      " <> show actual
 
  where
    abs n = if n < 0 then 0 - n else n
@@ -102,7 +101,7 @@ main = runTest do
     roundtrip 162.4 0.779 0.447
     sequence_ do
       degree <- 0 .. 360
-      return $ roundtrip (toNumber degree) 0.5 0.8
+      pure $ roundtrip (toNumber degree) 0.5 0.8
 
   test "xyz / toXYZ (XYZ -> HSL -> XYZ)" do
     equal white (xyz 0.9505 1.0 1.0890)
@@ -117,7 +116,7 @@ main = runTest do
 
     sequence_ do
       hue <- 0 .. 360
-      return $ xyzRoundtrip (toNumber hue) 0.2 0.8
+      pure $ xyzRoundtrip (toNumber hue) 0.2 0.8
 
   test "lab / toLab (Lab -> HSL -> Lab)" do
     let labRoundtrip h' s' l' =
@@ -129,7 +128,7 @@ main = runTest do
     equal red (lab 53.233 80.109 67.220)
     sequence_ do
       hue <- 0 .. 360
-      return $ labRoundtrip (toNumber hue) 0.2 0.8
+      pure $ labRoundtrip (toNumber hue) 0.2 0.8
 
   test "lch / toLCh (LCh -> HSL -> LCh)" do
     let lchRoundtrip h' s' l' =
@@ -141,7 +140,7 @@ main = runTest do
     equal (hsl 0.0 1.0 0.245) (lch 24.829 60.093 38.18)
     sequence_ do
       hue <- 0 .. 36
-      return $ lchRoundtrip (toNumber (10 * hue)) 0.2 0.8
+      pure $ lchRoundtrip (toNumber (10 * hue)) 0.2 0.8
 
   test "toHexString (HSL -> Hex -> HSL conversion)" do
     let hexRoundtrip h s l = equal (Just $ hsl h s l) (fromHexString (toHexString (hsl h s l)))

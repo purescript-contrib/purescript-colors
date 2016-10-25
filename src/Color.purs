@@ -14,7 +14,7 @@
 -- | gamut can be represented.
 
 module Color
-  ( Color()
+  ( Color
   , ColorSpace(..)
   -- Construct
   , rgba
@@ -367,7 +367,9 @@ toLCh col = { l, c, h }
 toHexString :: Color -> String
 toHexString color = "#" <> toHex c.r <> toHex c.g <> toHex c.b
   where c = toRGBA color
-        toHex = toStringAs hexadecimal
+        toHex = pad <<< toStringAs hexadecimal
+        pad s | length s < 2 = "0" <> s
+              | otherwise = s
 
 -- | A CSS representation of the color in the form `hsl(..)` or `hsla(...)`.
 cssStringHSLA :: Color -> String
