@@ -3,7 +3,7 @@
 -- | See: https://www.w3.org/TR/REC-html40/types.html#h-6.5
 
 module Color.Scheme.HTML
-  (module Color.Scheme.X11
+  ( module Color.Scheme.X11
   ) where
 
 import Color.Scheme.X11 (silver, gray, maroon, red, purple, fuchsia, green,

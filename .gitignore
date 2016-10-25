@@ -5,3 +5,5 @@
 /.psci*
 /src/.webpack.js
 html/test.js
+.psc-ide-port
+.psc-package

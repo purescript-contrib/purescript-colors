@@ -4,7 +4,7 @@
 
 module Color.Scheme.X11 where
 
-import Color (Color(), rgb)
+import Color (Color, rgb)
 
 aliceblue :: Color
 aliceblue = rgb 240 248 255

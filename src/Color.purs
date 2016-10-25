@@ -14,7 +14,7 @@
 -- | gamut can be represented.
 
 module Color
-  ( Color()
+  ( Color
   , ColorSpace(..)
   -- Construct
   , rgba
