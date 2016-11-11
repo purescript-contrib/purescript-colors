@@ -21,6 +21,7 @@
   },
   "devDependencies": {
     "purescript-test-unit": "^10.0.1",
-    "purescript-psci-support": "^2.0.0"
+    "purescript-psci-support": "^2.0.0",
+    "purescript-flaredoc": "^2.0.0"
   }
 }

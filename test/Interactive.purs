@@ -37,7 +37,7 @@ instance flammableTColor :: Flammable TColor where
                           <*> numberSlider "Saturation" 0.0 1.0 0.001 0.48
                           <*> numberSlider "Lightness" 0.0 1.0 0.001 0.48)
 
-colorBox :: Color -> H.Markup
+colorBox :: Color -> H.Markup Unit
 colorBox c = H.div ! HA.style css $ H.code (H.text repr)
   where
     repr = cssStringHSLA c
