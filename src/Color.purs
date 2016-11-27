@@ -322,8 +322,8 @@ toXYZ c = { x, y, z }
     g = finv rec.g
     b = finv rec.b
 
-    finv c | c <= 0.04045 = c / 12.92
-           | otherwise    = ((c + 0.055) / 1.055) `pow` 2.4
+    finv c' | c' <= 0.04045 = c' / 12.92
+            | otherwise     = ((c' + 0.055) / 1.055) `pow` 2.4
 
 -- | Get L, a and b coordinates according to the Lab color space.
 -- |
