@@ -191,7 +191,7 @@ cssColorStops scale@(ColorScale _ b middle e) = cssColorStops csRGB
     csRGB' = ColorScale RGB b middle e
 
     csRGB = foldl addStop' csRGB' additionalStops
-    addStop' scale (ColorStop c r) = addStop scale c r
+    addStop' scale' (ColorStop c r) = addStop scale' c r
 
     additionalStops = do
       step <- 1 .. 9
