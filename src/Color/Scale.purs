@@ -139,7 +139,7 @@ spectrumLCh = colorScale LCh end stops end
       pure $ colorStop (lch lightness chroma (10.0 * r)) (r / 36.0)
 
 -- | A perceptually-uniform, diverging color scale from blue to red, similar to
--- | the ColorBrewer scale *RdBu*.
+-- | the ColorBrewer scale 'RdBu'.
 blueToRed :: ColorScale
 blueToRed = uniformScale Lab blue (gray : Nil) red
   where
@@ -148,7 +148,7 @@ blueToRed = uniformScale Lab blue (gray : Nil) red
     blue = fromInt 0x2166ac
 
 -- | A perceptually-uniform, multi-hue color scale from yellow to red, similar
--- | to the ColorBrewer scale *YlOrRd*.
+-- | to the ColorBrewer scale YlOrRd.
 yellowToRed :: ColorScale
 yellowToRed = uniformScale Lab yellow (orange : Nil) red
   where

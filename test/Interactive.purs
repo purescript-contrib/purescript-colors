@@ -25,6 +25,7 @@ import Color.Scale.Perceptual
 import Color.Scheme.Harmonic
 import Color.Scheme.MaterialDesign as MD
 import Color.Scheme.X11
+import Color.Scheme.Clrs as Clrs
 
 newtype TColor = TColor Color
 
@@ -586,6 +587,26 @@ main = do
     docx11 "whitesmoke" (TColor whitesmoke)
     docx11 "yellow" (TColor yellow)
     docx11 "yellowgreen" (TColor yellowgreen)
+
+    let docClrs :: forall t. Interactive t => String -> t -> _
+        docClrs = flareDoc' "doc-scheme-clrs" dict "Color.Scheme.Clrs"
+
+    docClrs "navy" (TColor Clrs.navy)
+    docClrs "blue" (TColor Clrs.blue)
+    docClrs "aqua" (TColor Clrs.aqua)
+    docClrs "teal" (TColor Clrs.teal)
+    docClrs "olive" (TColor Clrs.olive)
+    docClrs "green" (TColor Clrs.green)
+    docClrs "lime" (TColor Clrs.lime)
+    docClrs "yellow" (TColor Clrs.yellow)
+    docClrs "orange" (TColor Clrs.orange)
+    docClrs "red" (TColor Clrs.red)
+    docClrs "maroon" (TColor Clrs.maroon)
+    docClrs "fuchsia" (TColor Clrs.fuchsia)
+    docClrs "purple" (TColor Clrs.purple)
+    docClrs "black'" (TColor Clrs.black')
+    docClrs "gray" (TColor Clrs.gray)
+    docClrs "silver" (TColor Clrs.silver)
 
   runFlareHTML "input1" "output1" flare1
   runFlareHTML "input2" "output2" flare2
