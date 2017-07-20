@@ -165,7 +165,7 @@ rgb' r g b = rgba' r g b 1.0
 -- | lightness and alpha are numbers between 0.0 and 1.0.
 hsla :: Number -> Number -> Number -> Number -> Color
 hsla h s l a = HSLA h' s' l' a'
-  where h' = h `modPos` 360.0
+  where h' = if h == 360.0 then h else h `modPos` 360.0
         s' = clamp 0.0 1.0 s
         l' = clamp 0.0 1.0 l
         a' = clamp 0.0 1.0 a
