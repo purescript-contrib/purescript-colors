@@ -26,3 +26,18 @@ A package for dealing with colors in PureScript.
 ## Credit
 
 Based on initial work by paf31 and inspired by (the PureScript version of) [Elm.Color](https://github.com/brainrape/purescript-elm-color), [TinyColor](https://github.com/bgrins/TinyColor) and [Chroma.js](https://github.com/gka/chroma.js).
+
+## Development
+
+For running the (interactive) tests, the following steps are necessary:
+```
+bower install
+# Remove ps-colors that is required by ps-flaredoc in a cyclic dependency:
+rm -rf bower_components/purescript-colors/
+
+# Run unit tests:
+pulp test
+
+# Build interactive tests / documentation:
+pulp build -O -I test -m Test.Interactive -t html/test.js
+```
