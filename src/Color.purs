@@ -164,7 +164,7 @@ rgb' :: Number -> Number -> Number -> Color
 rgb' r g b = rgba' r g b 1.0
 
 -- | Create a `Color` from Hue, Saturation, Lightness and Alpha values. The
--- | hue is given in degrees, as a `Number` between 0.0 and 360.0. Saturation,
+-- | Hue is given in degrees, as a `Number` between 0.0 and 360.0. Saturation,
 -- | Lightness and Alpha are numbers between 0.0 and 1.0.
 hsla :: Number -> Number -> Number -> Number -> Color
 hsla h s l a = HSLA h' s' l' a'
@@ -173,14 +173,14 @@ hsla h s l a = HSLA h' s' l' a'
         l' = clamp 0.0 1.0 l
         a' = clamp 0.0 1.0 a
 
--- | Create a `Color` from Hue, Saturation and Lightness values. The hue is
+-- | Create a `Color` from Hue, Saturation and Lightness values. The Hue is
 -- | given in degrees, as a `Number` between 0.0 and 360.0. Both Saturation and
 -- | Lightness are numbers between 0.0 and 1.0.
 hsl :: Number -> Number -> Number -> Color
 hsl h s l = hsla h s l 1.0
 
 -- | Create a `Color` from Hue, Saturation, Value and Alpha values. The
--- | hue is given in degrees, as a `Number` between 0.0 and 360.0. Saturation,
+-- | Hue is given in degrees, as a `Number` between 0.0 and 360.0. Saturation,
 -- | Value and Alpha are numbers between 0.0 and 1.0.
 hsva :: Number → Number → Number → Number → Color
 hsva h s   0.0 a = HSLA h (s / (2.0 - s)) 0.0 a
@@ -188,10 +188,10 @@ hsva h 0.0 1.0 a = HSLA h 0.0 1.0 a
 hsva h s'  v'  a = HSLA h s l a
   where
     tmp = (2.0 - s') * v'
-    s = (s' * v' / (if tmp < 1.0 then tmp else 2.0 - tmp))
-    l = (tmp / 2.0)
+    s = s' * v' / (if tmp < 1.0 then tmp else 2.0 - tmp)
+    l = tmp / 2.0
 
--- | Create a `Color` from Hue, Saturation and Value values. The hue is
+-- | Create a `Color` from Hue, Saturation and Value values. The Hue is
 -- | given in degrees, as a `Number` between 0.0 and 360.0. Both Saturation and
 -- | Value are numbers between 0.0 and 1.0.
 hsv :: Number → Number → Number → Color
@@ -301,10 +301,10 @@ toHSLA (HSLA h s l a) = { h, s, l, a }
 
 -- | Convert a `Color` to its Hue, Saturation, Value and Alpha values. See
 -- | `hsva` for the ranges of each channel.
-toHSVA :: Color -> {h :: Number, s :: Number, v :: Number, a :: Number}
-toHSVA (HSLA h s   0.0 a) = { h , s: 2.0 * s / (1.0 + s) , v: 0.0 , a }
-toHSVA (HSLA h 0.0 1.0 a) = { h , s: 0.0 , v: 1.0 , a }
-toHSVA (HSLA h s'  l'  a) = { h , s , v , a }
+toHSVA :: Color -> { h :: Number, s :: Number, v :: Number, a :: Number }
+toHSVA (HSLA h s   0.0 a) = { h, s: 2.0 * s / (1.0 + s), v: 0.0, a }
+toHSVA (HSLA h 0.0 1.0 a) = { h, s: 0.0, v: 1.0, a }
+toHSVA (HSLA h s'  l'  a) = { h, s, v, a }
   where
     tmp = s' * (if l' < 0.5 then l' else 1.0 - l')
     s = 2.0 * tmp / (l' + tmp)

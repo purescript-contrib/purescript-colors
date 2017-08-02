@@ -29,7 +29,7 @@ almostEqual expected actual =
                  "\n    got:      " <> show' actual
   where
     show' c = case toHSLA c of
-      ({h, s, l, a}) -> cssStringRGBA c <> " " <> cssStringHSLA c
+      {h, s, l, a} -> cssStringRGBA c <> " " <> cssStringHSLA c
     abs n = if n < 0 then 0 - n else n
     aE n1 n2 = abs (n1 - n2) <= 1
     almostEqual' col1 col2 =
