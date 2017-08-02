@@ -1,5 +1,8 @@
 # purescript-colors
 
+[![Latest release](http://img.shields.io/bower/v/purescript-colors.svg)](https://github.com/sharkdp/purescript-colors/releases)
+[![Build Status](https://api.travis-ci.org/sharkdp/purescript-colors.svg?branch=master)](https://travis-ci.org/sharkdp/purescript-colors)
+
 A package for dealing with colors in PureScript.
 
 - [Interactive documentation](http://sharkdp.github.io/purescript-colors/)
