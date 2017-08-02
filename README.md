@@ -31,13 +31,13 @@ Based on initial work by paf31 and inspired by (the PureScript version of) [Elm.
 
 For running the (interactive) tests, the following steps are necessary:
 ```
-bower install
-# Remove ps-colors that is required by ps-flaredoc in a cyclic dependency:
-rm -rf bower_components/purescript-colors/
+npm i
+bower i
+cd example && bower i && cd ..
 
 # Run unit tests:
-pulp test
+npm t
 
 # Build interactive tests / documentation:
-pulp build -O -I test -m Test.Interactive -t html/test.js
+npm run example
 ```
