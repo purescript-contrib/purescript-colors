@@ -1,4 +1,4 @@
-module Test.Interactive (main) where
+module Main (main) where
 
 import Prelude
 
