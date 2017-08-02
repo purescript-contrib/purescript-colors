@@ -1,6 +1,7 @@
 {
   "private": true,
   "scripts": {
+    "build": "pulp test && rimraf docs && pulp docs",
     "example": "cd example && pulp build -O -m Main -t html/test.js",
     "test": "pulp test"
   },
