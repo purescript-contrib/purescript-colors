@@ -32,15 +32,15 @@ Based on initial work by paf31 and inspired by (the PureScript version of) [Elm.
 
 ## Development
 
-For running the (interactive) tests, the following steps are necessary:
+To run the unit tests, the following steps are necessary:
 ```
-npm i
-bower i
-cd example && bower i && cd ..
+bower install
+pulp test
+```
 
-# Run unit tests:
-npm t
-
-# Build interactive tests / documentation:
-npm run example
+To build the interactive docmentation, run:
+```
+cd documentation
+bower install
+pulp build -O -m Main -t html/test.js
 ```

@@ -9,9 +9,9 @@
 /output/
 /.psci*
 
-/example/bower_components/
-/example/.pulp-cache/
-/example/output/
-/example/.psci*
+/documentation/bower_components/
+/documentation/.pulp-cache/
+/documentation/output/
+/documentation/.psci*
 
-/example/html/test.js
+/documentation/html/test.js
