@@ -1,7 +1,8 @@
 module Test.Main where
 
 import Prelude
-import Color (Color, ColorSpace(..), rgb', toHexString, toRGBA, toHSLA, saturate, lighten, white, black, graytone, mix, rgb, distance, textColor, contrast, luminance, brightness, fromInt, toGray, desaturate, darken, complementary, rotateHue, rgba, cssStringRGBA, hsla, cssStringHSLA, hsl, fromHexString, lch, toLCh, lab, toLab, xyz, toXYZ)
+
+import Color (Color, ColorSpace(..), rgb', toHexString, toRGBA, toHSLA, toHSVA, saturate, lighten, white, black, graytone, mix, rgb, distance, textColor, contrast, luminance, brightness, fromInt, toGray, desaturate, darken, complementary, rotateHue, rgba, cssStringRGBA, hsla, cssStringHSLA, hsl, hsva, fromHexString, lch, toLCh, lab, toLab, xyz, toXYZ)
 import Color.Blending (BlendMode(..), blend)
 import Color.Scale (grayscale, sample, colors, uniformScale, colorStop, colorScale)
 import Color.Scheme.X11 (orangered, seagreen, yellow, red, blue, magenta, hotpink, purple, pink, darkslateblue, aquamarine, cyan, green, lime)
@@ -24,20 +25,20 @@ import Test.Unit.Main (runTest)
 almostEqual :: forall e. Color -> Color -> Aff e Unit
 almostEqual expected actual =
   if almostEqual' expected actual then success
-  else failure $ "\n    expected: " <> show expected <>
-                 "\n    got:      " <> show actual
-
- where
-   abs n = if n < 0 then 0 - n else n
-   aE n1 n2 = abs (n1 - n2) <= 1
-   almostEqual' col1 col2 =
-     aE c1.r c2.r &&
-     aE c1.g c2.g &&
-     aE c1.b c2.b
-
-     where
-       c1 = toRGBA col1
-       c2 = toRGBA col2
+  else failure $ "\n    expected: " <> show' expected <>
+                 "\n    got:      " <> show' actual
+  where
+    show' c = case toHSLA c of
+      {h, s, l, a} -> cssStringRGBA c <> " " <> cssStringHSLA c
+    abs n = if n < 0 then 0 - n else n
+    aE n1 n2 = abs (n1 - n2) <= 1
+    almostEqual' col1 col2 =
+      aE c1.r c2.r &&
+      aE c1.g c2.g &&
+      aE c1.b c2.b
+      where
+        c1 = toRGBA col1
+        c2 = toRGBA col2
 
 main :: forall e. Eff (console :: CONSOLE, testOutput :: TESTOUTPUT, avar :: AVAR | e) Unit
 main = runTest do
@@ -122,6 +123,27 @@ main = runTest do
     sequence_ do
       hue <- 0 .. 360
       pure $ xyzRoundtrip (toNumber hue) 0.2 0.8
+
+  test "hsv / toHSV (HSV -> HSL -> HSV, HSL -> HSV -> HSL)" do
+    let
+      hsvRoundtrip h' s' l_v' a' = do
+        almostEqual colorIn1 colorOut1
+        almostEqual colorIn2 colorOut2
+        where
+          colorIn1 = hsla h' s' l_v' a'
+          colorIn2 = hsva h' s' l_v' a'
+          colorOut1 = case toHSVA colorIn1 of { h, s, v, a } -> hsva h s v a
+          colorOut2 = case toHSVA colorIn2 of { h, s, v, a } -> hsva h s v a
+    sequence_ do
+      hue <- 0 .. 3
+      saturation <- 0 .. 5
+      lightness <- 0 .. 5
+      [ hsvRoundtrip 90.0 (toNumber saturation / 5.0) 1.0 1.0
+      , hsvRoundtrip 90.0 1.0 (toNumber lightness / 5.0) 1.0
+      , hsvRoundtrip 90.0 (toNumber saturation / 5.0) 0.0 1.0
+      , hsvRoundtrip 90.0 0.0 (toNumber lightness / 5.0) 1.0
+      , hsvRoundtrip (toNumber (hue * 90)) (toNumber saturation / 5.0) (toNumber lightness / 5.0)  1.0
+      ]
 
   test "lab / toLab (Lab -> HSL -> Lab)" do
     let labRoundtrip h' s' l' =
