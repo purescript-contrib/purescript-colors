@@ -115,8 +115,8 @@ mkSimpleSampler :: Mixer -> Sampler ColorScaleBuilder
 -- | 1). If the number is smaller than 0, the color at 0 is returned. If the
 -- | number is larger than 1, the color at 1 is returned.
 mkSimpleSampler mixer (ColorScaleBuilder b middle e) x
-  | x <= 0.0 = b
-  | x >= 1.0 = e
+  | x < 0.0 = b
+  | x > 1.0 = e
   | otherwise = go b 0.0 (middle `snoc` colorStop e 1.0)
   where
     go col _ Nil = col
@@ -134,6 +134,7 @@ colors scale = colors' (sample scale)
 
 colors' :: (Number -> Color) -> Int -> List Color
 colors' f 0 = Nil
+colors' f 1 = f 0.0 : Nil
 colors' f num = map mkColor $ 0 .. (num - 1)
   where mkColor i = f (toNumber i / toNumber (num - 1))
 
