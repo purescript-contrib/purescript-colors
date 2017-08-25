@@ -31,18 +31,20 @@ module Color.Scale
   , addStop'
   , uniformScale'
   , colorScale'
+  , colors'
+  , cubehelixMix
+  , cubehelixSample
   , ColorScaleBuilder(..)
   ) where
 
 import Prelude
 
+import Color (Color, ColorSpace(..), black, cssStringHSLA, fromInt, hsl, lch, mix, rgb', toHSLA, white)
+import Color.Scheme.X11 (red, yellow)
 import Data.Foldable (class Foldable, intercalate, foldl)
 import Data.Int (toNumber)
 import Data.List (List(..), insertBy, snoc, (..), fromFoldable, length, zipWith, (:))
-
-import Color (Color, ColorSpace(..), mix, cssStringHSLA, black, white, hsl,
-              lch, fromInt)
-import Color.Scheme.X11 (red, yellow)
+import Math (Radians, cos, pi, pow, sin)
 
 -- | Ensure that a number lies in the interval [0, 1].
 ratio :: Number -> Number
@@ -105,11 +107,43 @@ sample (ColorScale mode scale) = mkSimpleSampler (mix mode) scale
 type Mixer = Color -> Color -> Number -> Color
 type Sampler a = a -> Number -> Color
 
+radians :: Radians
+radians = pi / 180.0
+
+cubehelixSample :: Sampler ColorScaleBuilder
+cubehelixSample = mkSimpleSampler $ cubehelixMix 1.0
+
+cubehelixMix :: Number -> Mixer
+cubehelixMix gama a b =
+  let
+    a' = toHSLA a
+    b' = toHSLA b
+    ah = (a'.h + 120.0) * radians
+    bh = (b'.h + 120.0) * radians - ah
+    as = a'.s
+    bs = b'.s - as
+    al = a'.l
+    bl = b'.l - al
+
+  -- NOTE not sure why isNan check is needed so I have not ported it
+  -- if (isNaN(bs)) bs = 0, as = isNaN(as) ? b.s : as;
+  -- if (isNaN(bh)) bh = 0, ah = isNaN(ah) ? b.h : ah;
+  in \t ->
+    let
+      angle = ah + bh * t
+      fract = pow (al + bl * t) gama
+      amp = (as + bs * t) * fract * (1.0 - fract)
+      r = fract + amp * (-0.14861 * cos(angle) + 1.78277 * sin(angle))
+      g = fract + amp * (-0.29227 * cos(angle) - 0.90649 * sin(angle))
+      b = fract + amp * ( 1.97294 * cos(angle))
+    in rgb' r g b
+
+
 mkSimpleSampler :: Mixer -> Sampler ColorScaleBuilder
 -- | Get the color at a specific point on the color scale (number between 0 and
 -- | 1). If the number is smaller than 0, the color at 0 is returned. If the
 -- | number is larger than 1, the color at 1 is returned.
-mkSimpleSampler mixer scale@(ColorScaleBuilder b middle e) x
+mkSimpleSampler mixer (ColorScaleBuilder b middle e) x
   | x <= 0.0 = b
   | x >= 1.0 = e
   | otherwise = go b 0.0 (middle `snoc` colorStop e 1.0)
@@ -124,9 +158,12 @@ mkSimpleSampler mixer scale@(ColorScaleBuilder b middle e) x
 
 -- | Takes sampling function and returns A list of colors that is sampled from
 -- | a color scale. The number of colors can be specified.
-colors :: (Number -> Color) -> Int -> List Color
-colors f 0 = Nil
-colors f num = map mkColor $ 0 .. (num - 1)
+colors :: ColorScale -> Int -> List Color
+colors scale = colors' (sample scale)
+
+colors' :: (Number -> Color) -> Int -> List Color
+colors' f 0 = Nil
+colors' f num = map mkColor $ 0 .. (num - 1)
   where mkColor i = f (toNumber i / toNumber (num - 1))
 
 -- | Modify the color scale by applying the given function to each color stop.
