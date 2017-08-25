@@ -54,7 +54,9 @@ module Color
   , desaturate
   , toGray
   -- Combine
+  , Mixer
   , mix
+  , cubehelixMix
   -- Analyze
   , brightness
   , luminance
@@ -66,6 +68,7 @@ module Color
   ) where
 
 import Prelude
+
 import Data.Array ((!!))
 import Data.Either (either)
 import Data.Foldable (minimumBy)
@@ -74,7 +77,7 @@ import Data.Int.Bits ((.&.), shr)
 import Data.Maybe (Maybe(..), fromJust, fromMaybe)
 import Data.String (length)
 import Data.String.Regex (regex, parseFlags, match)
-import Math (abs, (%), pow, cos, sin, pi, sqrt, atan2)
+import Math (Radians, abs, atan2, cos, pi, pow, sin, sqrt, (%))
 import Partial.Unsafe (unsafePartial)
 
 -- | The representation of a color.
@@ -167,11 +170,13 @@ rgb' r g b = rgba' r g b 1.0
 -- | Hue is given in degrees, as a `Number` between 0.0 and 360.0. Saturation,
 -- | Lightness and Alpha are numbers between 0.0 and 1.0.
 hsla :: Number -> Number -> Number -> Number -> Color
-hsla h s l a = HSLA h' s' l' a'
-  where h' = if h == 360.0 then h else h `modPos` 360.0
-        s' = clamp 0.0 1.0 s
+hsla h s l a = HSLA h s' l' a'
+  where s' = clamp 0.0 1.0 s
         l' = clamp 0.0 1.0 l
         a' = clamp 0.0 1.0 a
+
+clipHSLHue :: Number -> Number
+clipHSLHue h = modPos h 360.0
 
 -- | Create a `Color` from Hue, Saturation and Lightness values. The Hue is
 -- | given in degrees, as a `Number` between 0.0 and 360.0. Both Saturation and
@@ -297,14 +302,14 @@ fromInt m = rgb r g b
 -- | Convert a `Color` to its Hue, Saturation, Lightness and Alpha values. See
 -- | `hsla` for the ranges of each channel.
 toHSLA :: Color -> { h :: Number, s :: Number, l :: Number, a :: Number }
-toHSLA (HSLA h s l a) = { h, s, l, a }
+toHSLA (HSLA h s l a) = { h: clipHSLHue h, s, l, a }
 
 -- | Convert a `Color` to its Hue, Saturation, Value and Alpha values. See
 -- | `hsva` for the ranges of each channel.
 toHSVA :: Color -> { h :: Number, s :: Number, v :: Number, a :: Number }
-toHSVA (HSLA h s   0.0 a) = { h, s: 2.0 * s / (1.0 + s), v: 0.0, a }
-toHSVA (HSLA h 0.0 1.0 a) = { h, s: 0.0, v: 1.0, a }
-toHSVA (HSLA h s'  l'  a) = { h, s, v, a }
+toHSVA (HSLA h s   0.0 a) = { h: clipHSLHue h, s: 2.0 * s / (1.0 + s), v: 0.0, a }
+toHSVA (HSLA h 0.0 1.0 a) = { h: clipHSLHue h, s: 0.0, v: 1.0, a }
+toHSVA (HSLA h s'  l'  a) = { h: clipHSLHue h, s, v, a }
   where
     tmp = s' * (if l' < 0.5 then l' else 1.0 - l')
     s = 2.0 * tmp / (l' + tmp)
@@ -326,7 +331,7 @@ toRGBA col@(HSLA _ _ _ a) = { r, g, b, a }
 toRGBA' :: Color -> { r :: Number, g :: Number, b :: Number, a :: Number }
 toRGBA' (HSLA h s l a) = { r: col.r + m, g: col.g + m, b: col.b + m, a }
   where
-    h'  = h / 60.0
+    h'  = clipHSLHue h / 60.0
     chr = (1.0 - abs (2.0 * l - 1.0)) * s
     m   = l - chr / 2.0
     x   = chr * (1.0 - abs (h' % 2.0 - 1.0))
@@ -412,7 +417,7 @@ cssStringHSLA (HSLA h s l a) =
     else "hsla(" <> hue <> ", " <> saturation <> ", " <> lightness <> ", "
                  <> alpha <> ")"
   where
-    hue = toString h
+    hue = toString $ clipHSLHue h
     saturation = toString (s * 100.0) <> "%"
     lightness = toString (l * 100.0) <> "%"
     alpha = show a
@@ -500,10 +505,13 @@ interpolateAngle fraction a b = interpolate fraction shortest.from shortest.to
     dist { from, to } = abs (to - from)
     shortest = unsafePartial (fromJust (minimumBy (comparing dist) paths))
 
+
+type Mixer = Color -> Color -> Number -> Color
+
 -- | Mix two colors by linearly interpolating between them in the specified
 -- | color space. For the HSL colorspace, the shortest path is chosen along the
 -- | circle of hue values.
-mix :: ColorSpace -> Color -> Color -> Number -> Color
+mix :: ColorSpace -> Mixer
 mix HSL c1 c2 frac = hsla
     (interpolateAngle frac f.h t.h)
     (interpolate frac f.s t.s)
@@ -537,6 +545,32 @@ mix Lab c1 c2 frac = lab
   where
     f = toLab c1
     t = toLab c2
+
+radians :: Radians
+radians = pi / 180.0
+
+cubehelixMix :: Number -> Mixer -- TODO fix alpha
+cubehelixMix gama (HSLA ah' as' al' _) (HSLA bh' bs' bl' _) =
+  let
+    ah = (ah' + 120.0) * radians
+    bh = (bh' + 120.0) * radians - ah
+    as = as'
+    bs = bs' - as
+    al = al'
+    bl = bl' - al
+
+  -- NOTE not sure why isNan check is needed so I have not ported it
+  -- if (isNaN(bs)) bs = 0, as = isNaN(as) ? b.s : as;
+  -- if (isNaN(bh)) bh = 0, ah = isNaN(ah) ? b.h : ah;
+  in \t ->
+    let
+      angle = ah + bh * t
+      fract = pow (al + bl * t) gama
+      amp = (as + bs * t) * fract * (1.0 - fract)
+      r = fract + amp * (-0.14861 * cos(angle) + 1.78277 * sin(angle))
+      g = fract + amp * (-0.29227 * cos(angle) - 0.90649 * sin(angle))
+      b = fract + amp * ( 1.97294 * cos(angle))
+    in rgb' r g b
 
 -- | The percieved brightness of the color (A number between 0.0 and 1.0).
 -- |
