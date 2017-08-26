@@ -31,6 +31,7 @@ module Color.Scale
   , uniformScale'
   , colorScale'
   , colors'
+  , modify'
   , cubehelixSample
   , ColorScaleBuilder(..)
   ) where
@@ -140,8 +141,11 @@ colors' f num = map mkColor $ 0 .. (num - 1)
 
 -- | Modify the color scale by applying the given function to each color stop.
 -- | The first argument is the position of the color stop.
-modify :: (Number -> Color -> Color) -> ColorScaleBuilder -> ColorScaleBuilder
-modify f (ColorScaleBuilder start middle end) =
+modify :: (Number -> Color -> Color) -> ColorScale -> ColorScale
+modify f (ColorScale mode b) = ColorScale mode $ modify' f b
+
+modify' :: (Number -> Color -> Color) -> ColorScaleBuilder -> ColorScaleBuilder
+modify' f (ColorScaleBuilder start middle end) =
   ColorScaleBuilder (f 0.0 start) (f' <$> middle) (f 1.0 end)
     where f' (ColorStop col r) = ColorStop (f r col) r
 
