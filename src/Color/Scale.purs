@@ -147,7 +147,7 @@ modify f (ColorScaleBuilder start middle end) =
 
 -- | A scale of colors from black to white.
 grayscale :: ColorScale
-grayscale = colorScale HSL black Nil white
+grayscale = colorScale RGB black Nil white
 
 -- | A spectrum of fully saturated hues (HSL color space).
 spectrum :: ColorScale
@@ -161,7 +161,7 @@ spectrum = colorScale HSL end stops end
 
 -- | A perceptually-uniform spectrum of all hues (LCh color space).
 spectrumLCh :: ColorScale
-spectrumLCh = colorScale HSL end stops end
+spectrumLCh = colorScale LCh end stops end
   where
     lightness = 70.0
     chroma = 35.0
@@ -191,11 +191,11 @@ yellowToRed = uniformScale Lab yellow (orange : Nil) red
 
 -- | A color scale that represents 'hot' colors.
 hot :: ColorScale
-hot = colorScale HSL black (colorStop red 0.5 : colorStop yellow 0.75 : Nil) white
+hot = colorScale RGB black (colorStop red 0.5 : colorStop yellow 0.75 : Nil) white
 
 -- | A color scale that represents 'cool' colors.
 cool :: ColorScale
-cool = colorScale HSL (hsl 180.0 1.0 0.6) Nil (hsl 300.0 1.0 0.5)
+cool = colorScale RGB (hsl 180.0 1.0 0.6) Nil (hsl 300.0 1.0 0.5)
 
 -- | A CSS representation of the color scale in the form of a comma-separated
 -- | list of color stops. This list can be used in a `linear-gradient` or
