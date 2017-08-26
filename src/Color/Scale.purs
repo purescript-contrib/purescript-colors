@@ -128,11 +128,13 @@ mkSimpleSampler mixer (ColorScaleBuilder b middle e) x
                else mixer c1 c2 ((x - left) / (right - left))
         else go c2 right rest
 
--- | Takes sampling function and returns A list of colors that is sampled from
--- | a color scale. The number of colors can be specified.
+-- | A list of colors that is sampled from a color scale. The number of colors
+-- | can be specified.
 colors :: ColorScale -> Int -> List Color
 colors scale = colors' (sample scale)
 
+-- | Takes sampling function and returns A list of colors that is sampled from
+-- | a color scale. The number of colors can be specified.
 colors' :: (Number -> Color) -> Int -> List Color
 colors' f 0 = Nil
 colors' f 1 = f 0.0 : Nil
