@@ -10,10 +10,16 @@ module Color.Scale
   , colorScale
   , ColorStops(..)
   , uniformScale
+  , uniformScale'
   , addStop
+  , addStop'
   , sample
+  , cubehelixSample
+  , mkSimpleSampler
   , colors
+  , colors'
   , modify
+  , modify'
   , grayscale
   , hot
   , cool
@@ -21,17 +27,9 @@ module Color.Scale
   , spectrumLCh
   , blueToRed
   , yellowToRed
+  , minColorStops
   , cssColorStops
-
-  -- TK
-  , cssColorStopsSample
   , cssColorStopsRGB
-  , mkSimpleSampler
-  , addStop'
-  , uniformScale'
-  , colors'
-  , modify'
-  , cubehelixSample
   ) where
 
 import Prelude
@@ -61,7 +59,7 @@ stopRatio (ColorStop _ r) = r
 stopColor :: ColorStop -> Color
 stopColor (ColorStop c _) = c
 
--- | A color scale. combines `ColorSpace` and `ColorStops`
+-- | A color scale. combines `ColorSpace` and `ColorStops`.
 data ColorScale = ColorScale ColorSpace ColorStops
 
 -- | Represents all `ColorStops` in a color scale. The first `Color` defines the left end
@@ -81,7 +79,8 @@ colorScale space b middle e = ColorScale space $ ColorStops b middle e
 uniformScale :: forall f. Foldable f => ColorSpace -> Color -> f Color -> Color -> ColorScale
 uniformScale mode b middle e = ColorScale mode $ uniformScale' b middle e
 
--- | TK
+-- | Create `ColorStops` from a list of colors such that they will be evenly
+-- | spaced on the scale.
 uniformScale' :: forall f. Foldable f => Color -> f Color -> Color -> ColorStops
 uniformScale' b middle e = ColorStops b stops e
   where
@@ -95,17 +94,19 @@ uniformScale' b middle e = ColorStops b stops e
 addStop :: ColorScale -> Color -> Number -> ColorScale
 addStop (ColorScale mode b) c r = ColorScale mode $ addStop' b c r
 
--- | TK
+-- | Add a stop to a `ColorStops`.
 addStop' :: ColorStops -> Color -> Number -> ColorStops
 addStop' (ColorStops b middle e) c r =
   ColorStops b (insertBy (comparing stopRatio) stop middle) e
     where stop = colorStop c r
 
--- | TK
+-- | Get the color at a specific point on the color scale, by linearly
+-- | interpolating between it's colors (see `mix` and `mkSimpleSampler`).
 sample :: ColorScale -> Number -> Color
 sample (ColorScale mode scale) = mkSimpleSampler (mix mode) scale
 
--- | TK
+-- | Get the color at a specific point on the color scale, by cubehelix interpolation
+-- | between it's colors.  (see `mixCubehelix` and `mkSimpleSampler`).
 cubehelixSample :: ColorStops -> Number -> Color
 cubehelixSample = mkSimpleSampler $ mixCubehelix 1.0
 
@@ -144,7 +145,8 @@ colors' f num = map mkColor $ 0 .. (num - 1)
 modify :: (Number -> Color -> Color) -> ColorScale -> ColorScale
 modify f (ColorScale mode b) = ColorScale mode $ modify' f b
 
--- | TK
+-- | Modify the `ColorStops` by applying the given function to each color stop.
+-- | The first argument is the position of the color stop.
 modify' :: (Number -> Color -> Color) -> ColorStops -> ColorStops
 modify' f (ColorStops start middle end) =
   ColorStops (f 0.0 start) (f' <$> middle) (f 1.0 end)
@@ -202,6 +204,18 @@ hot = colorScale RGB black (colorStop red 0.5 : colorStop yellow 0.75 : Nil) whi
 cool :: ColorScale
 cool = colorScale RGB (hsl 180.0 1.0 0.6) Nil (hsl 300.0 1.0 0.5)
 
+-- | Takes number of stops `ColorStops` should contain, function to generate
+-- | missing colors and `ColorStops` itself.
+minColorStops :: Int -> (ColorStops -> Number -> Color) -> ColorStops -> ColorStops
+minColorStops 0 _ stops = stops
+minColorStops n sampler stops = stops `insertStops` additionalStops
+  where
+  insertStops = foldl \stops' (ColorStop c r) -> addStop' stops' c r
+  additionalStops = if n <= 2 then Nil else do
+    step <- 1 .. (n - 1)
+    let frac = ratio (toNumber step / toNumber n)
+    pure $ ColorStop (sampler stops frac) frac
+
 -- | A CSS representation of the color scale in the form of a comma-separated
 -- | list of color stops. This list can be used in a `linear-gradient` or
 -- | a similar construct.
@@ -214,23 +228,10 @@ cool = colorScale RGB (hsl 180.0 1.0 0.6) Nil (hsl 300.0 1.0 0.5)
 -- | different points. This should give a reasonable approximation to the true
 -- | gradient in the specified color space.
 cssColorStops :: ColorScale -> String
-cssColorStops (ColorScale RGB b) = cssColorStopsRGB b
-cssColorStops (ColorScale _ stops) = cssColorStopsSample (mkSimpleSampler $ mix RGB) 10 stops
+cssColorStops (ColorScale RGB stops) = cssColorStopsRGB stops
+cssColorStops (ColorScale _ stops) = cssColorStopsRGB $ minColorStops 10 (mkSimpleSampler $ mix RGB) stops
 
--- | TK
-cssColorStopsSample :: (ColorStops -> Number -> Color) -> Int -> ColorStops -> String
-cssColorStopsSample sampler minSamplingStepCount stops =
-  cssColorStops $ ColorScale RGB csRGB
-  where
-  csRGB = foldl go stops additionalStops
-  go stops' (ColorStop c r) = addStop' stops' c r
-
-  additionalStops = do
-    step <- 1 .. (minSamplingStepCount - 1)
-    let frac = ratio (toNumber step / toNumber minSamplingStepCount)
-    pure $ ColorStop (sampler stops frac) frac
-
--- | TK
+-- | Underling function of `cssColorStops`.
 cssColorStopsRGB :: ColorStops -> String
 cssColorStopsRGB (ColorStops b Nil e) =
   cssStringHSLA b <> ", " <> cssStringHSLA e
