@@ -5,9 +5,10 @@
 -- | specified color space is used for linear interpolation (see `mix`).
 module Color.Scale
   ( ColorStop
-  , ColorScale
   , colorStop
+  , ColorScale
   , colorScale
+  , ColorStops(..)
   , uniformScale
   , addStop
   , sample
@@ -25,15 +26,12 @@ module Color.Scale
   -- TK
   , cssColorStopsSample
   , cssColorStopsRGB
-  , Sampler
   , mkSimpleSampler
   , addStop'
   , uniformScale'
-  , colorStops
   , colors'
   , modify'
   , cubehelixSample
-  , ColorStops(..)
   ) where
 
 import Prelude
@@ -63,20 +61,20 @@ stopRatio (ColorStop _ r) = r
 stopColor :: ColorStop -> Color
 stopColor (ColorStop c _) = c
 
--- | A color scale.
-data ColorStops = ColorStops Color (List ColorStop) Color
+-- | A color scale. combines `ColorSpace` and `ColorStops`
 data ColorScale = ColorScale ColorSpace ColorStops
+
+-- | Represents all `ColorStops` in a color scale. The first `Color` defines the left end
+-- | (color at ratio 0.0), the list of stops defines possible intermediate steps
+-- | and the second `Color` argument defines the right end point (color at ratio 1.0).
+data ColorStops = ColorStops Color (List ColorStop) Color
 
 -- | Create a color scale. The color space is used for interpolation between
 -- | different stops. The first `Color` defines the left end (color at ratio
 -- | 0.0), the list of stops defines possible intermediate steps and the second
 -- | `Color` argument defines the right end point (color at ratio 1.0).
 colorScale :: ColorSpace -> Color -> List ColorStop -> Color -> ColorScale
-colorScale space b middle e = ColorScale space $ colorStops b middle e
-
--- | TK
-colorStops :: Color -> List ColorStop -> Color -> ColorStops
-colorStops = ColorStops
+colorScale space b middle e = ColorScale space $ ColorStops b middle e
 
 -- | Create a uniform color scale from a list of colors that will be evenly
 -- | spaced on the scale.
@@ -85,7 +83,7 @@ uniformScale mode b middle e = ColorScale mode $ uniformScale' b middle e
 
 -- | TK
 uniformScale' :: forall f. Foldable f => Color -> f Color -> Color -> ColorStops
-uniformScale' b middle e = colorStops b stops e
+uniformScale' b middle e = ColorStops b stops e
   where
     cs = fromFoldable middle
     len = length cs
