@@ -90,13 +90,13 @@ import Partial.Unsafe (unsafePartial)
 -- | - Colors outside the sRGB gamut which cannot be displayed on a typical
 -- |   computer screen can not be represented by `Color`.
 -- |
-newtype Color = HSLA
-  { hOriginal :: Number
-  , h :: Number
-  , s :: Number
-  , l :: Number
-  , a :: Number
-  }
+data Color = HSLA Hue Number Number Number
+
+newtype Hue = UnclippedHue Number
+
+clipHue :: Hue -> Number
+clipHue (UnclippedHue x) = x `modPos` 360.0
+
 
 -- | Definition of a color space.
 -- |
@@ -127,7 +127,7 @@ modPos x y = (x % y + y) % y
 -- | Create a `Color` from integer RGB values between 0 and 255 and a floating
 -- | point alpha value between 0.0 and 1.0.
 rgba :: Int -> Int -> Int -> Number -> Color
-rgba red' green' blue' alpha = hsla hue saturation lightness alpha
+rgba red' green' blue' alpha = HSLA (UnclippedHue hue) saturation lightness alpha
   where
     -- RGB to HSL conversion algorithm adapted from
     -- https://en.wikipedia.org/wiki/HSL_and_HSV
@@ -176,13 +176,10 @@ rgb' r g b = rgba' r g b 1.0
 -- | Hue is given in degrees, as a `Number` between 0.0 and 360.0. Saturation,
 -- | Lightness and Alpha are numbers between 0.0 and 1.0.
 hsla :: Number -> Number -> Number -> Number -> Color
-hsla h s l a = HSLA
-  { hOriginal: h
-  , h: h `modPos` 360.0
-  , s: clamp 0.0 1.0 s
-  , l: clamp 0.0 1.0 l
-  , a: clamp 0.0 1.0 a
-  }
+hsla h s l a = HSLA (UnclippedHue h) s' l' a'
+  where s' = clamp 0.0 1.0 s
+        l' = clamp 0.0 1.0 l
+        a' = clamp 0.0 1.0 a
 
 -- | Create a `Color` from Hue, Saturation and Lightness values. The Hue is
 -- | given in degrees, as a `Number` between 0.0 and 360.0. Both Saturation and
@@ -308,14 +305,14 @@ fromInt m = rgb r g b
 -- | Convert a `Color` to its Hue, Saturation, Lightness and Alpha values. See
 -- | `hsla` for the ranges of each channel.
 toHSLA :: Color -> { h :: Number, s :: Number, l :: Number, a :: Number }
-toHSLA (HSLA { h, s, l, a }) = { h, s, l, a }
+toHSLA (HSLA h s l a) = { h: clipHue h, s, l, a }
 
 -- | Convert a `Color` to its Hue, Saturation, Value and Alpha values. See
 -- | `hsva` for the ranges of each channel.
 toHSVA :: Color -> { h :: Number, s :: Number, v :: Number, a :: Number }
-toHSVA (HSLA { h, s,      l: 0.0, a }) = { h, s: 2.0 * s / (1.0 + s), v: 0.0, a }
-toHSVA (HSLA { h, s: 0.0, l: 1.0, a }) = { h, s: 0.0, v: 1.0, a }
-toHSVA (HSLA { h, s: s',  l: l',  a }) = { h, s, v, a }
+toHSVA (HSLA h s   0.0 a) = { h: clipHue h, s: 2.0 * s / (1.0 + s), v: 0.0, a }
+toHSVA (HSLA h 0.0 1.0 a) = { h: clipHue h, s: 0.0, v: 1.0, a }
+toHSVA (HSLA h s'  l'  a) = { h: clipHue h, s, v, a }
   where
     tmp = s' * (if l' < 0.5 then l' else 1.0 - l')
     s = 2.0 * tmp / (l' + tmp)
@@ -335,9 +332,9 @@ toRGBA col = { r, g, b, a: c.a }
 -- | Convert a `Color` to its red, green, blue and alpha values. All values
 -- | are numbers in the range from 0.0 to 1.0.
 toRGBA' :: Color -> { r :: Number, g :: Number, b :: Number, a :: Number }
-toRGBA' (HSLA { h, s, l, a }) = { r: col.r + m, g: col.g + m, b: col.b + m, a }
+toRGBA' (HSLA h s l a) = { r: col.r + m, g: col.g + m, b: col.b + m, a }
   where
-    h'  = h / 60.0
+    h'  = clipHue h / 60.0
     chr = (1.0 - abs (2.0 * l - 1.0)) * s
     m   = l - chr / 2.0
     x   = chr * (1.0 - abs (h' % 2.0 - 1.0))
@@ -417,13 +414,13 @@ toHexString color = "#" <> toHex c.r <> toHex c.g <> toHex c.b
 
 -- | A CSS representation of the color in the form `hsl(..)` or `hsla(...)`.
 cssStringHSLA :: Color -> String
-cssStringHSLA (HSLA { h, s, l, a }) =
+cssStringHSLA (HSLA h s l a) =
   if a == 1.0
     then "hsl(" <> hue <> ", " <> saturation <> ", " <> lightness <> ")"
     else "hsla(" <> hue <> ", " <> saturation <> ", " <> lightness <> ", "
                  <> alpha <> ")"
   where
-    hue = toString h
+    hue = toString $ clipHue h
     saturation = toString (s * 100.0) <> "%"
     lightness = toString (l * 100.0) <> "%"
     alpha = show a
@@ -457,7 +454,7 @@ graytone l = hsl 0.0 0.0 l
 
 -- | Rotate the hue of a `Color` by a certain angle (in degrees).
 rotateHue :: Number -> Color -> Color
-rotateHue angle (HSLA { hOriginal: h, s, l, a }) = hsla (h + angle) s l a
+rotateHue angle (HSLA (UnclippedHue h) s l a) = hsla (h + angle) s l a
 
 -- | Get the complementary color (hue rotated by 180°).
 complementary :: Color -> Color
@@ -467,7 +464,7 @@ complementary = rotateHue 180.0
 -- | to the lightness channel. If the number is negative, the color is
 -- | darkened.
 lighten :: Number -> Color -> Color
-lighten f (HSLA { hOriginal: h, s, l, a }) = hsla h s (l + f) a
+lighten f (HSLA (UnclippedHue h) s l a) = hsla h s (l + f) a
 
 -- | Darken a color by subtracting a certain amount (number between -1.0 and
 -- | 1.0) from the lightness channel. If the number is negative, the color is
@@ -479,7 +476,7 @@ darken f = lighten (- f)
 -- | between -1.0 and 1.0) to the saturation channel. If the number is
 -- | negative, the color is desaturated.
 saturate :: Number -> Color -> Color
-saturate f (HSLA { hOriginal: h, s, l, a }) = hsla h (s + f) l a
+saturate f (HSLA (UnclippedHue h) s l a) = hsla h (s + f) l a
 
 -- | Decrease the saturation of a color by subtracting a certain amount (number
 -- | between -1.0 and 1.0) from the saturation channel. If the number is
@@ -518,11 +515,14 @@ type Mixer = Color -> Color -> Number -> Color
 -- | color space. For the HSL colorspace, the shortest path is chosen along the
 -- | circle of hue values.
 mix :: ColorSpace -> Mixer
-mix HSL (HSLA f) (HSLA t) frac = hsla
-  (interpolateAngle frac f.h t.h) -- NOTE here we might benefit from using hOriginal?
-  (interpolate frac f.s t.s)
-  (interpolate frac f.l t.l)
-  (interpolate frac f.a t.a)
+mix HSL c1 c2 frac = hsla
+    (interpolateAngle frac f.h t.h) -- NOTE here we might benefit from using uncliped Hue?
+    (interpolate frac f.s t.s)
+    (interpolate frac f.l t.l)
+    (interpolate frac f.a t.a)
+  where
+    f = toHSLA c1
+    t = toHSLA c2
 
 mix RGB c1 c2 frac = rgba'
     (interpolate frac f.r t.r)
@@ -553,14 +553,14 @@ radians :: Radians
 radians = pi / 180.0
 
 cubehelixMix :: Number -> Mixer
-cubehelixMix gama (HSLA colorA) (HSLA colorB) =
+cubehelixMix gama (HSLA (UnclippedHue ah') as' al' aa') (HSLA (UnclippedHue bh') bs' bl' ba') =
   let
-    ah = (colorA.hOriginal + 120.0) * radians
-    bh = (colorB.hOriginal + 120.0) * radians - ah
-    as = colorA.s
-    bs = colorA.s - as
-    al = colorA.l
-    bl = colorA.l - al
+    ah = (ah' + 120.0) * radians
+    bh = (bh' + 120.0) * radians - ah
+    as = as'
+    bs = bs' - as
+    al = al'
+    bl = bl' - al
   in \t ->
     let
       angle = ah + bh * t
@@ -569,7 +569,7 @@ cubehelixMix gama (HSLA colorA) (HSLA colorB) =
       r = fract + amp * (-0.14861 * cos(angle) + 1.78277 * sin(angle))
       g = fract + amp * (-0.29227 * cos(angle) - 0.90649 * sin(angle))
       b = fract + amp * ( 1.97294 * cos(angle))
-      a = interpolate t colorA.a colorB.a
+      a = interpolate t aa' ba'
     in rgb' r g b
 
 -- | The percieved brightness of the color (A number between 0.0 and 1.0).
