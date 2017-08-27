@@ -54,9 +54,9 @@ module Color
   , desaturate
   , toGray
   -- Combine
-  , Mixer
+  , Interpolator
   , mix
-  , cubehelixMix
+  , mixCubehelix
   -- Analyze
   , brightness
   , luminance
@@ -509,12 +509,14 @@ interpolateAngle fraction a b = interpolate fraction shortest.from shortest.to
     shortest = unsafePartial (fromJust (minimumBy (comparing dist) paths))
 
 
-type Mixer = Color -> Color -> Number -> Color
+-- | A function that interpolates between two colors. Takes start color,
+-- | end color, progress [0.0, 1.0] and returns mixed color
+type Interpolator = Color -> Color -> Number -> Color
 
 -- | Mix two colors by linearly interpolating between them in the specified
 -- | color space. For the HSL colorspace, the shortest path is chosen along the
 -- | circle of hue values.
-mix :: ColorSpace -> Mixer
+mix :: ColorSpace -> Interpolator
 mix HSL c1 c2 frac = hsla
     (interpolateAngle frac f.h t.h) -- NOTE here we might benefit from using uncliped Hue?
     (interpolate frac f.s t.s)
@@ -549,12 +551,16 @@ mix Lab c1 c2 frac = lab
     f = toLab c1
     t = toLab c2
 
-radians :: Radians
-radians = pi / 180.0
 
-cubehelixMix :: Number -> Mixer
-cubehelixMix gama (HSLA (UnclippedHue ah') as' al' aa') (HSLA (UnclippedHue bh') bs' bl' ba') =
+-- | Mix two colors by [Dave Green's `cubehelix'](http://www.mrao.cam.ac.uk/~dag/CUBEHELIX/) interpolation between them.
+-- | Takes gamma correction value as an argument and retunrs Interpolator.
+-- | For more details see: [d3-plugins/cubehelix](https://github.com/d3/d3-plugins/tree/40f8b3b91e67719f58408732d7ddae94cafa559a/cubehelix#interpolateCubehelix)
+-- | Ported from: [d3-plugins/cubehelix/cubehelix.js](https://github.com/d3/d3-plugins/blob/40f8b3b91e67719f58408732d7ddae94cafa559a/cubehelix/cubehelix.js#L13)
+mixCubehelix :: Number -> Interpolator
+mixCubehelix gamma (HSLA (UnclippedHue ah') as' al' aa') (HSLA (UnclippedHue bh') bs' bl' ba') =
   let
+    radians :: Radians
+    radians = pi / 180.0
     ah = (ah' + 120.0) * radians
     bh = (bh' + 120.0) * radians - ah
     as = as'
@@ -564,13 +570,13 @@ cubehelixMix gama (HSLA (UnclippedHue ah') as' al' aa') (HSLA (UnclippedHue bh')
   in \t ->
     let
       angle = ah + bh * t
-      fract = pow (al + bl * t) gama
+      fract = pow (al + bl * t) gamma
       amp = (as + bs * t) * fract * (1.0 - fract)
       r = fract + amp * (-0.14861 * cos(angle) + 1.78277 * sin(angle))
       g = fract + amp * (-0.29227 * cos(angle) - 0.90649 * sin(angle))
       b = fract + amp * ( 1.97294 * cos(angle))
       a = interpolate t aa' ba'
-    in rgb' r g b
+    in rgba' r g b a
 
 -- | The percieved brightness of the color (A number between 0.0 and 1.0).
 -- |
