@@ -184,6 +184,7 @@ main = runTest do
   test "cssStringHSLA" do
     equal "hsla(120.1, 33.0%, 55.0%, 0.3)" (cssStringHSLA (hsla 120.1 0.33 0.55 0.3))
     equal "hsl(120.1, 33.2%, 54.9%)" (cssStringHSLA (hsla 120.1 0.332 0.549 1.0))
+    equal "hsl(360.0, 33.2%, 54.9%)" (cssStringHSLA (hsla 360.0 0.332 0.549 1.0))
 
   test "cssStringRGB" do
     equal "rgba(42, 103, 255, 0.3)" (cssStringRGBA (rgba 42 103 255 0.3))
