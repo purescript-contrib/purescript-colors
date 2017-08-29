@@ -136,8 +136,8 @@ main = runTest do
           colorOut2 = case toHSVA colorIn2 of { h, s, v, a } -> hsva h s v a
     sequence_ do
       hue <- 0 .. 3
-      saturation <- 0 .. 5
-      lightness <- 0 .. 5
+      saturation <- 0 .. 4
+      lightness <- 0 .. 4
       [ hsvRoundtrip 90.0 (toNumber saturation / 5.0) 1.0 1.0
       , hsvRoundtrip 90.0 1.0 (toNumber lightness / 5.0) 1.0
       , hsvRoundtrip 90.0 (toNumber saturation / 5.0) 0.0 1.0
