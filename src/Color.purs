@@ -95,7 +95,7 @@ data Color = HSLA Hue Number Number Number
 newtype Hue = UnclippedHue Number
 
 clipHue :: Hue -> Number
-clipHue (UnclippedHue x) = x `modPos` 360.0
+clipHue (UnclippedHue x) = if 360.0 == x then x else x `modPos` 360.0
 
 
 -- | Definition of a color space.
