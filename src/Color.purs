@@ -414,13 +414,13 @@ toHexString color = "#" <> toHex c.r <> toHex c.g <> toHex c.b
 
 -- | A CSS representation of the color in the form `hsl(..)` or `hsla(...)`.
 cssStringHSLA :: Color -> String
-cssStringHSLA (HSLA h s l a) =
+cssStringHSLA (HSLA (UnclippedHue h) s l a) =
   if a == 1.0
     then "hsl(" <> hue <> ", " <> saturation <> ", " <> lightness <> ")"
     else "hsla(" <> hue <> ", " <> saturation <> ", " <> lightness <> ", "
                  <> alpha <> ")"
   where
-    hue = toString $ clipHue h
+    hue = toString h
     saturation = toString (s * 100.0) <> "%"
     lightness = toString (l * 100.0) <> "%"
     alpha = show a
