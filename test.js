@@ -4489,15 +4489,6 @@ var PS = {};
           };
       };
   };
-  var cubehelix = (function () {
-      var e = Color.hsl(-240.0)(0.5)(1.0);
-      var b = Color.hsl(300.0)(0.5)(0.0);
-      var stops = Control_Bind.bind(Data_List_Types.bindList)(Data_List.range(1)(100 - 1 | 0))(function (v) {
-          var frac = Data_Int.toNumber(v) / Data_Int.toNumber(100 + 1 | 0);
-          return Control_Applicative.pure(Data_List_Types.applicativeList)(Color.mixCubehelix(1.0)(b)(e)(frac));
-      });
-      return uniformScale(Data_List_Types.foldableList)(Color.HSL.value)(b)(stops)(e);
-  })();
   var yellowToRed = (function () {
       var yellow = Color.fromInt(16777164);
       var red = Color.fromInt(8388646);
@@ -4558,8 +4549,8 @@ var PS = {};
                   };
               });
               var additionalStops = (function () {
-                  var $88 = v <= 2;
-                  if ($88) {
+                  var $87 = v <= 2;
+                  if ($87) {
                       return Data_List_Types.Nil.value;
                   };
                   return Control_Bind.bind(Data_List_Types.bindList)(Data_List.range(1)(v - 1 | 0))(function (v2) {
@@ -4577,6 +4568,14 @@ var PS = {};
       };
       return cssColorStopsRGB(minColorStops(10)(mkSimpleSampler(Color.mix(Color.RGB.value)))(v.value1));
   };
+  var cubehelix = (function () {
+      var e = Color.hsl(-240.0)(0.5)(1.0);
+      var b = Color.hsl(300.0)(0.5)(0.0);
+      var gen = function (v) {
+          return Color.mixCubehelix(1.0)(b)(e);
+      };
+      return ColorScale.create(Color.HSL.value)(minColorStops(100)(gen)(new ColorStops(b, Data_List_Types.Nil.value, e)));
+  })();
   var addStop = function (v) {
       return function (c) {
           return function (r) {
@@ -11922,6 +11921,7 @@ var PS = {};
   var Color_Scheme_Harmonic = PS["Color.Scheme.Harmonic"];
   var Color_Scheme_MaterialDesign = PS["Color.Scheme.MaterialDesign"];
   var Color_Scheme_X11 = PS["Color.Scheme.X11"];
+  var Control_Applicative = PS["Control.Applicative"];
   var Control_Apply = PS["Control.Apply"];
   var Control_Bind = PS["Control.Bind"];
   var Control_Category = PS["Control.Category"];
@@ -12109,8 +12109,8 @@ var PS = {};
       var pretty = function (v) {
           return Text_Smolder_Markup["with"](Text_Smolder_Markup.attributableMarkupMF)(Text_Smolder_HTML.div)(Text_Smolder_HTML_Attributes.style(css(v)))(Text_Smolder_Markup.text(""));
       };
-      return Data_Functor.map(Flare.functorUI)(function ($127) {
-          return Test_FlareCheck.SetHTML.create(pretty($127));
+      return Data_Functor.map(Flare.functorUI)(function ($128) {
+          return Test_FlareCheck.SetHTML.create(pretty($128));
       })(ui);
   });
   var flare4 = Data_Functor.map(Flare.functorUI)(nameColor)(Flare.color("Input color")(Color_Scheme_X11.salmon));
@@ -12188,13 +12188,23 @@ var PS = {};
           };
           throw new Error("Failed pattern match at Main line 99, column 11 - line 127, column 41: " + [ v.constructor.name ]);
       };
-      return Data_Functor.map(Flare.functorUI)(function ($128) {
-          return TColorScale(toColorScale($128));
+      return Data_Functor.map(Flare.functorUI)(function ($129) {
+          return TColorScale(toColorScale($129));
       })(Flare.fieldset("ColorScale")(Flare.select(Data_Foldable.foldableArray)("Choose")(new Data_NonEmpty.NonEmpty(Grayscale.value, [ Spectrum.value, SpectrumLCh.value, BlueToRed.value, YellowToRed.value, Hot.value, Cool.value, Magma.value, Inferno.value, Plasma.value, Viridis.value ]))(toString)));
   })());
   var flammableTColor = new Test_FlareCheck.Flammable(Data_Functor.map(Flare.functorUI)(TColor)(Flare.fieldset("Color")(Control_Apply.apply(Flare.applyUI)(Control_Apply.apply(Flare.applyUI)(Data_Functor.map(Flare.functorUI)(Color.hsl)(Flare.numberSlider("Hue")(0.0)(360.0)(0.1)(231.0)))(Flare.numberSlider("Saturation")(0.0)(1.0)(1.0e-3)(0.48)))(Flare.numberSlider("Lightness")(0.0)(1.0)(1.0e-3)(0.48)))));
   var flammableTBlendMode = new Test_FlareCheck.Flammable(Data_Functor.map(Flare.functorUI)(TBlendMode)(Flare.select(Data_Foldable.foldableArray)("BlendMode")(new Data_NonEmpty.NonEmpty(Color_Blending.Multiply.value, [ Color_Blending.Screen.value, Color_Blending.Overlay.value ]))(modeToString)));
   var flammableInt255 = new Test_FlareCheck.Flammable(Data_Functor.map(Flare.functorUI)(Int255)(Flare.intSlider("Int")(0)(255)(100)));
+  var cubehelix$prime = function (b) {
+      return function (e) {
+          return function (gamma) {
+              var gen = function (v) {
+                  return Color.mixCubehelix(gamma)(b)(e);
+              };
+              return Color_Scale.cssColorStopsRGB(Color_Scale.minColorStops(100)(gen)(new Color_Scale.ColorStops(b, Data_List_Types.Nil.value, e)));
+          };
+      };
+  };
   var csToString = function (v) {
       if (v instanceof Color.RGB) {
           return "RGB";
@@ -12231,6 +12241,20 @@ var PS = {};
       };
   };
   var flare3 = Control_Apply.apply(Flare.applyUI)(Control_Apply.apply(Flare.applyUI)(Data_Functor.map(Flare.functorUI)(palettes)(Flare.color("From")(Color.fromInt(16119518))))(Flare.color("To")(Color.fromInt(1901867))))(Flare.intSlider("Number")(4)(10)(6));
+  var colorScaleDiv = function (stops) {
+      var css = "background: linear-gradient(to right, " + (stops + (");" + "width: 100%; height: 30px;"));
+      return Text_Smolder_Markup["with"](Text_Smolder_Markup.attributableMarkupMF)(Text_Smolder_HTML.div)(Text_Smolder_HTML_Attributes.style(css))(Text_Smolder_Markup.text(""));
+  };
+  var flare5 = (function () {
+      var hslPick = function (title) {
+          return function (h) {
+              return function (l) {
+                  return Flare.fieldset(title)(Control_Apply.apply(Flare.applyUI)(Control_Apply.apply(Flare.applyUI)(Data_Functor.map(Flare.functorUI)(Color.hsl)(Flare.numberSlider("Hue (-360\xb0 .. 720\xb0)")(-360.0)(720.0)(0.1)(h)))(Flare.numberSlider("Saturation")(0.0)(1.0)(1.0e-2)(1.0)))(Control_Applicative.pure(Flare.applicativeUI)(l)));
+              };
+          };
+      };
+      return Data_Functor.map(Flare.functorUI)(colorScaleDiv)(Control_Apply.apply(Flare.applyUI)(Control_Apply.apply(Flare.applyUI)(Data_Functor.map(Flare.functorUI)(cubehelix$prime)(hslPick("First color")(360.0)(0.0)))(hslPick("Last color")(-240.0)(1.0)))(Flare.numberSlider("Gamma (0.5 .. 3.0)")(0.5)(3.0)(0.1)(1.0)));
+  })();
   var colorBox = function (c) {
       var repr = Color.cssStringHSLA(c);
       var css = "background-color: " + (repr + (";" + ("width: 260px; height: 50px; display: inline-block; font-size: 13px;" + ("margin-top: 10px; margin-right: 10px; border: 1px solid black;" + ("padding: 5px; color: " + Color.cssStringHSLA(Color.textColor(c)))))));
@@ -12240,13 +12264,13 @@ var PS = {};
       var pretty = function (v) {
           return Data_Foldable.foldMap(Data_Foldable.foldableArray)(Text_Smolder_Markup.monoidMarkup)(colorBox)(v.value0);
       };
-      return Data_Functor.map(Flare.functorUI)(function ($129) {
-          return Test_FlareCheck.SetHTML.create(pretty($129));
+      return Data_Functor.map(Flare.functorUI)(function ($130) {
+          return Test_FlareCheck.SetHTML.create(pretty($130));
       })(ui);
   });
   var interactiveTColor = new Test_FlareCheck.Interactive(function (ui) {
-      return Data_Functor.map(Flare.functorUI)(function ($130) {
-          return Test_FlareCheck.SetHTML.create(colorBox(runTColor($130)));
+      return Data_Functor.map(Flare.functorUI)(function ($131) {
+          return Test_FlareCheck.SetHTML.create(colorBox(runTColor($131)));
       })(ui);
   });
   var blendUI = function (c1) {
@@ -12615,7 +12639,8 @@ var PS = {};
       Flare_Smolder.runFlareHTML("input1")("output1")(flare1)();
       Flare_Smolder.runFlareHTML("input2")("output2")(flare2)();
       Flare_Smolder.runFlareHTML("input3")("output3")(flare3)();
-      return Flare_Smolder.runFlareHTML("input4")("output4")(flare4)();
+      Flare_Smolder.runFlareHTML("input4")("output4")(flare4)();
+      return Flare_Smolder.runFlareHTML("input5")("output5")(flare5)();
   };
   exports["main"] = main;
 })(PS["Main"] = PS["Main"] || {});
