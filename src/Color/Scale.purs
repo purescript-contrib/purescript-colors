@@ -59,7 +59,8 @@ stopRatio (ColorStop _ r) = r
 stopColor :: ColorStop -> Color
 stopColor (ColorStop c _) = c
 
--- | A color scale. combines `ColorSpace` and `ColorStops`.
+-- | A color scale is represented by a list of `ColorStops` and a `ColorSpace` that is
+-- | used for interpolation between the stops.
 data ColorScale = ColorScale ColorSpace ColorStops
 
 -- | Represents all `ColorStops` in a color scale. The first `Color` defines the left end
@@ -94,19 +95,19 @@ uniformScale' b middle e = ColorStops b stops e
 addStop :: ColorScale -> Color -> Number -> ColorScale
 addStop (ColorScale mode b) c r = ColorScale mode $ addStop' b c r
 
--- | Add a stop to a `ColorStops`.
+-- | Add a stop to a list of `ColorStops`.
 addStop' :: ColorStops -> Color -> Number -> ColorStops
 addStop' (ColorStops b middle e) c r =
   ColorStops b (insertBy (comparing stopRatio) stop middle) e
     where stop = colorStop c r
 
--- | Get the color at a specific point on the color scale, by linearly
--- | interpolating between it's colors (see `mix` and `mkSimpleSampler`).
+-- | Get the color at a specific point on the color scale by linearly
+-- | interpolating between its colors (see `mix` and `mkSimpleSampler`).
 sample :: ColorScale -> Number -> Color
 sample (ColorScale mode scale) = mkSimpleSampler (mix mode) scale
 
--- | Get the color at a specific point on the color scale, by cubehelix interpolation
--- | between it's colors.  (see `mixCubehelix` and `mkSimpleSampler`).
+-- | Get the color at a specific point on the color scale, using the cubehelix
+-- | interpolation  (see `mixCubehelix` and `mkSimpleSampler`).
 cubehelixSample :: ColorStops -> Number -> Color
 cubehelixSample = mkSimpleSampler $ mixCubehelix 1.0
 
@@ -114,7 +115,7 @@ cubehelixSample = mkSimpleSampler $ mixCubehelix 1.0
 -- | 1). If the number is smaller than 0, the color at 0 is returned. If the
 -- | number is larger than 1, the color at 1 is returned.
 mkSimpleSampler :: Interpolator -> ColorStops -> Number -> Color
-mkSimpleSampler mixer (ColorStops b middle e) x
+mkSimpleSampler interpolate (ColorStops b middle e) x
   | x < 0.0 = b
   | x > 1.0 = e
   | otherwise = go b 0.0 (middle `snoc` colorStop e 1.0)
@@ -124,7 +125,7 @@ mkSimpleSampler mixer (ColorStops b middle e) x
       if between left right x
         then if left == right
                then c1
-               else mixer c1 c2 ((x - left) / (right - left))
+               else interpolate c1 c2 ((x - left) / (right - left))
         else go c2 right rest
 
 -- | A list of colors that is sampled from a color scale. The number of colors
@@ -132,7 +133,7 @@ mkSimpleSampler mixer (ColorStops b middle e) x
 colors :: ColorScale -> Int -> List Color
 colors scale = colors' (sample scale)
 
--- | Takes sampling function and returns A list of colors that is sampled from
+-- | Takes a sampling function and returns a list of colors that is sampled via
 -- | that function. The number of colors can be specified.
 colors' :: (Number -> Color) -> Int -> List Color
 colors' f 0 = Nil
@@ -145,8 +146,8 @@ colors' f num = map mkColor $ 0 .. (num - 1)
 modify :: (Number -> Color -> Color) -> ColorScale -> ColorScale
 modify f (ColorScale mode b) = ColorScale mode $ modify' f b
 
--- | Modify the `ColorStops` by applying the given function to each color stop.
--- | The first argument is the position of the color stop.
+-- | Modify a list of  `ColorStops` by applying the given function to each color
+-- | stop. The first argument is the position of the color stop.
 modify' :: (Number -> Color -> Color) -> ColorStops -> ColorStops
 modify' f (ColorStops start middle end) =
   ColorStops (f 0.0 start) (f' <$> middle) (f 1.0 end)

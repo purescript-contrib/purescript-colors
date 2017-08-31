@@ -94,9 +94,9 @@ data Color = HSLA Hue Number Number Number
 
 newtype Hue = UnclippedHue Number
 
+-- | Assert that the hue angle is in the interval [0, 360].
 clipHue :: Hue -> Number
 clipHue (UnclippedHue x) = if 360.0 == x then x else x `modPos` 360.0
-
 
 -- | Definition of a color space.
 -- |
@@ -508,9 +508,9 @@ interpolateAngle fraction a b = interpolate fraction shortest.from shortest.to
     dist { from, to } = abs (to - from)
     shortest = unsafePartial (fromJust (minimumBy (comparing dist) paths))
 
-
--- | A function that interpolates between two colors. Takes start color,
--- | end color, progress [0.0, 1.0] and returns mixed color
+-- | A function that interpolates between two colors. It takes a start color,
+-- | an end color, and a ratio in the interval [0.0, 1.0]. It returns the
+-- | mixed color.
 type Interpolator = Color -> Color -> Number -> Color
 
 -- | Mix two colors by linearly interpolating between them in the specified
@@ -518,7 +518,7 @@ type Interpolator = Color -> Color -> Number -> Color
 -- | circle of hue values.
 mix :: ColorSpace -> Interpolator
 mix HSL c1 c2 frac = hsla
-    (interpolateAngle frac f.h t.h) -- NOTE here we might benefit from using uncliped Hue?
+    (interpolateAngle frac f.h t.h)
     (interpolate frac f.s t.s)
     (interpolate frac f.l t.l)
     (interpolate frac f.a t.a)
@@ -552,10 +552,15 @@ mix Lab c1 c2 frac = lab
     t = toLab c2
 
 
--- | Mix two colors by [Dave Green's `cubehelix'](http://www.mrao.cam.ac.uk/~dag/CUBEHELIX/) interpolation between them.
--- | Takes gamma correction value as an argument and retunrs Interpolator.
--- | For more details see: [d3-plugins/cubehelix](https://github.com/d3/d3-plugins/tree/40f8b3b91e67719f58408732d7ddae94cafa559a/cubehelix#interpolateCubehelix)
--- | Ported from: [d3-plugins/cubehelix/cubehelix.js](https://github.com/d3/d3-plugins/blob/40f8b3b91e67719f58408732d7ddae94cafa559a/cubehelix/cubehelix.js#L13)
+-- | Mix two colors via Dave Green's [`cubehelix'](http://www.mrao.cam.ac.uk/~dag/CUBEHELIX/) by
+-- | interpolating between them. Takes a gamma correction value as an argument and
+-- | returns an `Interpolator` function.
+-- |
+-- | For more details see:
+-- | * [d3-plugins/cubehelix](https://github.com/d3/d3-plugins/tree/40f8b3b91e67719f58408732d7ddae94cafa559a/cubehelix#interpolateCubehelix)
+-- |
+-- | Ported from:
+-- | * [d3-plugins/cubehelix/cubehelix.js](https://github.com/d3/d3-plugins/blob/40f8b3b91e67719f58408732d7ddae94cafa559a/cubehelix/cubehelix.js#L13)
 mixCubehelix :: Number -> Interpolator
 mixCubehelix gamma (HSLA (UnclippedHue ah') as' al' aa') (HSLA (UnclippedHue bh') bs' bl' ba') =
   let
