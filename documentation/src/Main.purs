@@ -354,6 +354,26 @@ nameColor color = H.div $ foldMap toCell closest
 
 flare4 = nameColor <$> color "Input color" salmon
 
+cubehelix' :: Color -> Color -> Number -> String
+cubehelix' b e gamma = cssColorStopsRGB $ minColorStops 100 gen (ColorStops b Nil e)
+  where
+    gen _ = mixCubehelix gamma b e
+
+colorScaleDiv stops = H.div ! HA.style css $ H.text ""
+  where
+    css = "background: linear-gradient(to right, " <> stops <> ");" <>
+          "width: 100%; height: 30px;"
+
+flare5 = colorScaleDiv <$> (cubehelix' <$> hslPick "First color" 360.0 0.0
+                                       <*> hslPick "Last color" (-240.0) 1.0
+                                       <*> numberSlider "Gamma (0.5 .. 3.0)" 0.5 3.0 0.1 1.0)
+  where
+    hslPick :: forall e. String -> Number -> Number -> UI e Color
+    hslPick title h l = fieldset title $
+                          hsl <$> numberSlider "Hue (-360° .. 720°)" (-360.0) 720.0 0.1 h
+                              <*> numberSlider "Saturation" 0.0 1.0 0.01 1.0
+                              <*> pure l
+
 main = do
   withPackage "purescript-colors.json" $ \dict -> do
     let doc :: forall t. Interactive t => String -> t -> _
@@ -614,3 +634,4 @@ main = do
   runFlareHTML "input2" "output2" flare2
   runFlareHTML "input3" "output3" flare3
   runFlareHTML "input4" "output4" flare4
+  runFlareHTML "input5" "output5" flare5
