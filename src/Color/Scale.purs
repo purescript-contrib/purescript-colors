@@ -27,6 +27,7 @@ module Color.Scale
   , spectrumLCh
   , blueToRed
   , yellowToRed
+  , cubehelix
   , minColorStops
   , cssColorStops
   , cssColorStopsRGB
@@ -204,6 +205,20 @@ hot = colorScale RGB black (colorStop red 0.5 : colorStop yellow 0.75 : Nil) whi
 -- | A color scale that represents 'cool' colors.
 cool :: ColorScale
 cool = colorScale RGB (hsl 180.0 1.0 0.6) Nil (hsl 300.0 1.0 0.5)
+
+-- | The standard [cubehelix](http://www.mrao.cam.ac.uk/~dag/CUBEHELIX/) color
+-- | scale.
+cubehelix :: ColorScale
+cubehelix = uniformScale HSL b stops e
+  where
+    b = hsl 300.0 0.5 0.0
+    e = hsl (-240.0) 0.5 1.0
+    numStops = 100
+    gamma = 1.0
+    stops = do
+      i <- 1 .. (numStops - 1)
+      let frac = toNumber i / toNumber (numStops + 1)
+      pure $ mixCubehelix gamma b e frac
 
 -- | Takes number of stops `ColorStops` should contain, function to generate
 -- | missing colors and `ColorStops` itself.

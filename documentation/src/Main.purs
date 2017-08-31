@@ -373,6 +373,7 @@ main = do
     doc "saturate"   (\(SmallNumber a) (TColor c) -> ColorList [c, saturate a c])
     doc "desaturate" (\(SmallNumber a) (TColor c) -> ColorList [c, desaturate a c])
     doc "mix"        (\(TColorSpace s) (TColor b) (TColor f) (SmallNumber frac) -> ColorList [b, f, mix s b f frac])
+    doc "mixCubehelix" (\gamma (TColor b) (TColor f) (SmallNumber frac) -> ColorList [b, f, mixCubehelix gamma b f frac])
     doc "brightness" (\(TColor c) -> brightness c)
     doc "luminance"  (\(TColor c) -> luminance c)
     doc "textColor"  (\(TColor c) -> ColorList [c, textColor c])
@@ -396,6 +397,7 @@ main = do
     docscale "yellowToRed" (TColorScale yellowToRed)
     docscale "hot" (TColorScale hot)
     docscale "cool" (TColorScale cool)
+    docscale "cubehelix" (TColorScale cubehelix)
     docscale "cssColorStops" $ \(TColorSpace mode) (TColor b) (TColor e) -> cssColorStops (colorScale mode b Nil e)
     docscale "modify (here: modify (const toGray))" $ \(TColorScale sc) -> TColorScale (modify (const toGray) sc)
 
