@@ -6,6 +6,8 @@
 module Color.Scale
   ( ColorStop
   , colorStop
+  , stopRatio
+  , stopColor
   , ColorScale
   , colorScale
   , ColorStops(..)
