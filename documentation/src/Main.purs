@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Array (sortBy, take, fromFoldable)
 import Data.Foldable (foldMap)
-import Data.List (List(..))
+import Data.List (List(..), (:))
 import Data.Ord (comparing)
 import Data.Tuple (Tuple (..))
 import Data.NonEmpty ((:|))
@@ -33,10 +33,13 @@ runTColor :: TColor -> Color
 runTColor (TColor c) = c
 
 instance flammableTColor :: Flammable TColor where
-  spark = TColor <$> fieldset "Color"
-                     (hsl <$> numberSlider "Hue" 0.0 360.0 0.1 231.0
-                          <*> numberSlider "Saturation" 0.0 1.0 0.001 0.48
-                          <*> numberSlider "Lightness" 0.0 1.0 0.001 0.48)
+  examples = TColor <$> (hsl 231.0 0.48 0.38  :| MD.blue : MD.orange : Nil)
+
+  spark (TColor c) = TColor <$> fieldset "Color"
+                           (hsl <$> numberSlider "Hue" 0.0 360.0 0.1 col.h
+                                <*> numberSlider "Saturation" 0.0 1.0 0.001 col.s
+                                <*> numberSlider "Lightness" 0.0 1.0 0.001 col.l)
+    where col = toHSLA c
 
 colorBox :: Color -> H.Markup Unit
 colorBox c = H.div ! HA.style css $ H.code (H.text repr)
@@ -64,7 +67,8 @@ modeToString Screen = "Screen"
 modeToString Overlay = "Overlay"
 
 instance flammableTBlendMode :: Flammable TBlendMode where
-  spark = TBlendMode <$> select "BlendMode" (Multiply :| [Screen, Overlay]) modeToString
+  examples = TBlendMode <$> (Multiply :| Screen : Overlay : Nil)
+  spark _ = TBlendMode <$> select "BlendMode" (Multiply :| [Screen, Overlay]) modeToString
 
 newtype TColorSpace = TColorSpace ColorSpace
 
@@ -74,11 +78,13 @@ csToString LCh = "LCh"
 csToString Lab = "Lab"
 
 instance flammableTColorSpace :: Flammable TColorSpace where
-  spark = TColorSpace <$> select "ColorSpace" (HSL :| [RGB, LCh, Lab]) csToString
+  examples = TColorSpace <$> (HSL :| RGB : LCh : Lab : Nil)
+  spark _ = TColorSpace <$> select "ColorSpace" (HSL :| [RGB, LCh, Lab]) csToString
 
 newtype Int255 = Int255 Int
 instance flammableInt255 :: Flammable Int255 where
-  spark = Int255 <$> intSlider "Int" 0 255 100
+  examples = Int255 <$> (127 :| 50 : 200 : 0 : Nil)
+  spark (Int255 def) = Int255 <$> intSlider "Int" 0 255 def
 
 newtype TColorScale = TColorScale ColorScale
 
@@ -95,36 +101,37 @@ data CSTypes
   | Plasma
   | Viridis
 
-instance flammableTColorScale :: Flammable TColorScale where
-  spark = (TColorScale <<< toColorScale) <$> (fieldset "ColorScale" $
-            select "Choose" (Grayscale :| [Spectrum, SpectrumLCh, BlueToRed,
-                                           YellowToRed, Hot, Cool, Magma, Inferno,
-                                           Plasma, Viridis]) toString
-          )
-    where
-      toString Grayscale   = "grayscale"
-      toString Spectrum    = "spectrum"
-      toString SpectrumLCh = "spectrumLCh"
-      toString BlueToRed   = "blueToRed"
-      toString YellowToRed = "yellowToRed"
-      toString Hot         = "hot"
-      toString Cool        = "cool"
-      toString Magma       = "magma"
-      toString Inferno     = "inferno"
-      toString Plasma      = "plasma"
-      toString Viridis     = "viridis"
+toString Grayscale   = "grayscale"
+toString Spectrum    = "spectrum"
+toString SpectrumLCh = "spectrumLCh"
+toString BlueToRed   = "blueToRed"
+toString YellowToRed = "yellowToRed"
+toString Hot         = "hot"
+toString Cool        = "cool"
+toString Magma       = "magma"
+toString Inferno     = "inferno"
+toString Plasma      = "plasma"
+toString Viridis     = "viridis"
 
-      toColorScale Grayscale   = grayscale
-      toColorScale Spectrum    = spectrum
-      toColorScale SpectrumLCh = spectrumLCh
-      toColorScale BlueToRed   = blueToRed
-      toColorScale YellowToRed = yellowToRed
-      toColorScale Hot         = hot
-      toColorScale Cool        = cool
-      toColorScale Magma       = magma
-      toColorScale Inferno     = inferno
-      toColorScale Plasma      = plasma
-      toColorScale Viridis     = viridis
+toColorScale Grayscale   = grayscale
+toColorScale Spectrum    = spectrum
+toColorScale SpectrumLCh = spectrumLCh
+toColorScale BlueToRed   = blueToRed
+toColorScale YellowToRed = yellowToRed
+toColorScale Hot         = hot
+toColorScale Cool        = cool
+toColorScale Magma       = magma
+toColorScale Inferno     = inferno
+toColorScale Plasma      = plasma
+toColorScale Viridis     = viridis
+
+instance flammableTColorScale :: Flammable TColorScale where
+  examples = (TColorScale <<< toColorScale) <$> (Spectrum :| SpectrumLCh : BlueToRed : Nil)
+  spark _ = (TColorScale <<< toColorScale) <$> (fieldset "ColorScale" $
+              select "Choose" (Grayscale :| [Spectrum, SpectrumLCh, BlueToRed,
+                                             YellowToRed, Hot, Cool, Magma, Inferno,
+                                             Plasma, Viridis]) toString
+            )
 
 instance interactiveTColorScale :: Interactive TColorScale where
   interactive ui = (SetHTML <<< pretty) <$> ui
@@ -382,32 +389,32 @@ main = do
     doc "hsl" (id :: TColor -> _)
     doc "rgb" $
       (\(Int255 r) (Int255 g) (Int255 b) -> TColor (rgb r g b))
-    doc "toHexString" (\(TColor c) -> toHexString c)
-    doc "cssStringHSLA" (\(TColor c) -> cssStringHSLA c)
+    doc "toHexString" toHexString
+    doc "cssStringHSLA" cssStringHSLA
     doc "black" (TColor black)
     doc "white" (TColor white)
     doc "graytone" (\(SmallNumber s) -> TColor (graytone s))
-    doc "complementary" (\(TColor c) -> ColorList [c, complementary c])
-    doc "lighten"    (\(SmallNumber a) (TColor c) -> ColorList [c, lighten a c])
-    doc "darken"     (\(SmallNumber a) (TColor c) -> ColorList [c, darken a c])
-    doc "saturate"   (\(SmallNumber a) (TColor c) -> ColorList [c, saturate a c])
-    doc "desaturate" (\(SmallNumber a) (TColor c) -> ColorList [c, desaturate a c])
-    doc "mix"        (\(TColorSpace s) (TColor b) (TColor f) (SmallNumber frac) -> ColorList [b, f, mix s b f frac])
-    doc "mixCubehelix" (\gamma (TColor b) (TColor f) (SmallNumber frac) -> ColorList [b, f, mixCubehelix gamma b f frac])
-    doc "brightness" (\(TColor c) -> brightness c)
-    doc "luminance"  (\(TColor c) -> luminance c)
-    doc "textColor"  (\(TColor c) -> ColorList [c, textColor c])
+    doc "complementary" complementary
+    doc "lighten"    (\(SmallNumber a) -> TColor <<< lighten a)
+    doc "darken"     (\(SmallNumber a) -> TColor <<< darken a)
+    doc "saturate"   (\(SmallNumber a) -> TColor <<< saturate a)
+    doc "desaturate" (\(SmallNumber a) -> TColor <<< desaturate a)
+    doc "mix"        (\(TColorSpace s) b f (SmallNumber frac) -> TColor (mix s b f frac))
+    doc "mixCubehelix" (\gamma b f (SmallNumber frac) -> TColor (mixCubehelix gamma b f frac))
+    doc "brightness" brightness
+    doc "luminance"  luminance
+    doc "textColor"  (TColor <<< textColor)
 
     let docblend :: forall t. Interactive t => String -> t -> _
         docblend = flareDoc' "doc-blending" dict "Color.Blending"
 
-    docblend "blend" (\(TBlendMode m) (TColor b) (TColor f) -> ColorList [b, f, blend m b f])
+    docblend "blend" (\(TBlendMode m) b f -> TColor (blend m b f))
 
     let docscale :: forall t. Interactive t => String -> t -> _
         docscale = flareDoc' "doc-scale" dict "Color.Scale"
 
-    docscale "colorScale" $ \(TColorSpace mode) (TColor b) (TColor e) -> TColorScale $ colorScale mode b Nil e
-    docscale "addStop" $ \(TColorScale sc) (SmallNumber r) (TColor c) -> TColorScale $ addStop sc c r
+    docscale "colorScale" $ \(TColorSpace mode) b e -> TColorScale $ colorScale mode b Nil e
+    docscale "addStop" $ \(TColorScale sc) (SmallNumber r) c -> TColorScale $ addStop sc c r
     docscale "sample" $ \(TColorScale sc) (SmallNumber r) -> TColor (sample sc r)
     docscale "colors" $ \(TColorScale sc) (SmallInt n) -> ColorList (fromFoldable $ colors sc n)
     docscale "grayscale" (TColorScale grayscale)
@@ -418,7 +425,7 @@ main = do
     docscale "hot" (TColorScale hot)
     docscale "cool" (TColorScale cool)
     docscale "cubehelix" (TColorScale cubehelix)
-    docscale "cssColorStops" $ \(TColorSpace mode) (TColor b) (TColor e) -> cssColorStops (colorScale mode b Nil e)
+    docscale "cssColorStops" $ \(TColorSpace mode) b e -> cssColorStops (colorScale mode b Nil e)
     docscale "modify (here: modify (const toGray))" $ \(TColorScale sc) -> TColorScale (modify (const toGray) sc)
 
     let docscaleperc :: forall t. Interactive t => String -> t -> _
@@ -432,11 +439,11 @@ main = do
     let docharm :: forall t. Interactive t => String -> t -> _
         docharm = flareDoc' "doc-scheme-harm" dict "Color.Scheme.Harmonic"
 
-    docharm "analogous" (\(TColor c) -> ColorList $ analogous c)
-    docharm "triad" (\(TColor c) -> ColorList $ triad c)
-    docharm "splitComplementary" (\(TColor c) -> ColorList $ splitComplementary c)
-    docharm "shades" (\(TColor c) -> ColorList $ shades c)
-    docharm "tetrad" (\(TColor c) -> ColorList $ tetrad c)
+    docharm "analogous" (\c -> ColorList $ analogous c)
+    docharm "triad" (\c -> ColorList $ triad c)
+    docharm "splitComplementary" (\c -> ColorList $ splitComplementary c)
+    docharm "shades" (\c -> ColorList $ shades c)
+    docharm "tetrad" (\c -> ColorList $ tetrad c)
 
     let docmd :: forall t. Interactive t => String -> t -> _
         docmd = flareDoc' "doc-scheme-md" dict "Color.Scheme.MaterialDesign"
