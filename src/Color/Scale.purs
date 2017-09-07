@@ -240,7 +240,7 @@ minColorStops n sampler stops = stops `insertStops` additionalStops
 -- | gradient in the specified color space.
 cssColorStops :: ColorScale -> String
 cssColorStops (ColorScale RGB stops) = cssColorStopsRGB stops
-cssColorStops (ColorScale space stops) = cssColorStopsRGB $ minColorStops 10 (mkSimpleSampler $ mix cs) stops
+cssColorStops (ColorScale cs stops) = cssColorStopsRGB $ minColorStops 10 (mkSimpleSampler $ mix cs) stops
 
 -- | Underling function of `cssColorStops`.
 cssColorStopsRGB :: ColorStops -> String
