@@ -1,7 +1,7 @@
 {
   "name": "purescript-colors-example",
   "dependencies": {
-    "purescript-colors": "^4.0.0",
+    "purescript-colors": "^4.1.0",
     "purescript-flaredoc": "^4.0.0"
   }
 }
