@@ -11,6 +11,9 @@ module Color.Scale
   , ColorScale
   , colorScale
   , ColorStops(..)
+  , combineStops'
+  , combineStops
+  , reverseStops
   , uniformScale
   , uniformScale'
   , addStop
@@ -41,7 +44,7 @@ import Color (Color, ColorSpace(..), Interpolator, black, cssStringHSLA, mixCube
 import Color.Scheme.X11 (red, yellow)
 import Data.Foldable (class Foldable, intercalate, foldl)
 import Data.Int (toNumber)
-import Data.List (List(..), insertBy, snoc, (..), fromFoldable, length, zipWith, (:))
+import Data.List (List(..), fromFoldable, insertBy, length, reverse, snoc, zipWith, (..), (:))
 
 
 -- | Ensure that a number lies in the interval [0, 1].
@@ -77,6 +80,35 @@ data ColorStops = ColorStops Color (List ColorStop) Color
 -- | `Color` argument defines the right end point (color at ratio 1.0).
 colorScale :: ColorSpace -> Color -> List ColorStop -> Color -> ColorScale
 colorScale space b middle e = ColorScale space $ ColorStops b middle e
+
+-- | Concatenates two color scales. First Number is epsilon, second one defines
+-- | transition point (i.e. is a number between 0 and 1).
+-- | for ```(redToBlue `combineStops' epsilon x` orangeToGray)```
+-- | color at `x` will be orange and color at `x - epsilon` will be blue
+-- | if we want color at `x` to be blue, then `combineStops (x+epsilon)` could be used
+combineStops' :: Number → Number → ColorStops → ColorStops → ColorStops
+combineStops' epsilon at (ColorStops bStart bStops bEnd) (ColorStops eStart eStops eEnd) =
+  ColorStops bStart (startStops <> midStops <> endStops) eEnd
+  where
+  startStops = bStops <#> \stop ->
+    colorStop (stopColor stop) (stopRatio stop / (1.0 / at))
+  midStops =
+    (colorStop bEnd $ at - epsilon) : (colorStop eStart $ at) : Nil
+  endStops = eStops <#> \stop ->
+    colorStop (stopColor stop) (at + stopRatio stop / (1.0 / (1.0 - at)))
+
+-- | Partially applied `combineStops'` with `0.000001` as epsilon value
+combineStops :: Number → ColorStops → ColorStops → ColorStops
+combineStops = combineStops' 0.000001
+
+-- | Give color stops reverses it
+reverseStops :: ColorStops → ColorStops
+reverseStops (ColorStops start stops end) =
+  ColorStops end newStops start
+  where
+  newStops = reverse stops <#>
+    \stop -> colorStop (stopColor stop) (1.0 - stopRatio stop)
+
 
 -- | Create a uniform color scale from a list of colors that will be evenly
 -- | spaced on the scale.
