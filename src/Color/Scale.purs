@@ -81,11 +81,30 @@ data ColorStops = ColorStops Color (List ColorStop) Color
 colorScale :: ColorSpace -> Color -> List ColorStop -> Color -> ColorScale
 colorScale space b middle e = ColorScale space $ ColorStops b middle e
 
--- | Concatenates two color scales. First Number is epsilon, second one defines
--- | transition point (i.e. is a number between 0 and 1).
--- | for ```(redToBlue `combineStops' epsilon x` orangeToGray)```
--- | color at `x` will be orange and color at `x - epsilon` will be blue
--- | if we want color at `x` to be blue, then `combineStops (x+epsilon)` could be used
+-- | Concatenates two color scales. The first argument specifies the transition point as
+-- | a number between zero and one. The color right at the transition point is the first
+-- | color of the second color scale.
+-- |
+-- | Example:
+-- |
+-- | ```
+-- | redToBlue `combineStops 0.4` orangeToGray
+-- | ```
+combineStops :: Number → ColorStops → ColorStops → ColorStops
+combineStops = combineStops' 0.000001
+
+
+-- | Like `combineStops`, but the width of the "transition zone" can be specified as the
+-- | first argument.
+-- |
+-- | Example:
+-- |
+-- | ```
+-- | redToBlue `combineStops epsilon x` orangeToGray
+-- | ```
+-- |
+-- | Here, the color at `x` will be orange and color at `x - epsilon` will be blue.
+-- | If we want the color at `x` to be blue, `combineStops' epsilon (x + epsilon)` could be used.
 combineStops' :: Number → Number → ColorStops → ColorStops → ColorStops
 combineStops' epsilon at (ColorStops bStart bStops bEnd) (ColorStops eStart eStops eEnd) =
   ColorStops bStart (startStops <> midStops <> endStops) eEnd
@@ -97,11 +116,7 @@ combineStops' epsilon at (ColorStops bStart bStops bEnd) (ColorStops eStart eSto
   endStops = eStops <#> \stop ->
     colorStop (stopColor stop) (at + stopRatio stop / (1.0 / (1.0 - at)))
 
--- | Partially applied `combineStops'` with `0.000001` as epsilon value
-combineStops :: Number → ColorStops → ColorStops → ColorStops
-combineStops = combineStops' 0.000001
-
--- | Give color stops reverses it
+-- | Takes `ColorStops` and returns reverses it
 reverseStops :: ColorStops → ColorStops
 reverseStops (ColorStops start stops end) =
   ColorStops end newStops start
