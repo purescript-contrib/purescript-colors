@@ -87,7 +87,7 @@ colorScale space b middle e = ColorScale space $ ColorStops b middle e
 -- |
 -- | Example:
 -- |
--- | ```
+-- | ``` purs
 -- | redToBlue `combineStops 0.4` orangeToGray
 -- | ```
 combineStops :: Number → ColorStops → ColorStops → ColorStops
@@ -99,7 +99,7 @@ combineStops = combineStops' 0.000001
 -- |
 -- | Example:
 -- |
--- | ```
+-- | ``` purs
 -- | redToBlue `combineStops epsilon x` orangeToGray
 -- | ```
 -- |

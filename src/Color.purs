@@ -292,6 +292,7 @@ fromHexString str = do
 -- | `0xffffff` is white. Values outside this range will be clamped.
 -- |
 -- | This function is useful if you want to hard-code Hex values. For example:
+-- | 
 -- | ``` purs
 -- | red = fromInt 0xff0000
 -- | ```
@@ -552,7 +553,7 @@ mix Lab c1 c2 frac = lab
     t = toLab c2
 
 
--- | Mix two colors via Dave Green's [`cubehelix'](http://www.mrao.cam.ac.uk/~dag/CUBEHELIX/) by
+-- | Mix two colors via Dave Green's [cubehelix](http://www.mrao.cam.ac.uk/~dag/CUBEHELIX/) by
 -- | interpolating between them. Takes a gamma correction value as an argument and
 -- | returns an `Interpolator` function.
 -- |
