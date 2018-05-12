@@ -13,14 +13,13 @@
     "test"
   ],
   "dependencies": {
-    "purescript-arrays": "^4.0.0",
-    "purescript-integers": "^3.0.0",
-    "purescript-lists": "^4.0.0",
-    "purescript-partial": "^1.0.0",
-    "purescript-strings": "^3.0.0"
+    "purescript-arrays": "#compiler/0.12",
+    "purescript-integers": "#compiler/0.12",
+    "purescript-lists": "#compiler/0.12",
+    "purescript-partial": "#compiler/0.12",
+    "purescript-strings": "#compiler/0.12"
   },
   "devDependencies": {
-    "purescript-test-unit": "^11.0.0",
-    "purescript-psci-support": "^3.0.0"
+    "purescript-test-unit": "justinwoo/purescript-test-unit#compiler/0.12"
   }
 }
