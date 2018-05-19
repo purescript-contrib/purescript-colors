@@ -69,7 +69,7 @@ module Color
 
 import Prelude
 
-import Data.Array ((!!))
+import Data.Array.NonEmpty (index)
 import Data.Either (either)
 import Data.Foldable (minimumBy)
 import Data.Int (toNumber, round, fromStringAs, toStringAs, hexadecimal)
@@ -268,9 +268,9 @@ fromHexString :: String -> Maybe Color
 fromHexString str = do
   pattern <- hush mPattern
   groups <- match pattern str
-  r <- parseHex <$> join (groups !! 1)
-  g <- parseHex <$> join (groups !! 2)
-  b <- parseHex <$> join (groups !! 3)
+  r <- parseHex <$> join (index groups 1)
+  g <- parseHex <$> join (index groups 2)
+  b <- parseHex <$> join (index groups 3)
   if isShort
     then
       pure $ rgb (16 * r + r) (16 * g + g) (16 * b + b)
