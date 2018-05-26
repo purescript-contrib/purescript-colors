@@ -13,11 +13,11 @@
     "test"
   ],
   "dependencies": {
-    "purescript-arrays": "#compiler/0.12",
-    "purescript-integers": "#compiler/0.12",
-    "purescript-lists": "#compiler/0.12",
-    "purescript-partial": "#compiler/0.12",
-    "purescript-strings": "#compiler/0.12"
+    "purescript-arrays": "^5.0.0",
+    "purescript-integers": "^4.0.0",
+    "purescript-lists": "^5.0.0",
+    "purescript-partial": "^2.0.0",
+    "purescript-strings": "^4.0.0"
   },
   "devDependencies": {
     "purescript-test-unit": "justinwoo/purescript-test-unit#compiler/0.12"
