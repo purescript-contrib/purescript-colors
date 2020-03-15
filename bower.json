@@ -13,8 +13,6 @@
     "test"
   ],
   "dependencies": {
-    "purescript-typelevel-prelude": "^5.0.2",
-    "purescript-record": "^2.0.0",
     "purescript-arrays": "^5.3.0",
     "purescript-integers": "^4.0.0",
     "purescript-lists": "^5.4.0",
