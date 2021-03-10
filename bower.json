@@ -13,13 +13,13 @@
     "test"
   ],
   "dependencies": {
-    "purescript-arrays": "^5.3.0",
-    "purescript-integers": "^4.0.0",
-    "purescript-lists": "^5.4.0",
-    "purescript-partial": "^2.0.0",
-    "purescript-strings": "^4.0.0"
+    "purescript-arrays": "^6.0.0",
+    "purescript-integers": "^5.0.0",
+    "purescript-lists": "^6.0.0",
+    "purescript-partial": "^3.0.0",
+    "purescript-strings": "^5.0.0"
   },
   "devDependencies": {
-    "purescript-test-unit": "^14.0.0"
+    "purescript-test-unit": "^16.0.0"
   }
 }
