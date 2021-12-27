@@ -15,3 +15,5 @@
 /documentation/.psci*
 
 /documentation/html/test.js
+./spago
+.purs-repl

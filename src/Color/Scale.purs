@@ -41,7 +41,6 @@ module Color.Scale
 import Prelude
 
 import Color (Color, ColorSpace(..), Interpolator, black, cssStringHSLA, mixCubehelix, fromInt, hsl, lch, mix, white)
-import Color.Scheme.X11 (red, yellow)
 import Data.Foldable (class Foldable, intercalate, foldl)
 import Data.Int (toNumber)
 import Data.List (List(..), fromFoldable, insertBy, length, reverse, snoc, zipWith, (..), (:))
@@ -249,7 +248,7 @@ yellowToRed = uniformScale Lab yellow (orange : Nil) red
 
 -- | A color scale that represents 'hot' colors.
 hot :: ColorScale
-hot = colorScale RGB black (colorStop red 0.5 : colorStop yellow 0.75 : Nil) white
+hot = colorScale RGB black (colorStop (fromInt 0xff0000) 0.5 : colorStop (fromInt 0xffff00) 0.75 : Nil) white
 
 -- | A color scale that represents 'cool' colors.
 cool :: ColorScale
