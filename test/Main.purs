@@ -1,11 +1,10 @@
-module Test.Main where
+module Test.Main (main) where
 
 import Prelude
 
 import Color (Color, ColorSpace(..), rgb', toHexString, toRGBA, toHSLA, toHSVA, saturate, lighten, white, black, graytone, mix, rgb, distance, textColor, contrast, luminance, brightness, fromInt, toGray, desaturate, darken, complementary, rotateHue, rgba, cssStringRGBA, hsla, cssStringHSLA, hsl, hsva, fromHexString, lch, toLCh, lab, toLab, xyz, toXYZ)
 import Color.Blending (BlendMode(..), blend)
 import Color.Scale (grayscale, sample, colors, uniformScale, colorStop, colorScale)
-import Color.Scheme.X11 (orangered, seagreen, yellow, red, blue, magenta, hotpink, purple, pink, darkslateblue, aquamarine, cyan, green, lime)
 import Data.Array ((..))
 import Data.Foldable (sequence_, for_)
 import Data.Int (toNumber, round)
@@ -13,6 +12,7 @@ import Data.List (List(..), (:))
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Aff (Aff)
+import Test.Scheme.X11 (aquamarine, blue, cyan, darkslateblue, green, hotpink, lime, magenta, orangered, pink, purple, red, seagreen, yellow)
 import Test.Unit (test, success, failure)
 import Test.Unit.Assert (equal, assertFalse)
 import Test.Unit.Main (runTest)
