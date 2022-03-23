@@ -2,7 +2,7 @@
   "name": "purescript-colors",
   "repository": {
     "type": "git",
-    "url": "git://github.com/sharkdp/purescript-colors.git"
+    "url": "git://github.com/purescript-contrib/purescript-colors.git"
   },
   "license": "MIT",
   "ignore": [
@@ -20,6 +20,6 @@
     "purescript-strings": "^5.0.0"
   },
   "devDependencies": {
-    "purescript-test-unit": "^16.0.0"
+    "purescript-assert": "^5.0.0"
   }
 }

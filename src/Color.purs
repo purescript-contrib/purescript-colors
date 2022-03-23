@@ -146,7 +146,7 @@ rgba red' green' blue' alpha = HSLA (UnclippedHue hue) saturation lightness alph
     chroma' = toNumber chroma / 255.0
 
     hue' 0 = 0.0
-    hue' c | maxChroma == red   = ((g - b) / chroma') `modPos` 6.0
+    hue' _ | maxChroma == red   = ((g - b) / chroma') `modPos` 6.0
            | maxChroma == green = ((b - r) / chroma') + 2.0
            | otherwise          = ((r - g) / chroma') + 4.0
 
@@ -292,7 +292,7 @@ fromHexString str = do
 -- | `0xffffff` is white. Values outside this range will be clamped.
 -- |
 -- | This function is useful if you want to hard-code Hex values. For example:
--- | 
+-- |
 -- | ``` purs
 -- | red = fromInt 0xff0000
 -- | ```

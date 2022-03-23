@@ -185,7 +185,7 @@ colors scale = colors' (sample scale)
 -- | Takes a sampling function and returns a list of colors that is sampled via
 -- | that function. The number of colors can be specified.
 colors' :: (Number -> Color) -> Int -> List Color
-colors' f 0 = Nil
+colors' _ 0 = Nil
 colors' f 1 = f 0.0 : Nil
 colors' f num = map mkColor $ 0 .. (num - 1)
   where mkColor i = f (toNumber i / toNumber (num - 1))
