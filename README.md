@@ -1,14 +1,21 @@
-# purescript-colors
+# Colors
 
-[![Latest release](http://img.shields.io/bower/v/purescript-colors.svg)](https://github.com/sharkdp/purescript-colors/releases)
-[![Build Status](https://api.travis-ci.org/sharkdp/purescript-colors.svg?branch=master)](https://travis-ci.org/sharkdp/purescript-colors)
+[![CI](https://github.com/purescript-contrib/purescript-colors/workflows/CI/badge.svg?branch=main)](https://github.com/purescript-contrib/purescript-colors/actions?query=workflow%3ACI+branch%3Amain)
+[![Release](https://img.shields.io/github/release/purescript-contrib/purescript-colors.svg)](https://github.com/purescript-contrib/purescript-colors/releases)
+[![Pursuit](https://pursuit.purescript.org/packages/purescript-colors/badge)](https://pursuit.purescript.org/packages/purescript-colors)
+[![Maintainer: sharkdp](https://img.shields.io/badge/maintainer-sharkdp-teal.svg)](https://github.com/sharkdp)
 
 A package for dealing with colors in PureScript.
 
-- [Interactive documentation](http://sharkdp.github.io/purescript-colors/)
-- [Module documentation](https://pursuit.purescript.org/packages/purescript-colors)
+## Installation
 
-## Examples
+Install `colors` with [Spago](https://github.com/purescript/spago):
+
+```sh
+spago install colors
+```
+
+## Quick start
 
 ```purs
 > toHexString (hsl 200.0 0.4 0.5)
@@ -22,25 +29,32 @@ A package for dealing with colors in PureScript.
 
 > toHexString <$> (sortBy (comparing luminance) [black, white, blue, lightgreen])
 ["#000000","#0000ff","#90ee90","#ffffff"]
-
-
 ```
+
+## Documentation
+
+See [Interactive documentation](http://sharkdp.github.io/purescript-colors/)
+
+Otherwise, `colors` documentation is stored in a few places:
+
+1. Module documentation is [published on Pursuit](https://pursuit.purescript.org/packages/purescript-colors).
+1. Usage examples can be found in [the test suite](./test).
+
+If you get stuck, there are several ways to get help:
+
+- [Open an issue](https://github.com/purescript-contrib/purescript-colors/issues) if you have encountered a bug or problem.
+- Ask general questions on the [PureScript Discourse](https://discourse.purescript.org) forum or the [PureScript Discord](https://discord.com/invite/sMqwYUbvz6) chat.
+
+## Contributing
+
+You can contribute to `colors` in several ways:
+
+1. If you encounter a problem or have a question, please [open an issue](https://github.com/purescript-contrib/purescript-colors/issues). We'll do our best to work with you to resolve or answer it.
+
+2. If you would like to contribute code, tests, or documentation, please [read the contributor guide](./CONTRIBUTING.md). It's a short, helpful introduction to contributing to this library, including development instructions.
+
+3. If you have written a library, tutorial, guide, or other resource based on this package, please share it on the [PureScript Discourse](https://discourse.purescript.org)! Writing libraries and learning resources are a great way to help this library succeed.
 
 ## Credit
 
 Based on initial work by paf31 and inspired by (the PureScript version of) [Elm.Color](https://github.com/brainrape/purescript-elm-color), [TinyColor](https://github.com/bgrins/TinyColor) and [Chroma.js](https://github.com/gka/chroma.js).
-
-## Development
-
-To run the unit tests, the following steps are necessary:
-```
-bower install
-pulp test
-```
-
-To build the interactive docmentation, run:
-```
-cd documentation
-bower install
-pulp build -O -m Main -t html/test.js
-```
