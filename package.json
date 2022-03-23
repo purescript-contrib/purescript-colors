@@ -1,7 +1,0 @@
-{
-  "private": true,
-  "scripts": {
-    "build": "bower install && pulp build",
-    "test": "pulp test"
-  }
-}
