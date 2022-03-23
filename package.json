@@ -2,7 +2,6 @@
   "private": true,
   "scripts": {
     "build": "bower install && pulp build",
-    "documentation": "cd example && pulp build -O -m Main -t html/test.js",
     "test": "pulp test"
   }
 }
