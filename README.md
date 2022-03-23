@@ -33,11 +33,10 @@ spago install colors
 
 ## Documentation
 
-See [Interactive documentation](http://sharkdp.github.io/purescript-colors/)
-
 Otherwise, `colors` documentation is stored in a few places:
 
 1. Module documentation is [published on Pursuit](https://pursuit.purescript.org/packages/purescript-colors).
+1. Written documentation is kept in the [docs directory](./docs).
 1. Usage examples can be found in [the test suite](./test).
 
 If you get stuck, there are several ways to get help:
