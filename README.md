@@ -3,7 +3,6 @@
 [![CI](https://github.com/purescript-contrib/purescript-colors/workflows/CI/badge.svg?branch=main)](https://github.com/purescript-contrib/purescript-colors/actions?query=workflow%3ACI+branch%3Amain)
 [![Release](https://img.shields.io/github/release/purescript-contrib/purescript-colors.svg)](https://github.com/purescript-contrib/purescript-colors/releases)
 [![Pursuit](https://pursuit.purescript.org/packages/purescript-colors/badge)](https://pursuit.purescript.org/packages/purescript-colors)
-[![Maintainer: sharkdp](https://img.shields.io/badge/maintainer-sharkdp-teal.svg)](https://github.com/sharkdp)
 
 A package for dealing with colors in PureScript.
 

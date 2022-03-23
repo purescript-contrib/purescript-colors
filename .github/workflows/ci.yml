@@ -17,6 +17,7 @@ jobs:
         uses: purescript-contrib/setup-purescript@main
         with:
           purescript: "unstable"
+          purs-tidy: "latest"
 
       - name: Cache PureScript dependencies
         uses: actions/cache@v2
