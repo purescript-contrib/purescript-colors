@@ -72,10 +72,11 @@ import Prelude
 import Data.Array.NonEmpty (index)
 import Data.Either (either)
 import Data.Foldable (minimumBy)
+import Data.Function (on)
 import Data.Int (toNumber, round, fromStringAs, toStringAs, hexadecimal)
 import Data.Int.Bits ((.&.), shr)
 import Data.Maybe (Maybe(..), fromJust, fromMaybe)
-import Data.String (length)
+import Data.String (length, joinWith)
 import Data.String.Regex (regex, parseFlags, match)
 import Math (Radians, abs, atan2, cos, pi, pow, sin, sqrt, (%))
 import Partial.Unsafe (unsafePartial)
@@ -107,22 +108,18 @@ clipHue (UnclippedHue x) = if 360.0 == x then x else x `modPos` 360.0
 data ColorSpace = RGB | HSL | LCh | Lab
 
 instance showColor :: Show Color where
-  show c = "rgba " <> show col.r <> " "
-    <> show col.g
-    <> " "
-    <> show col.b
-    <> " "
-    <> show col.a
+  show c = joinWith " "
+    [ "rgba"
+    , show col.r
+    , show col.g
+    , show col.b
+    , show col.a
+    ]
     where
     col = toRGBA c
 
 instance eqColor :: Eq Color where
-  eq c1 c2 = rgb1.r == rgb2.r && rgb1.g == rgb2.g
-    && rgb1.b == rgb2.b
-    && rgb1.a == rgb2.a
-    where
-    rgb1 = toRGBA c1
-    rgb2 = toRGBA c2
+  eq = eq `on` toRGBA
 
 -- | Like `%`, but always positive.
 modPos :: Number -> Number -> Number
