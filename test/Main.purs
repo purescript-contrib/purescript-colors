@@ -11,33 +11,44 @@ import Data.Int (toNumber, round)
 import Data.List (List(..), (:))
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
-import Effect.Aff (Aff)
+import Effect.Console (log)
+import Test.Assert as Assert
 import Test.Scheme.X11 (aquamarine, blue, cyan, darkslateblue, green, hotpink, lime, magenta, orangered, pink, purple, red, seagreen, yellow)
-import Test.Unit (test, success, failure)
-import Test.Unit.Assert (equal, assertFalse)
-import Test.Unit.Main (runTest)
+
+equal :: forall a. Eq a => Show a => a -> a -> Effect Unit
+equal expected actual = Assert.assertEqual { expected, actual }
+
+assertFalse :: String -> Boolean -> Effect Unit
+assertFalse = Assert.assertFalse'
+
+test :: String -> Effect Unit -> Effect Unit
+test msg runTests = do
+  log $ "=== " <> msg <> " ==="
+  runTests
 
 -- | Assert that two colors are 'almost' equal (differ in their RGB values by
 -- | no more than 1 part in 255).
-almostEqual :: Color -> Color -> Aff Unit
+almostEqual :: Color -> Color -> Effect Unit
 almostEqual expected actual =
-  if almostEqual' expected actual then success
-  else failure $ "\n    expected: " <> show' expected <>
-                 "\n    got:      " <> show' actual
+  Assert.assertTrue' failureMsg $ almostEqual' expected actual
   where
-    show' c = cssStringRGBA c <> " " <> cssStringHSLA c
-    abs n = if n < 0 then 0 - n else n
-    aE n1 n2 = abs (n1 - n2) <= 1
-    almostEqual' col1 col2 =
-      aE c1.r c2.r &&
-      aE c1.g c2.g &&
-      aE c1.b c2.b
-      where
-        c1 = toRGBA col1
-        c2 = toRGBA col2
+  failureMsg =
+    "\n    expected: " <> show' expected <>
+    "\n         got: " <> show' actual
+  show' c = cssStringRGBA c <> " " <> cssStringHSLA c
+  abs n = if n < 0 then 0 - n else n
+  aE n1 n2 = abs (n1 - n2) <= 1
+  almostEqual' col1 col2 =
+    aE c1.r c2.r &&
+    aE c1.g c2.g &&
+    aE c1.b c2.b
+    where
+    c1 = toRGBA col1
+    c2 = toRGBA col2
 
 main :: Effect Unit
-main = runTest do
+main = do
+  log "\n\nNote: console will only show content under test suite names if a test fails.\n"
   test "Eq instance" do
     equal (hsl 120.0 0.3 0.5) (hsl 120.0 0.3 0.5)
     equal (rgba 1 2 3 0.3) (rgba 1 2 3 0.3)

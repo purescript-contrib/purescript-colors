@@ -1,8 +1,9 @@
 { name = "colors"
 , dependencies =
-  [ "aff"
-  , "arrays"
+  [ "arrays"
+  , "assert"
   , "effect"
+  , "console"
   , "either"
   , "foldable-traversable"
   , "integers"
@@ -13,7 +14,6 @@
   , "prelude"
   , "psci-support"
   , "strings"
-  , "test-unit"
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs", "test/**/*.purs" ]
