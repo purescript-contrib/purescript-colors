@@ -13,13 +13,13 @@
     "test"
   ],
   "dependencies": {
-    "purescript-arrays": "^6.0.0",
-    "purescript-integers": "^5.0.0",
-    "purescript-lists": "^6.0.0",
-    "purescript-partial": "^3.0.0",
-    "purescript-strings": "^5.0.0"
+    "purescript-arrays": "master",
+    "purescript-integers": "master",
+    "purescript-lists": "master",
+    "purescript-partial": "master",
+    "purescript-strings": "master"
   },
   "devDependencies": {
-    "purescript-assert": "^5.0.0"
+    "purescript-assert": "master"
   }
 }

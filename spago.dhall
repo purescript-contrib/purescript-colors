@@ -12,7 +12,6 @@
   , "maybe"
   , "partial"
   , "prelude"
-  , "psci-support"
   , "strings"
   ]
 , packages = ./packages.dhall
