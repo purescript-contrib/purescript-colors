@@ -12,6 +12,7 @@ New features:
 Bugfixes:
 
 Other improvements:
+- Drop dependency on `math` (#54 by @JordanMartinez)
 
 ## [v5.0.0](https://github.com/purescript-contrib/purescript-colors/releases/tag/v5.0.0) - 2018-05-27
 
