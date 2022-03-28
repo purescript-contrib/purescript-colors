@@ -9,6 +9,7 @@
   , "integers"
   , "lists"
   , "maybe"
+  , "numbers"
   , "partial"
   , "prelude"
   , "strings"

@@ -15,6 +15,7 @@
   "dependencies": {
     "purescript-arrays": "master",
     "purescript-integers": "master",
+    "purescript-numbers": "master",
     "purescript-lists": "master",
     "purescript-partial": "master",
     "purescript-strings": "master"
