@@ -76,9 +76,9 @@ import Data.Function (on)
 import Data.Int (toNumber, round, fromStringAs, toStringAs, hexadecimal)
 import Data.Int.Bits ((.&.), shr)
 import Data.Maybe (Maybe(..), fromJust, fromMaybe)
+import Data.Number (abs, atan2, cos, pi, pow, sin, sqrt, (%))
 import Data.String (length, joinWith)
 import Data.String.Regex (regex, parseFlags, match)
-import Math (Radians, abs, atan2, cos, pi, pow, sin, sqrt, (%))
 import Partial.Unsafe (unsafePartial)
 
 -- | The representation of a color.
@@ -578,7 +578,7 @@ mix Lab c1 c2 frac = lab
 mixCubehelix :: Number -> Interpolator
 mixCubehelix gamma (HSLA (UnclippedHue ah') as' al' aa') (HSLA (UnclippedHue bh') bs' bl' ba') =
   let
-    radians :: Radians
+    radians :: Number
     radians = pi / 180.0
     ah = (ah' + 120.0) * radians
     bh = (bh' + 120.0) * radians - ah

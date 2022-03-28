@@ -8,7 +8,6 @@
   , "foldable-traversable"
   , "integers"
   , "lists"
-  , "math"
   , "maybe"
   , "partial"
   , "prelude"
