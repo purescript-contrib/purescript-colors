@@ -4,6 +4,7 @@
   , "assert"
   , "effect"
   , "console"
+  , "control"
   , "either"
   , "foldable-traversable"
   , "integers"
