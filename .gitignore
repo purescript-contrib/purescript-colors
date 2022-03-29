@@ -15,6 +15,6 @@
 /documentation/.psci*
 
 /documentation/html/test.js
-./spago
+/.spago
 .purs-repl
 generated-docs
