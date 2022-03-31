@@ -8,6 +8,7 @@ Breaking changes:
 - Update project and deps to PureScript v0.15.0 (#51 by @JordanMartinez)
 
 New features:
+- Support for alpha channel added to `toHexString` and `fromHexString` (#56 by @nsaunders)
 
 Bugfixes:
 

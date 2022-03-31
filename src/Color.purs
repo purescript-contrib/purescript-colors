@@ -69,6 +69,7 @@ module Color
 
 import Prelude
 
+import Control.Alt ((<|>))
 import Data.Array.NonEmpty (index)
 import Data.Either (either)
 import Data.Foldable (minimumBy)
@@ -277,18 +278,25 @@ fromHexString str = do
   r <- parseHex <$> join (index groups 1)
   g <- parseHex <$> join (index groups 2)
   b <- parseHex <$> join (index groups 3)
+  a <- parseHex <$> (join (index groups 4) <|> pure (if isShort then "f" else "ff"))
   if isShort then
-    pure $ rgb (16 * r + r) (16 * g + g) (16 * b + b)
+    let
+      alpha = toNumber (clamp 0 15 a) / 15.0
+    in
+      pure $ rgba (16 * r + r) (16 * g + g) (16 * b + b) alpha
   else
-    pure (rgb r g b)
+    let
+      alpha = toNumber (clamp 0 255 a) / 255.0
+    in
+      pure (rgba r g b alpha)
   where
-  isShort = length str == 4
+  isShort = length str < 6
   digit = "[0-9a-f]"
   single = "(" <> digit <> ")"
   pair = "(" <> digit <> digit <> ")"
   variant =
-    if isShort then single <> single <> single
-    else pair <> pair <> pair
+    if isShort then single <> single <> single <> single <> "?"
+    else pair <> pair <> pair <> pair <> "?"
   mPattern = regex ("^#(?:" <> variant <> ")$") (parseFlags "i")
   hush = either (const Nothing) Just
   parseHex = fromMaybe 0 <<< fromStringAs hexadecimal
@@ -410,14 +418,17 @@ toLCh col = { l, c, h }
   c = sqrt (a * a + b * b)
   h = (atan2 b a * rad2deg) `modPos` 360.0
 
--- | Return a hexadecimal representation of the color in the form `#rrggbb`,
--- | where `rr`, `gg` and `bb` refer to hexadecimal digits corresponding to
--- | the RGB channel values between `00` and `ff`. The alpha channel is not
--- | represented.
+-- | Return a hexadecimal representation of the color in the forms `#rrggbb`
+-- | or `#rrggbbaa`, where `rr`, `gg`, `bb`, and `aa` refer to hexadecimal
+-- | digits corresponding to the RGBA channel values between `00` and `ff`. The
+-- | alpha channel is only represented when it has a value less than 100%.
 toHexString :: Color -> String
-toHexString color = "#" <> toHex c.r <> toHex c.g <> toHex c.b
+toHexString color = "#" <> toHex c.r <> toHex c.g <> toHex c.b <> alpha
   where
   c = toRGBA color
+  alpha
+    | c.a == 1.0 = ""
+    | otherwise = toHex $ round (255.0 * c.a)
   toHex num =
     let
       repr = toStringAs hexadecimal num

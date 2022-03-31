@@ -81,14 +81,16 @@ main = do
     equal (Just white) (fromHexString "#fffFFF")
     equal (Just white) (fromHexString "#ffffff")
     equal (Just red) (fromHexString "#f00")
+    equal (Just (rgba 255 0 0 0.6)) (fromHexString "#f009")
     equal (Just (rgb 87 166 206)) (fromHexString "#57A6CE")
     equal Nothing (fromHexString "000")
     equal Nothing (fromHexString "000000")
     equal Nothing (fromHexString "#0")
     equal Nothing (fromHexString "#00")
-    equal Nothing (fromHexString "#0000")
+    equal (Just (rgba 0 0 0 0.0)) (fromHexString "#0000")
     equal Nothing (fromHexString "#00000")
     equal Nothing (fromHexString "#0000000")
+    equal (Just (rgba 0 0 0 0.0)) (fromHexString "#00000000")
 
   test "fromInt" do
     equal black (fromInt 0)
@@ -195,6 +197,12 @@ main = do
     hexRoundtrip 240.0 1.0 0.75
     hexRoundtrip 49.5 0.893 0.497
     hexRoundtrip 162.4 0.779 0.447
+
+  test "toHexString (HSLA -> Hex -> HSLA conversion)" do
+    let hexAlphaRoundtrip h s l a = equal (Just $ hsla h s l a) (fromHexString (toHexString (hsla h s l a)))
+    hexAlphaRoundtrip 120.1 0.33 0.55 0.30196078431372547
+    hexAlphaRoundtrip 120.1 0.332 0.549 1.0
+    hexAlphaRoundtrip 360.0 0.332 0.549 1.0
 
   test "cssStringHSLA" do
     equal "hsla(120.1, 33.0%, 55.0%, 0.3)" (cssStringHSLA (hsla 120.1 0.33 0.55 0.3))
