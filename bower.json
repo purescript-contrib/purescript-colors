@@ -2,7 +2,7 @@
   "name": "purescript-colors",
   "repository": {
     "type": "git",
-    "url": "git://github.com/purescript-contrib/purescript-colors.git"
+    "url": "https://github.com/purescript-contrib/purescript-colors.git"
   },
   "license": "MIT",
   "ignore": [
