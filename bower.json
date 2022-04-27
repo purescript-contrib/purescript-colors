@@ -13,14 +13,14 @@
     "test"
   ],
   "dependencies": {
-    "purescript-arrays": "master",
-    "purescript-integers": "master",
-    "purescript-numbers": "master",
-    "purescript-lists": "master",
-    "purescript-partial": "master",
-    "purescript-strings": "master"
+    "purescript-arrays": "^7.0.0",
+    "purescript-integers": "^6.0.0",
+    "purescript-numbers": "^9.0.0",
+    "purescript-lists": "^7.0.0",
+    "purescript-partial": "^4.0.0",
+    "purescript-strings": "^6.0.0"
   },
   "devDependencies": {
-    "purescript-assert": "master"
+    "purescript-assert": "^6.0.0"
   }
 }
