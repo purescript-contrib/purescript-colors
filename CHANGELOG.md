@@ -15,6 +15,7 @@ Other improvements:
 ## [v7.0.1](https://github.com/purescript-contrib/purescript-colors/releases/tag/v7.0.1) - 2022-04-27
 
 Fix registry URL, so we can publish package (#61 by @JordanMartinez)
+
 ## [v7.0.0](https://github.com/purescript-contrib/purescript-colors/releases/tag/v7.0.0) - 2022-04-27
 
 Breaking changes:
