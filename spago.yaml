@@ -1,0 +1,30 @@
+package:
+  name: colors
+  publish:
+    license: MIT
+    version: 7.0.1
+    location:
+      githubOwner: purescript-contrib
+      githubRepo: purescript-colors
+  dependencies:
+    - arrays
+    - control
+    - either
+    - foldable-traversable
+    - integers
+    - lists
+    - maybe
+    - numbers
+    - partial
+    - prelude
+    - strings
+  test:
+    main: Test.Main
+    dependencies:
+      - assert
+      - console
+      - effect
+workspace:
+  extraPackages: {}
+  packageSet:
+    registry: 60.5.0
