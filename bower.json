@@ -4,12 +4,5 @@
     "type": "git",
     "url": "https://github.com/purescript-contrib/purescript-colors.git"
   },
-  "license": "MIT",
-  "ignore": [
-    "**/.*",
-    "bower_components",
-    "html",
-    "output",
-    "test"
-  ]
+  "license": "MIT"
 }

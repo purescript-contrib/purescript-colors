@@ -5,17 +5,39 @@
         "path": "./",
         "core": {
           "dependencies": [
-            "arrays",
-            "control",
-            "either",
-            "foldable-traversable",
-            "integers",
-            "lists",
-            "maybe",
-            "numbers",
-            "partial",
-            "prelude",
-            "strings"
+            {
+              "arrays": ">=7.3.0 <8.0.0"
+            },
+            {
+              "control": ">=6.0.0 <7.0.0"
+            },
+            {
+              "either": ">=6.1.0 <7.0.0"
+            },
+            {
+              "foldable-traversable": ">=6.0.0 <7.0.0"
+            },
+            {
+              "integers": ">=6.0.0 <7.0.0"
+            },
+            {
+              "lists": ">=7.0.0 <8.0.0"
+            },
+            {
+              "maybe": ">=6.0.0 <7.0.0"
+            },
+            {
+              "numbers": ">=9.0.1 <10.0.0"
+            },
+            {
+              "partial": ">=4.0.0 <5.0.0"
+            },
+            {
+              "prelude": ">=6.0.1 <7.0.0"
+            },
+            {
+              "strings": ">=6.0.1 <7.0.0"
+            }
           ],
           "build_plan": [
             "arrays",
