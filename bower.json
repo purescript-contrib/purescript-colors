@@ -1,8 +1,0 @@
-{
-  "name": "purescript-colors",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/purescript-contrib/purescript-colors.git"
-  },
-  "license": "MIT"
-}
