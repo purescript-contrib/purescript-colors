@@ -2,7 +2,7 @@ package:
   name: colors
   publish:
     license: MIT
-    version: 7.0.1
+    version: 8.0.0
     location:
       githubOwner: purescript-contrib
       githubRepo: purescript-colors
