@@ -11,6 +11,8 @@ New features:
 Bugfixes:
 
 Other improvements:
+- Migrate to registry-backed Spago, preserving published dependency ranges.
+- Update CI actions and use Node.js 24.
 
 ## [v7.0.1](https://github.com/purescript-contrib/purescript-colors/releases/tag/v7.0.1) - 2022-04-27
 
@@ -156,4 +158,3 @@ Updates for PS 0.12 (Thanks to @justinwoo!)
 ## [v0.1.0](https://github.com/purescript-contrib/purescript-colors/releases/tag/v0.1.0) - 2016-02-02
 
 Initial release
-
